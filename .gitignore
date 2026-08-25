@@ -1,0 +1,88 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+
+# Virtual Environment
+venv/
+env/
+ENV/
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# Environment Variables
+.env
+.env.local
+.env.production
+
+# Database
+*.db
+*.sqlite3
+
+# Docker
+docker-compose.override.yml
+
+# Node.js
+node_modules/
+frontend/.next/
+frontend/out/
+
+# Testing
+.coverage
+htmlcov/
+.pytest_cache/
+.coverage.*
+
+# Logs
+*.log
+logs/
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Frontend
+frontend/.env.local
+frontend/.env.development.local
+frontend/.env.test.local
+frontend/.env.production.local
+
+# Backend
+backend/.env
+backend/venv/
+backend/*.pyc
+
+# Build
+dist/
+build/
+*.tar.gz
+*.zip
+
+# Reports (generated)
+reports/*.pdf
+
+# CIS Benchmark PDFs (copyrighted - keep private)
+docsss/
+private_resources/

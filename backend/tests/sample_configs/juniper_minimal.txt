@@ -1,0 +1,7 @@
+# ============================================================================
+# SAMPLE: MINIMAL Juniper JUNOS Configuration
+# Most controls will be REVIEW because configuration is missing.
+# ============================================================================
+## system {
+##     host-name MIN-JUNOS-01;
+## }

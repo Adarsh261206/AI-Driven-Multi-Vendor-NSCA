@@ -1,0 +1,8 @@
+! ============================================================================
+! SAMPLE: EDGE CASE - Empty / Minimal Cisco IOS XE Configuration
+! Tests handling of minimal configurations.
+! ============================================================================
+
+hostname MINIMAL-RTR-01
+!
+end

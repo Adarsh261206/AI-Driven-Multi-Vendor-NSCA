@@ -1,0 +1,82 @@
+! ============================================================================
+! SAMPLE: SECURE Cisco IOS XE Configuration
+! All CIS benchmark controls should PASS on this configuration.
+! ============================================================================
+
+hostname SECURE-RTR-01
+!
+aaa new-model
+aaa authentication login default local
+aaa authentication enable default enable
+aaa authorization commands 15 default local
+aaa accounting commands 15 default start-stop local
+aaa accounting connection default start-stop local
+aaa accounting exec default start-stop local
+aaa accounting network default start-stop local
+aaa accounting system default start-stop local
+!
+security passwords min-length 14
+enable secret 5 $1$mERr$hx5rVt7rPNoS4wqbXKX7m0
+service password-encryption
+!
+ip ssh version 2
+ip ssh authentication-retries 3
+ip ssh time-out 60
+ip ssh stricthostkeycheck
+ip ssh source-interface Loopback0
+crypto key generate rsa modulus 2048
+!
+no ip http server
+ip http secure-server
+ip http authentication aaa
+!
+no service finger
+no service pad
+no service tcp-small-servers
+no service udp-small-servers
+!
+no cdp run
+no lldp run
+!
+no ip redirects
+no ip unreachables
+no ip proxy-arp
+no ip source-route
+!
+logging buffered informational
+service timestamps log datetime msec
+logging source-interface Loopback0
+logging host 10.0.0.100
+logging trap informational
+logging console notifications
+logging monitor notifications
+!
+ntp authenticate
+ntp authentication-key 1 md5 NTPSecretKey
+ntp trusted-key 1
+ntp server 10.0.0.200
+ntp server 10.0.0.201
+ntp source Loopback0
+!
+snmp-server group SECURE-GROUP v3 priv
+snmp-server user SECURE-USER SECURE-GROUP v3 auth sha AuthPassword priv aes 128 PrivPassword
+access-list 99 deny any
+snmp-server community SECURE-COMM RO 99
+!
+interface Loopback0
+ ip address 10.0.0.1 255.255.255.255
+!
+line vty 0 15
+ transport input ssh
+ exec-timeout 5 0
+ access-class 99 in
+ login authentication default
+!
+line con 0
+ exec-timeout 5 0
+!
+line aux 0
+ no exec
+ exec-timeout 5 0
+!
+end

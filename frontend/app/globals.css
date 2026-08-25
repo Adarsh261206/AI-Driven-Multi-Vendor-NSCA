@@ -1,0 +1,108 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --color-bg: #0a0e14;
+  --color-surface: #0d1219;
+  --color-panel: #111826;
+  --color-border: #1c2638;
+  --color-text: #e2e8f0;
+  --color-text-dim: #64748b;
+  --color-accent: #22d3ee;
+}
+
+html,
+body {
+  background: var(--color-bg);
+  color: var(--color-text);
+  font-feature-settings: 'cv02', 'cv03', 'cv04', 'cv11';
+  -webkit-font-smoothing: antialiased;
+}
+
+/* Focus visibility - accessible focus states */
+:focus-visible {
+  outline: 2px solid var(--color-accent);
+  outline-offset: 2px;
+  border-radius: 4px;
+}
+
+/* Custom scrollbar */
+::-webkit-scrollbar {
+  width: 10px;
+  height: 10px;
+}
+::-webkit-scrollbar-track {
+  background: #0d1219;
+}
+::-webkit-scrollbar-thumb {
+  background: #243046;
+  border-radius: 5px;
+  border: 2px solid #0d1219;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: #33405c;
+}
+
+@layer components {
+  /* Numeric/technical text */
+  .font-mono {
+    font-variant-numeric: tabular-nums;
+  }
+
+  /* Data table conventions */
+  .table-shell {
+    @apply overflow-x-auto;
+  }
+  .data-table {
+    @apply w-full text-sm;
+  }
+  .data-table thead th {
+    @apply text-left px-4 py-2.5 text-[11px] font-semibold uppercase tracking-wider text-slate-400 border-b border-base-700 bg-base-850;
+  }
+  .data-table tbody td {
+    @apply px-4 py-3 border-b border-base-800 text-slate-300;
+  }
+  .data-table tbody tr {
+    @apply transition-colors hover:bg-base-800/60;
+  }
+  .data-table tbody tr.row-link {
+    @apply cursor-pointer;
+  }
+
+  /* Code block convention */
+  .code-block {
+    @apply font-mono text-[12.5px] leading-relaxed whitespace-pre-wrap break-words;
+  }
+
+  /* Card convention */
+  .panel {
+    @apply bg-base-850 border border-base-700 rounded-lg shadow-panel;
+  }
+  .panel-header {
+    @apply px-5 py-4 border-b border-base-700 flex items-center justify-between gap-4;
+  }
+  .panel-body {
+    @apply p-5;
+  }
+
+  /* Focus ring for inputs in dark theme */
+  .field {
+    @apply w-full bg-base-900 border border-base-600 rounded px-3 py-2 text-sm text-slate-200 placeholder:text-slate-500 focus:border-accent-500 focus:ring-1 focus:ring-accent-500/30 outline-none transition-colors;
+  }
+}
+
+/* Chart accessibility - no information conveyed only by color */
+.chart-tooltip {
+  @apply bg-base-800 border border-base-600 rounded-lg px-3 py-2 text-xs text-slate-200 shadow-panel-lg;
+}
+
+/* Reduced motion */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    transition-duration: 0.01ms !important;
+  }
+}

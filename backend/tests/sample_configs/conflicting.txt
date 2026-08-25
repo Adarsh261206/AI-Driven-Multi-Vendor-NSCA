@@ -1,0 +1,38 @@
+! ============================================================================
+! SAMPLE: Conflicting/Duplicate Settings Cisco IOS XE Configuration
+! Tests handling of duplicate and conflicting commands.
+! ============================================================================
+
+hostname CONFLICT-RTR-01
+!
+aaa new-model
+aaa authentication login default local
+aaa authentication login default none
+!
+security passwords min-length 14
+security passwords min-length 6
+enable secret 5 $1$mERr$hx5rVt7rPNoS4wqbXKX7m0
+!
+ip ssh version 2
+ip ssh version 1
+ip ssh authentication-retries 3
+ip ssh authentication-retries 5
+!
+no ip http server
+ip http server
+!
+logging buffered informational
+logging trap warnings
+!
+interface Loopback0
+ ip address 10.0.0.1 255.255.255.255
+!
+line vty 0 4
+ transport input ssh
+ transport input telnet
+ exec-timeout 5 0
+!
+line con 0
+ exec-timeout 5 0
+!
+end

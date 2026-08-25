@@ -1,0 +1,48 @@
+! ============================================================================
+! SAMPLE: Nested Interface Configuration
+! Tests handling of multiple interface blocks.
+! ============================================================================
+
+hostname NESTED-IF-RTR-01
+!
+aaa new-model
+aaa authentication login default local
+!
+security passwords min-length 14
+enable secret 5 $1$mERr$hx5rVt7rPNoS4wqbXKX7m0
+!
+ip ssh version 2
+ip ssh authentication-retries 3
+ip ssh time-out 60
+crypto key generate rsa modulus 2048
+!
+no ip http server
+!
+no cdp run
+no lldp run
+!
+logging buffered informational
+logging host 10.0.0.100
+logging trap informational
+!
+interface Loopback0
+ ip address 10.0.0.1 255.255.255.255
+ no ip redirects
+!
+interface GigabitEthernet0/0
+ ip address 192.168.1.1 255.255.255.0
+ no ip proxy-arp
+!
+interface GigabitEthernet0/1
+ ip address 10.10.10.1 255.255.255.0
+ shutdown
+!
+line vty 0 15
+ transport input ssh
+ exec-timeout 5 0
+ login authentication default
+!
+line con 0
+ exec-timeout 5 0
+!
+end

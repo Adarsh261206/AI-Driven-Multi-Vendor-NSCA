@@ -1,0 +1,28 @@
+! ============================================================================
+! SAMPLE: Malformed Cisco IOS XE Configuration
+! Contains syntax errors and incomplete sections.
+! ============================================================================
+
+hostname MALFORMED-RTR-01
+!
+aaa new-model
+aaa authentication login default local
+!
+security passwords min-length
+enable secret 5 $1$mERr$hx5rVt7rPNoS4wqbXKX7m0
+!
+ip ssh version
+!
+no ip http server
+!
+logging buffered
+logging host
+!
+line vty 0 4
+ transport input
+ exec-timeout abc def
+!
+line con 0
+ exec-timeout 5 0
+!
+end

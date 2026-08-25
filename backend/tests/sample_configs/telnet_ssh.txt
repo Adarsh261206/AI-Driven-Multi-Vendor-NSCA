@@ -1,0 +1,34 @@
+! ============================================================================
+! SAMPLE: Telnet + SSH Cisco IOS XE Configuration
+! Both telnet and ssh allowed on VTY.
+! ============================================================================
+
+hostname TELNET-SSH-RTR-01
+!
+aaa new-model
+aaa authentication login default local
+!
+security passwords min-length 10
+enable secret 5 $1$mERr$hx5rVt7rPNoS4wqbXKX7m0
+!
+ip ssh version 2
+ip ssh authentication-retries 3
+crypto key generate rsa modulus 2048
+!
+ip http server
+!
+logging buffered warnings
+logging host 10.0.0.100
+logging trap warnings
+!
+interface Loopback0
+ ip address 10.0.0.1 255.255.255.255
+!
+line vty 0 4
+ transport input telnet ssh
+ exec-timeout 10 0
+!
+line con 0
+ exec-timeout 10 0
+!
+end

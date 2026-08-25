@@ -1,0 +1,43 @@
+# ============================================================================
+# SAMPLE: INSECURE Juniper JUNOS Configuration
+# Most CIS Juniper OS v2.1.0 automated controls should FAIL on this config.
+# ============================================================================
+## system {
+##     host-name JUNOS-INSECURE-01;
+##     time-zone America/New_York;
+##     services {
+##         ssh {
+##             protocol-version v1;
+##             root-login allow;
+##         }
+##         telnet;
+##         ftp;
+##     }
+##     login {
+##         retry-options {
+##             tries-before-disconnect 10;
+##             lockout-period 5;
+##         }
+##         password {
+##             minimum-length 6;
+##             format md5;
+##         }
+##     }
+##     ntp {
+##         boot-server 10.0.0.1;
+##     }
+## }
+## interfaces {
+##     ge-0/0/0 {
+##         unit 0 {
+##             family inet {
+##                 address 192.168.1.1/24;
+##             }
+##         }
+##     }
+## }
+## snmp {
+##     community public {
+##         authorization read-write;
+##     }
+## }

@@ -1,0 +1,60 @@
+! ============================================================================
+! SAMPLE: MIXED Cisco IOS XE Configuration
+! Some controls PASS, some FAIL, some REVIEW.
+! ============================================================================
+
+hostname MIXED-RTR-01
+!
+aaa new-model
+aaa authentication login default local
+aaa authentication enable default enable
+aaa accounting commands 15 default start-stop local
+!
+security passwords min-length 10
+enable secret 5 $1$mERr$hx5rVt7rPNoS4wqbXKX7m0
+!
+ip ssh version 2
+ip ssh authentication-retries 3
+ip ssh time-out 120
+crypto key generate rsa modulus 1024
+!
+ip http server
+!
+no service finger
+no service pad
+no service tcp-small-servers
+no service udp-small-servers
+!
+no cdp run
+lldp run
+!
+no ip redirects
+ip unreachables
+ip proxy-arp
+!
+logging buffered warnings
+service timestamps log datetime msec
+logging host 10.0.0.100
+logging trap warnings
+logging console errors
+!
+ntp server 10.0.0.200
+!
+snmp-server community SECURE-COMM RO
+snmp-server group MONITOR-GROUP v3 auth
+!
+interface Loopback0
+ ip address 10.0.0.1 255.255.255.255
+!
+line vty 0 15
+ transport input ssh
+ exec-timeout 10 0
+ login authentication default
+!
+line con 0
+ exec-timeout 10 0
+!
+line aux 0
+ no exec
+!
+end

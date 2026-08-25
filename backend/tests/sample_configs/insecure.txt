@@ -1,0 +1,46 @@
+! ============================================================================
+! SAMPLE: INSECURE Cisco IOS XE Configuration
+! Most CIS benchmark controls should FAIL on this configuration.
+! ============================================================================
+
+hostname INSECURE-RTR-01
+!
+no aaa new-model
+!
+no ip ssh version
+!
+ip http server
+!
+service finger
+service pad
+service tcp-small-servers
+service udp-small-servers
+!
+cdp run
+lldp run
+!
+ip redirects
+ip unreachables
+ip proxy-arp
+ip source-route
+!
+no logging buffered
+no logging host
+!
+snmp-server community public RO
+snmp-server community private RW
+!
+interface Loopback0
+ ip address 10.0.0.1 255.255.255.255
+!
+line vty 0 4
+ transport input telnet
+ exec-timeout 60 0
+!
+line con 0
+ exec-timeout 60 0
+!
+line aux 0
+ exec
+!
+end

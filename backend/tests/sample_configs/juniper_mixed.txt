@@ -1,0 +1,46 @@
+# ============================================================================
+# SAMPLE: MIXED Juniper JUNOS Configuration
+# Some controls PASS, some FAIL on this config.
+# ============================================================================
+## system {
+##     host-name MIXED-JUNOS-01;
+##     time-zone UTC;
+##     services {
+##         ssh {
+##             protocol-version v2;
+##             root-login deny;
+##         }
+##         telnet;
+##     }
+##     login {
+##         retry-options {
+##             tries-before-disconnect 5;
+##         }
+##         password {
+##             minimum-length 10;
+##             format sha512;
+##         }
+##     }
+##     accounting {
+##         events login;
+##     }
+##     syslog {
+##         host 10.0.0.10 {
+##             any info;
+##         }
+##     }
+## }
+## interfaces {
+##     lo0 {
+##         unit 0 {
+##             family inet {
+##                 address 10.255.255.1/32;
+##             }
+##         }
+##     }
+## }
+## snmp {
+##     community public {
+##         authorization read-only;
+##     }
+## }

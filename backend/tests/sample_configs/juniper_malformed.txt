@@ -1,0 +1,30 @@
+# ============================================================================
+# SAMPLE: MALFORMED Juniper JUNOS Configuration
+# Broken braces, garbage tokens, partial statements.
+# Engine must not crash - missing evidence → REVIEW.
+# ============================================================================
+## system {
+##     host-name MALFORMED-JUNOS-01;
+##     services {
+##         ssh {
+##             protocol-version v2
+##         root-login
+##     }
+##     login
+##         retry-options {
+##             tries-before-disconnect xyz;
+##         }
+## }
+## interfaces {
+##     lo0 {
+##         unit 0 {
+##             family inet {
+##                 address 10.255.255.1/32
+##             }
+##         }
+## }
+## snmp {
+##     community ??? {
+##         authorization ;;;;
+##     }
+## garbage line with no meaning

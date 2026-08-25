@@ -1,0 +1,44 @@
+! ============================================================================
+! SAMPLE: Multiple VTY Blocks Cisco IOS XE Configuration
+! Tests parsing of multiple VTY sections.
+! ============================================================================
+
+hostname MULTI-VTY-RTR-01
+!
+aaa new-model
+aaa authentication login default local
+!
+security passwords min-length 14
+enable secret 5 $1$mERr$hx5rVt7rPNoS4wqbXKX7m0
+!
+ip ssh version 2
+ip ssh authentication-retries 3
+ip ssh time-out 60
+crypto key generate rsa modulus 2048
+!
+no ip http server
+!
+logging buffered informational
+logging host 10.0.0.100
+logging trap informational
+!
+interface Loopback0
+ ip address 10.0.0.1 255.255.255.255
+!
+line vty 0 4
+ transport input ssh
+ exec-timeout 5 0
+ login authentication default
+!
+line vty 5 15
+ transport input ssh
+ exec-timeout 5 0
+ login authentication default
+!
+line con 0
+ exec-timeout 5 0
+!
+line aux 0
+ no exec
+!
+end

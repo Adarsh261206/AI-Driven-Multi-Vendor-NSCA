@@ -1,0 +1,13 @@
+# ============================================================================
+# SAMPLE: UNKNOWN Juniper JUNOS Configuration
+# Contains no recognizable JUNOS structure - vendor detection may fail.
+# ============================================================================
+#
+# Random output from an unknown device
+# ------------------------------------
+device-type: mystery-box
+model: QX-9000
+settings:
+  - mode: auto
+  - feature: x
+status: operational

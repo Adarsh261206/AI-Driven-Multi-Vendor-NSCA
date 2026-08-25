@@ -1,0 +1,60 @@
+# ============================================================================
+# SAMPLE: MULTIPLE BLOCKS Juniper JUNOS Configuration
+# Multiple NTP servers, syslog hosts, and login classes.
+# All blocks should be evaluated.
+# ============================================================================
+## system {
+##     host-name MULTI-JUNOS-01;
+##     services {
+##         ssh {
+##             protocol-version v2;
+##             root-login deny;
+##         }
+##     }
+##     login {
+##         retry-options {
+##             tries-before-disconnect 3;
+##             lockout-period 30;
+##         }
+##         password {
+##             minimum-length 10;
+##             format sha512;
+##         }
+##     }
+##     accounting {
+##         events login;
+##     }
+##     syslog {
+##         host 10.0.0.10 {
+##             any info;
+##         }
+##         host 10.0.0.11 {
+##             any warning;
+##         }
+##     }
+##     ntp {
+##         server 10.0.0.20;
+##         server 10.0.0.21;
+##         server 10.0.0.22;
+##         version 4;
+##     }
+## }
+## interfaces {
+##     lo0 {
+##         unit 0 {
+##             family inet {
+##                 address 10.255.255.1/32;
+##             }
+##         }
+##     }
+## }
+## snmp {
+##     client-list NMS1 {
+##         default restrict;
+##         10.0.1.0/24;
+##     }
+##     community comm1 {
+##         client-list-name NMS1;
+##         authorization read-only;
+##     }
+## }

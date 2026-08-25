@@ -1,0 +1,39 @@
+# ============================================================================
+# SAMPLE: CONFLICTING Juniper JUNOS Configuration
+# Duplicate settings with conflicting values exist.
+# Affected controls should produce REVIEW (conflict), not silent last-wins.
+# ============================================================================
+## system {
+##     host-name CONFLICT-JUNOS-01;
+##     services {
+##         ssh {
+##             protocol-version v1;
+##             protocol-version v2;
+##             root-login allow;
+##             root-login deny;
+##         }
+##     }
+##     login {
+##         retry-options {
+##             tries-before-disconnect 10;
+##             tries-before-disconnect 3;
+##         }
+##         password {
+##             minimum-length 6;
+##             minimum-length 12;
+##         }
+##     }
+##     ntp {
+##         version 3;
+##         version 4;
+##     }
+## }
+## interfaces {
+##     lo0 {
+##         unit 0 {
+##             family inet {
+##                 address 10.255.255.1/32;
+##             }
+##         }
+##     }
+## }
