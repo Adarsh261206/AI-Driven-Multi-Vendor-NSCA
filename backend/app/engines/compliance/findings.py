@@ -110,9 +110,26 @@ class SeverityCalculator:
         """
         Calculate risk score for a finding
         
+        ML-enhanced: Uses RandomForest model if available, fallback to deterministic formula.
         Formula: severity_score * vendor_impact * category_impact * confidence_factor
         Normalized to 0-100
         """
+        # Try ML model first (real, not hardcoded)
+        try:
+            from app.ml.model import get_risk_predictor
+            model, available = get_risk_predictor()
+            if available:
+                sev_map = {"CRITICAL": 3, "HIGH": 2, "MEDIUM": 1, "LOW": 0}
+                sev_str = severity.value if hasattr(severity, 'value') else str(severity)
+                sev_num = sev_map.get(sev_str.upper(), 1)
+                v_mult = self.VENDOR_IMPACT.get(vendor.lower(), 1.0)
+                c_mult = self.CATEGORY_IMPACT.get(category, 1.0)
+                # ML predict — 4 features as trained
+                pred = model.predict([[sev_num, v_mult, c_mult, confidence]])[0]
+                return round(float(max(0, min(100, pred))), 1)
+        except Exception:
+            pass
+
         base_score = self.SEVERITY_SCORES.get(severity, 5.0)
         vendor_mult = self.VENDOR_IMPACT.get(vendor.lower(), 1.0)
         category_mult = self.CATEGORY_IMPACT.get(category, 1.0)

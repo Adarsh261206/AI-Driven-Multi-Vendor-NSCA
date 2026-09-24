@@ -5,6 +5,8 @@ import {
   Activity,
   AlertOctagon,
   AlertTriangle,
+  ArrowRight,
+  BarChart3,
   Eye,
   Network,
   PlayCircle,
@@ -16,16 +18,13 @@ import {
 import { useRequireAuth } from '@/hooks/useAuth';
 import { useDashboardData } from '@/hooks/useDashboardData';
 import { AppShell } from '@/components/layout/AppShell';
-import { StatCard } from '@/components/ui/StatCard';
-import { Button } from '@/components/ui/Button';
 import { Alert } from '@/components/ui/Alert';
 import { PageLoader } from '@/components/ui/Progress';
-import { ChartCard } from '@/components/dashboard/ChartCard';
 import { DataTable } from '@/components/ui/DataTable';
-import { AuditStatusBadge, SeverityBadge, TechBadge } from '@/components/ui/Badge';
+import { AuditStatusBadge, SeverityBadge } from '@/components/ui/Badge';
 import { scoreRisk } from '@/lib/security';
 import { formatPercent, formatRelative } from '@/lib/format';
-import type { Audit, Finding } from '@/types';
+import type { Audit } from '@/types';
 import {
   ResponsiveContainer,
   LineChart,
@@ -34,15 +33,13 @@ import {
   YAxis,
   CartesianGrid,
   Tooltip,
-  BarChart,
-  Bar,
-  Cell,
   PieChart,
   Pie,
+  Cell,
 } from 'recharts';
 
-const AXIS = { stroke: '#4a5876', fontSize: 11 };
-const GRID = { stroke: '#1c2638' };
+const AXIS = { stroke: '#a8a89f', fontSize: 11 };
+const GRID = { stroke: '#f0eff0' };
 
 export default function DashboardPage() {
   const { isLoading: authLoading } = useRequireAuth();
@@ -53,401 +50,482 @@ export default function DashboardPage() {
   const risk = scoreRisk(data.latestScore ?? data.avgScore);
 
   const trendData = data.scoreTrend.map((t) => ({ ...t, score: t.score ?? null }));
-  const vendorData = data.vendorCompliance.map((v) => ({
-    name: v.vendor,
-    Devices: v.devices,
-    Score: Math.round(v.score),
-  }));
-
   const severityChartData = data.severityDistribution.map((s) => ({
     name: s.name,
     value: s.value,
     color: s.color,
   }));
 
+  const hasData = data.audits.length > 0;
+
   return (
-    <AppShell title="Dashboard" subtitle="Network security posture overview">
+    <AppShell
+      title="Dashboard"
+      subtitle="Security posture overview • Track compliance, findings and audit activity at a glance"
+      actions={
+        hasData ? (
+          <div className="flex items-center gap-3">
+            <Link href="/devices" className="btn-secondary">
+              <Server className="h-4 w-4" />
+              Devices
+            </Link>
+            <Link href="/audit/new" className="btn-primary">
+              <PlayCircle className="h-4 w-4" />
+              New Audit
+            </Link>
+          </div>
+        ) : null
+      }
+    >
       {data.error && (
-        <div className="mb-5">
+        <div className="mb-8">
           <Alert variant="error" title="Dashboard data unavailable" onDismiss={data.refresh}>
             {data.error}
           </Alert>
         </div>
       )}
 
-      {/* Run audit CTA */}
-      <div className="mb-6 flex flex-wrap items-center justify-between gap-3 rounded-lg border border-base-700 bg-base-850 p-4">
-        <div className="flex items-center gap-3">
-          <div className="flex h-9 w-9 items-center justify-center rounded-md border border-accent-500/40 bg-accent-500/10 text-accent-400">
-            <PlayCircle className="h-4.5 w-4.5" />
-          </div>
-          <div>
-            <p className="text-sm font-medium text-slate-200">Evaluate a device configuration</p>
-            <p className="text-xs text-slate-500">
-              Upload a Cisco IOS XE or Juniper JUNOS configuration and run a CIS benchmark audit.
+      {/* ── Stat cards — Odoo: generous p-6, soft icon wells, airy spacing ── */}
+      <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-4">
+        {/* Security Score */}
+        <div className="card group transition-all duration-200 hover:shadow-odoo-md">
+          <div className="p-6">
+            <div className="flex items-start justify-between">
+              <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-brand-50 text-brand-600 ring-1 ring-brand-100">
+                <ShieldCheck className="h-5 w-5" strokeWidth={1.75} />
+              </div>
+              {data.scoreDelta != null && (
+                <span
+                  className={`inline-flex items-center gap-1 rounded-full px-2.5 py-1 text-xs font-semibold ring-1 ${
+                    data.scoreDelta >= 0
+                      ? 'bg-emerald-50 text-emerald-700 ring-emerald-200'
+                      : 'bg-red-50 text-red-700 ring-red-200'
+                  }`}
+                >
+                  {data.scoreDelta >= 0 ? <TrendingUp className="h-3 w-3" /> : <TrendingDown className="h-3 w-3" />}
+                  {data.scoreDelta >= 0 ? '+' : ''}
+                  {data.scoreDelta.toFixed(1)}
+                </span>
+              )}
+            </div>
+            <p className="metric-label mt-5">Security Score</p>
+            <div className="mt-2 flex items-baseline gap-2">
+              <span className="metric-value">
+                {data.latestScore != null ? `${Math.round(data.latestScore)}%` : '—'}
+              </span>
+              {risk?.label && data.latestScore != null && (
+                <span className="rounded-full bg-surface-50 px-2 py-0.5 text-xs font-medium text-ink-400 ring-1 ring-surface-200">
+                  {risk.label}
+                </span>
+              )}
+            </div>
+            <p className="mt-3 text-xs leading-relaxed text-ink-400">
+              {data.avgScore != null ? `Avg ${Math.round(data.avgScore)}% across ${data.completedAudits.length} audits` : 'No completed audits yet'}
             </p>
           </div>
         </div>
-        <Link href="/audit/new">
-          <Button>Run New Audit</Button>
-        </Link>
-      </div>
 
-      {/* Summary metrics */}
-      <div className="grid grid-cols-2 gap-4 lg:grid-cols-5">
-        <StatCard
-          label="Security Score"
-          value={formatPercent(data.latestScore ?? data.avgScore)}
-          sub={
-            data.scoreDelta != null ? (
-              <span className={`inline-flex items-center gap-1 font-medium ${data.scoreDelta >= 0 ? 'text-green-400' : 'text-red-400'}`}>
-                {data.scoreDelta >= 0 ? <TrendingUp className="h-3 w-3" /> : <TrendingDown className="h-3 w-3" />}
-                {data.scoreDelta >= 0 ? '+' : ''}
-                {data.scoreDelta.toFixed(1)} pts vs previous
-              </span>
-            ) : (
-              'No completed audits'
-            )
-          }
-          accent={risk.color}
-          icon={<ShieldCheck className="h-4 w-4" />}
-          onClick={() => data.recentAudits.length > 0 && (window.location.href = `/audit/${data.recentAudits[0].id}`)}
-        />
-        <StatCard
-          label="Devices"
-          value={data.totalDevices}
-          sub={`${data.auditedDevices} audited`}
-          icon={<Server className="h-4 w-4" />}
-          onClick={() => (window.location.href = '/devices')}
-        />
-        <StatCard
-          label="Critical Findings"
-          value={data.criticalFindings}
-          accent="#ef4444"
-          icon={<AlertOctagon className="h-4 w-4" />}
-        />
-        <StatCard
-          label="High Findings"
-          value={data.highFindings}
-          accent="#f97316"
-          icon={<AlertTriangle className="h-4 w-4" />}
-        />
-        <StatCard
-          label="Needs Review"
-          value={data.reviewCount}
-          accent="#f59e0b"
-          icon={<Eye className="h-4 w-4" />}
-        />
-      </div>
-
-      {/* Main trend chart */}
-      <div className="mt-5">
-        <ChartCard
-          title="Compliance Score Trend"
-          subtitle="Overall score of completed audits over time"
-          loading={data.loading}
-          empty={trendData.length === 0}
-        >
-          <div className="h-56">
-            <ResponsiveContainer width="100%" height="100%">
-              <LineChart data={trendData} margin={{ top: 8, right: 16, bottom: 4, left: -16 }}>
-                <CartesianGrid strokeDasharray="3 3" stroke={GRID.stroke} />
-                <XAxis
-                  dataKey="date"
-                  tickFormatter={(v) => new Date(v).toLocaleDateString(undefined, { month: 'short', day: 'numeric' })}
-                  stroke={AXIS.stroke}
-                  fontSize={AXIS.fontSize}
-                />
-                <YAxis domain={[0, 100]} stroke={AXIS.stroke} fontSize={AXIS.fontSize} unit="%" />
-                <Tooltip
-                  contentStyle={{
-                    backgroundColor: '#151d2d',
-                    border: '1px solid #243046',
-                    borderRadius: 6,
-                    fontSize: 12,
-                  }}
-                  labelFormatter={(_, payload) => (payload?.[0]?.payload?.name as string) ?? ''}
-                  formatter={(value) => [`${Number(value).toFixed(1)}%`, 'Score']}
-                />
-                <Line
-                  type="monotone"
-                  dataKey="score"
-                  stroke="#22d3ee"
-                  strokeWidth={2}
-                  dot={{ r: 3, fill: '#22d3ee', strokeWidth: 0 }}
-                  activeDot={{ r: 5 }}
-                  connectNulls
-                />
-              </LineChart>
-            </ResponsiveContainer>
-          </div>
-        </ChartCard>
-      </div>
-
-      {/* Second row: vendor + framework */}
-      <div className="mt-5 grid grid-cols-1 gap-5 lg:grid-cols-2">
-        <ChartCard
-          title="Compliance by Vendor"
-          subtitle="Devices and average score per vendor"
-          loading={data.loading}
-          empty={vendorData.length === 0}
-        >
-          <div className="h-52">
-            <ResponsiveContainer width="100%" height="100%">
-              <BarChart data={vendorData} margin={{ top: 8, right: 16, bottom: 4, left: -16 }}>
-                <CartesianGrid strokeDasharray="3 3" stroke={GRID.stroke} />
-                <XAxis dataKey="name" stroke={AXIS.stroke} fontSize={AXIS.fontSize} />
-                <YAxis yAxisId="devices" orientation="left" stroke={AXIS.stroke} fontSize={AXIS.fontSize} allowDecimals={false} />
-                <YAxis yAxisId="score" orientation="right" domain={[0, 100]} stroke={AXIS.stroke} fontSize={AXIS.fontSize} unit="%" />
-                <Tooltip
-                  contentStyle={{ backgroundColor: '#151d2d', border: '1px solid #243046', borderRadius: 6, fontSize: 12 }}
-                />
-                <Bar yAxisId="devices" dataKey="Devices" fill="#243046" radius={[3, 3, 0, 0]} />
-                <Bar yAxisId="score" dataKey="Score" fill="#22d3ee" radius={[3, 3, 0, 0]} />
-              </BarChart>
-            </ResponsiveContainer>
-          </div>
-        </ChartCard>
-
-        <ChartCard
-          title="Framework Status"
-          subtitle="Active evaluation frameworks"
-          loading={data.loading}
-          empty={false}
-        >
-          <div className="space-y-3">
-            <div className="flex items-center justify-between rounded-md border border-green-500/25 bg-green-500/5 px-3.5 py-3">
-              <div className="flex items-center gap-3">
-                <TechBadge>CIS</TechBadge>
-                <div>
-                  <p className="text-sm font-medium text-slate-200">CIS Benchmarks</p>
-                  <p className="text-xs text-slate-500">
-                    53 Cisco IOS XE + 17 Juniper OS controls · {data.completedAudits.length} completed audit{data.completedAudits.length === 1 ? '' : 's'}
-                  </p>
-                </div>
-              </div>
-              <span className="rounded bg-green-500/15 px-2 py-0.5 text-[11px] font-semibold uppercase text-green-400">
-                Active
-              </span>
+        {/* Total Devices */}
+        <div className="card group transition-all duration-200 hover:shadow-odoo-md">
+          <div className="p-6">
+            <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-sky-50 text-sky-600 ring-1 ring-sky-100">
+              <Server className="h-5 w-5" strokeWidth={1.75} />
             </div>
-            {(['NIST SP 800-53', 'DISA STIG'] as const).map((f) => (
-              <div key={f} className="flex items-center justify-between rounded-md border border-base-700 px-3.5 py-3 opacity-60">
-                <div className="flex items-center gap-3">
-                  <TechBadge>{f.startsWith('NIST') ? 'NIST' : 'STIG'}</TechBadge>
-                  <div>
-                    <p className="text-sm font-medium text-slate-300">{f}</p>
-                    <p className="text-xs text-slate-500">Architecture ready · controls not yet configured</p>
-                  </div>
-                </div>
-                <span className="rounded bg-base-800 px-2 py-0.5 text-[11px] font-semibold uppercase text-slate-500">
-                  Pending
-                </span>
-              </div>
-            ))}
-          </div>
-        </ChartCard>
-      </div>
-
-      {/* Third row: severity + top failing controls */}
-      <div className="mt-5 grid grid-cols-1 gap-5 lg:grid-cols-2">
-        <ChartCard
-          title="Severity Distribution"
-          subtitle="Findings across completed audits"
-          loading={data.loading}
-          empty={severityChartData.length === 0}
-        >
-          <div className="h-52">
-            <ResponsiveContainer width="100%" height="100%">
-              <PieChart>
-                <Pie
-                  data={severityChartData}
-                  dataKey="value"
-                  nameKey="name"
-                  cx="50%"
-                  cy="50%"
-                  innerRadius={52}
-                  outerRadius={80}
-                  paddingAngle={2}
-                  strokeWidth={0}
-                >
-                  {severityChartData.map((entry) => (
-                    <Cell key={entry.name} fill={entry.color} />
-                  ))}
-                </Pie>
-                <Tooltip
-                  contentStyle={{ backgroundColor: '#151d2d', border: '1px solid #243046', borderRadius: 6, fontSize: 12 }}
-                />
-              </PieChart>
-            </ResponsiveContainer>
-          </div>
-          <div className="mt-2 flex flex-wrap justify-center gap-3">
-            {data.severityDistribution.map((s) => (
-              <span key={s.name} className="flex items-center gap-1.5 text-xs text-slate-400">
-                <span className="h-2 w-2 rounded-full" style={{ backgroundColor: s.color }} />
-                {s.name} · {s.value}
-              </span>
-            ))}
-          </div>
-        </ChartCard>
-
-        <ChartCard
-          title="Top Failing Controls"
-          subtitle="Most frequently failed controls (from critical findings)"
-          loading={data.loading}
-          empty={data.topFailingControls.length === 0}
-        >
-          <div className="space-y-2.5">
-            {data.topFailingControls.map((c, i) => (
-              <div key={c.control_id} className="flex items-center gap-3">
-                <span className="w-5 text-right font-mono text-[11px] text-slate-600">{i + 1}</span>
-                <div className="min-w-0 flex-1">
-                  <div className="flex items-baseline justify-between gap-2">
-                    <p className="truncate text-xs font-medium text-slate-300">{c.title}</p>
-                    <span className="font-mono text-[11px] text-slate-500">{c.count}x</span>
-                  </div>
-                  <div className="mt-1 h-1.5 overflow-hidden rounded-full bg-base-800">
-                    <div
-                      className="h-full rounded-full bg-red-500/70"
-                      style={{ width: `${Math.min(100, (c.count / Math.max(1, data.topFailingControls[0].count)) * 100)}%` }}
-                    />
-                  </div>
-                </div>
-                <TechBadge>{c.control_id}</TechBadge>
-              </div>
-            ))}
-          </div>
-        </ChartCard>
-      </div>
-
-      {/* Recent audits + critical findings */}
-      <div className="mt-5 grid grid-cols-1 gap-5 xl:grid-cols-3">
-        <div className="xl:col-span-2">
-          <div className="panel">
-            <div className="panel-header">
-              <div>
-                <h3 className="text-sm font-semibold text-slate-200">Recent Audits</h3>
-                <p className="mt-0.5 text-xs text-slate-500">Latest audit activity</p>
-              </div>
-              <Link href="/audits" className="text-xs font-medium text-accent-400 hover:text-accent-300">
-                View all
-              </Link>
-            </div>
-            <div className="panel-body p-0">
-              <DataTable<Audit>
-                dense
-                rows={data.recentAudits}
-                rowKey={(a) => a.id}
-                onRowClick={(a) => (window.location.href = `/audit/${a.id}`)}
-                columns={[
-                  {
-                    key: 'name',
-                    header: 'Audit',
-                    render: (a) => <span className="font-medium text-slate-200">{a.name}</span>,
-                    sortValue: (a) => a.name,
-                  },
-                  {
-                    key: 'status',
-                    header: 'Status',
-                    render: (a) => <AuditStatusBadge status={a.status} />,
-                    sortValue: (a) => a.status,
-                  },
-                  {
-                    key: 'overall_score',
-                    header: 'Score',
-                    align: 'right',
-                    render: (a) => (
-                      <span className="font-mono text-slate-300">
-                        {a.overall_score != null ? formatPercent(a.overall_score) : '—'}
-                      </span>
-                    ),
-                    sortValue: (a) => a.overall_score ?? -1,
-                  },
-                  {
-                    key: 'findings_count',
-                    header: 'Findings',
-                    align: 'right',
-                    render: (a) => <span className="font-mono">{a.findings_count}</span>,
-                    sortValue: (a) => a.findings_count,
-                  },
-                  {
-                    key: 'created_at',
-                    header: 'Run',
-                    render: (a) => <span className="text-slate-500">{formatRelative(a.created_at)}</span>,
-                    sortValue: (a) => a.created_at,
-                  },
-                ]}
-              />
-            </div>
+            <p className="metric-label mt-5">Total Devices</p>
+            <p className="metric-value mt-2">{data.totalDevices}</p>
+            <p className="mt-3 flex items-center gap-1.5 text-xs text-ink-400">
+              <span className="h-1.5 w-1.5 rounded-full bg-emerald-500" />
+              {data.auditedDevices} audited · {data.totalDevices > 0 ? Math.round((data.auditedDevices / Math.max(1, data.totalDevices)) * 100) : 0}% coverage
+            </p>
           </div>
         </div>
 
-        <div>
-          <div className="panel h-full">
-            <div className="panel-header">
+        {/* Critical Findings */}
+        <div className="card group transition-all duration-200 hover:shadow-odoo-md">
+          <div className="p-6">
+            <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-red-50 text-sev-critical ring-1 ring-red-100">
+              <AlertOctagon className="h-5 w-5" strokeWidth={1.75} />
+            </div>
+            <p className="metric-label mt-5">Critical Findings</p>
+            <p className="metric-value mt-2 text-sev-critical">{data.criticalFindings}</p>
+            <p className="mt-3 text-xs leading-relaxed text-ink-400">
+              {data.criticalFindings > 0 ? 'Requires immediate attention' : 'No critical issues — good standing'}
+            </p>
+          </div>
+        </div>
+
+        {/* High Findings */}
+        <div className="card group transition-all duration-200 hover:shadow-odoo-md">
+          <div className="p-6">
+            <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-orange-50 text-sev-high ring-1 ring-orange-100">
+              <AlertTriangle className="h-5 w-5" strokeWidth={1.75} />
+            </div>
+            <p className="metric-label mt-5">High Findings</p>
+            <p className="metric-value mt-2 text-sev-high">{data.highFindings}</p>
+            <p className="mt-3 text-xs leading-relaxed text-ink-400">
+              {data.highFindings > 0 ? 'Review recommended this week' : 'No high severity open'}
+            </p>
+          </div>
+        </div>
+      </div>
+
+      {/* ── Analytics — Odoo cards with generous header/body padding ── */}
+      <div className="mt-8">
+        <div className="mb-5 flex items-end justify-between">
+          <div>
+            <h2 className="section-title">Analytics</h2>
+            <p className="mt-1 text-xs text-ink-400">Compliance trends and finding breakdown</p>
+          </div>
+          <span className="hidden text-xs text-ink-400 sm:block">{trendData.length} audits · {severityChartData.length} severities</span>
+        </div>
+
+        <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
+          {/* Compliance Trend */}
+          <div className="card overflow-hidden">
+            <div className="card-header">
               <div>
-                <h3 className="flex items-center gap-2 text-sm font-semibold text-slate-200">
-                  <AlertOctagon className="h-3.5 w-3.5 text-red-400" />
-                  Critical Findings
-                </h3>
-                <p className="mt-0.5 text-xs text-slate-500">Most recent critical issues</p>
+                <h3 className="text-sm font-semibold text-ink-100">Compliance Trend</h3>
+                <p className="mt-0.5 text-xs text-ink-400">Score over completed audits</p>
+              </div>
+              <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-surface-50 text-ink-400 ring-1 ring-surface-200">
+                <BarChart3 className="h-4 w-4" />
               </div>
             </div>
-            <div className="panel-body">
-              {data.recentCriticalFindings.length === 0 ? (
-                <div className="py-8 text-center">
-                  <p className="text-xs text-slate-500">No critical findings yet.</p>
+            <div className="card-body">
+              {trendData.length === 0 ? (
+                <div className="flex flex-col items-center justify-center py-16 text-center">
+                  <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-surface-50 text-ink-400 ring-1 ring-surface-200">
+                    <BarChart3 className="h-6 w-6" />
+                  </div>
+                  <p className="mt-4 text-sm font-medium text-ink-300">No trend data yet</p>
+                  <p className="mt-1 text-xs text-ink-400">Run an audit to populate this view</p>
                 </div>
               ) : (
-                <ul className="space-y-3">
-                  {data.recentCriticalFindings.map((f) => (
-                    <li key={f.id}>
-                      <a
-                        href={`/findings/${f.id}`}
-                        className="block rounded-md border border-base-700 bg-base-900 px-3 py-2.5 transition-colors hover:border-red-500/30"
+                <div className="h-[280px] w-full">
+                  <ResponsiveContainer width="100%" height="100%">
+                    <LineChart data={trendData} margin={{ top: 12, right: 20, bottom: 8, left: -12 }}>
+                      <CartesianGrid strokeDasharray="3 3" stroke={GRID.stroke} vertical={false} />
+                      <XAxis
+                        dataKey="date"
+                        tickFormatter={(v) => new Date(v).toLocaleDateString(undefined, { month: 'short', day: 'numeric' })}
+                        stroke={AXIS.stroke}
+                        fontSize={AXIS.fontSize}
+                        tickLine={false}
+                        axisLine={false}
+                        dy={8}
+                      />
+                      <YAxis domain={[0, 100]} stroke={AXIS.stroke} fontSize={AXIS.fontSize} unit="%" tickLine={false} axisLine={false} dx={-4} />
+                      <Tooltip
+                        cursor={{ stroke: '#e9e7e4', strokeDasharray: '4 4' }}
+                        contentStyle={{
+                          backgroundColor: '#ffffff',
+                          border: '1px solid #ececec',
+                          borderRadius: 12,
+                          fontSize: 13,
+                          boxShadow: '0 4px 12px rgba(0,0,0,0.06), 0 1px 3px rgba(0,0,0,0.04)',
+                          padding: '10px 14px',
+                        }}
+                        labelFormatter={(_, payload) => (payload?.[0]?.payload?.name as string) ?? ''}
+                        formatter={(value) => [`${Number(value).toFixed(1)}%`, 'Score']}
+                      />
+                      <Line
+                        type="monotone"
+                        dataKey="score"
+                        stroke="#4c6ef5"
+                        strokeWidth={2.5}
+                        dot={{ r: 4, fill: '#4c6ef5', strokeWidth: 2, stroke: '#ffffff' }}
+                        activeDot={{ r: 6, fill: '#4c6ef5', stroke: '#ffffff', strokeWidth: 2 }}
+                        connectNulls
+                      />
+                    </LineChart>
+                  </ResponsiveContainer>
+                </div>
+              )}
+            </div>
+          </div>
+
+          {/* Severity Distribution */}
+          <div className="card overflow-hidden">
+            <div className="card-header">
+              <div>
+                <h3 className="text-sm font-semibold text-ink-100">Severity Distribution</h3>
+                <p className="mt-0.5 text-xs text-ink-400">Findings across completed audits</p>
+              </div>
+              <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-surface-50 text-ink-400 ring-1 ring-surface-200">
+                <AlertOctagon className="h-4 w-4" />
+              </div>
+            </div>
+            <div className="card-body">
+              {severityChartData.length === 0 ? (
+                <div className="flex flex-col items-center justify-center py-16 text-center">
+                  <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-surface-50 text-ink-400 ring-1 ring-surface-200">
+                    <Activity className="h-6 w-6" />
+                  </div>
+                  <p className="mt-4 text-sm font-medium text-ink-300">No findings yet</p>
+                  <p className="mt-1 text-xs text-ink-400">Completed audits will populate the distribution</p>
+                </div>
+              ) : (
+                <>
+                  <div className="h-[260px] w-full">
+                    <ResponsiveContainer width="100%" height="100%">
+                      <PieChart>
+                        <Pie
+                          data={severityChartData}
+                          dataKey="value"
+                          nameKey="name"
+                          cx="50%"
+                          cy="50%"
+                          innerRadius={64}
+                          outerRadius={92}
+                          paddingAngle={3}
+                          strokeWidth={0}
+                        >
+                          {severityChartData.map((entry) => (
+                            <Cell key={entry.name} fill={entry.color} />
+                          ))}
+                        </Pie>
+                        <Tooltip
+                          contentStyle={{
+                            backgroundColor: '#ffffff',
+                            border: '1px solid #ececec',
+                            borderRadius: 12,
+                            fontSize: 13,
+                            boxShadow: '0 4px 12px rgba(0,0,0,0.06), 0 1px 3px rgba(0,0,0,0.04)',
+                            padding: '10px 14px',
+                          }}
+                        />
+                      </PieChart>
+                    </ResponsiveContainer>
+                  </div>
+                  <div className="mt-2 flex flex-wrap justify-center gap-2.5">
+                    {data.severityDistribution.map((s) => (
+                      <span
+                        key={s.name}
+                        className="inline-flex items-center gap-2 rounded-full border border-surface-200 bg-surface-50 px-3 py-1 text-xs font-medium text-ink-400"
                       >
-                        <div className="flex items-start justify-between gap-2">
-                          <p className="text-xs font-medium text-slate-200">{f.title}</p>
-                          <SeverityBadge severity={f.severity} />
-                        </div>
-                        <div className="mt-1.5 flex items-center gap-2">
-                          {f.affected_vendor && <TechBadge>{f.affected_vendor}</TechBadge>}
-                          <span className="text-[11px] text-slate-500">
-                            {f.affected_device ?? '—'} · {formatRelative(f.created_at)}
-                          </span>
-                        </div>
-                      </a>
-                    </li>
-                  ))}
-                </ul>
+                        <span className="h-2.5 w-2.5 rounded-full" style={{ backgroundColor: s.color }} />
+                        {s.name}
+                        <span className="font-mono text-ink-300">{s.value}</span>
+                      </span>
+                    ))}
+                  </div>
+                </>
               )}
             </div>
           </div>
         </div>
       </div>
 
-      {/* Empty state when nothing exists */}
-      {data.audits.length === 0 && (
-        <div className="mt-5">
-          <div className="panel flex flex-col items-center py-14 text-center">
-            <div className="mb-3 flex h-12 w-12 items-center justify-center rounded-lg border border-base-700 bg-base-900 text-accent-400">
-              <Activity className="h-5 w-5" />
+      {/* ── Activity — Top failing controls + Recent audits ── */}
+      <div className="mt-8">
+        <div className="mb-5">
+          <h2 className="section-title">Operational Overview</h2>
+          <p className="mt-1 text-xs text-ink-400">Controls that fail most often and latest audit runs</p>
+        </div>
+
+        <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
+          {/* Top Failing Controls */}
+          <div className="card overflow-hidden">
+            <div className="card-header">
+              <div>
+                <h3 className="text-sm font-semibold text-ink-100">Top Failing Controls</h3>
+                <p className="mt-0.5 text-xs text-ink-400">Most frequently failed controls</p>
+              </div>
+              <span className="rounded-full bg-surface-50 px-2.5 py-1 text-xs font-medium text-ink-400 ring-1 ring-surface-200">
+                {data.topFailingControls.length} controls
+              </span>
             </div>
-            <h3 className="text-sm font-semibold text-slate-200">No audits yet</h3>
-            <p className="mt-1 max-w-md text-xs text-slate-500">
-              Upload a device configuration to run your first CIS benchmark audit. Every result includes
-              evidence-backed findings and remediation guidance.
-            </p>
-            <div className="mt-5 flex gap-2">
-              <Link href="/audit/new">
-                <Button>Run First Audit</Button>
-              </Link>
-              <Link href="/devices">
-                <Button variant="secondary">
-                  <Network className="h-3.5 w-3.5" />
-                  Manage Devices
-                </Button>
+
+            <div className="px-6 py-6">
+              {data.topFailingControls.length === 0 ? (
+                <div className="flex flex-col items-center justify-center py-12 text-center">
+                  <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-emerald-50 text-emerald-600 ring-1 ring-emerald-100">
+                    <ShieldCheck className="h-6 w-6" />
+                  </div>
+                  <p className="mt-4 text-sm font-medium text-ink-300">No failing controls yet</p>
+                  <p className="mt-1 max-w-[22rem] text-xs leading-relaxed text-ink-400">All controls are passing or no critical findings have been collected.</p>
+                </div>
+              ) : (
+                <div className="space-y-5">
+                  {data.topFailingControls.map((c, i) => (
+                    <div key={c.control_id} className="group flex items-center gap-4">
+                      <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-surface-50 font-mono text-xs font-semibold text-ink-400 ring-1 ring-surface-200 group-hover:bg-white group-hover:shadow-xs">
+                        {String(i + 1).padStart(2, '0')}
+                      </span>
+                      <div className="min-w-0 flex-1">
+                        <div className="flex items-start justify-between gap-3">
+                          <p className="truncate text-sm font-medium leading-tight text-ink-100">{c.title}</p>
+                          <span className="shrink-0 font-mono text-xs font-semibold text-ink-500">{c.count}×</span>
+                        </div>
+                        <div className="mt-2.5 h-1.5 overflow-hidden rounded-full bg-surface-100">
+                          <div
+                            className="h-full rounded-full bg-sev-critical transition-all duration-700"
+                            style={{ width: `${Math.min(100, (c.count / Math.max(1, data.topFailingControls[0].count)) * 100)}%` }}
+                          />
+                        </div>
+                      </div>
+                      <span className="hidden shrink-0 rounded-lg bg-surface-50 px-2.5 py-1 font-mono text-xs font-medium text-ink-400 ring-1 ring-surface-200 sm:inline-flex">
+                        {c.control_id}
+                      </span>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+          </div>
+
+          {/* Recent Audits */}
+          <div className="card overflow-hidden">
+            <div className="card-header">
+              <div>
+                <h3 className="text-sm font-semibold text-ink-100">Recent Audits</h3>
+                <p className="mt-0.5 text-xs text-ink-400">Latest audit activity</p>
+              </div>
+              <Link
+                href="/audits"
+                className="inline-flex items-center gap-1 rounded-full bg-brand-50 px-3 py-1 text-xs font-semibold text-brand-600 ring-1 ring-brand-100 transition-colors hover:bg-brand-100"
+              >
+                View all
+                <ArrowRight className="h-3 w-3" />
               </Link>
             </div>
+
+            <div className="p-0">
+              {data.recentAudits.length === 0 ? (
+                <div className="flex flex-col items-center justify-center px-6 py-14 text-center">
+                  <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-surface-50 text-ink-400 ring-1 ring-surface-200">
+                    <Network className="h-6 w-6" />
+                  </div>
+                  <p className="mt-4 text-sm font-medium text-ink-300">No audits yet</p>
+                  <p className="mt-1 text-xs text-ink-400">Audits will appear here once created</p>
+                </div>
+              ) : (
+                <DataTable<Audit>
+                  rows={data.recentAudits}
+                  rowKey={(a) => a.id}
+                  onRowClick={(a) => (window.location.href = `/audit/${a.id}`)}
+                  className="border-0 shadow-none rounded-none"
+                  columns={[
+                    {
+                      key: 'name',
+                      header: 'Audit',
+                      render: (a) => <span className="font-semibold text-ink-100">{a.name}</span>,
+                      sortValue: (a) => a.name,
+                    },
+                    {
+                      key: 'status',
+                      header: 'Status',
+                      render: (a) => <AuditStatusBadge status={a.status} />,
+                      sortValue: (a) => a.status,
+                    },
+                    {
+                      key: 'overall_score',
+                      header: 'Score',
+                      align: 'right',
+                      render: (a) => (
+                        <span className="font-mono text-sm font-semibold text-ink-100">
+                          {a.overall_score != null ? formatPercent(a.overall_score) : '—'}
+                        </span>
+                      ),
+                      sortValue: (a) => a.overall_score ?? -1,
+                    },
+                    {
+                      key: 'findings_count',
+                      header: 'Findings',
+                      align: 'right',
+                      render: (a) => <span className="font-mono text-xs text-ink-500">{a.findings_count}</span>,
+                      sortValue: (a) => a.findings_count,
+                    },
+                    {
+                      key: 'created_at',
+                      header: 'Run',
+                      render: (a) => <span className="whitespace-nowrap text-xs text-ink-400">{formatRelative(a.created_at)}</span>,
+                      sortValue: (a) => a.created_at,
+                    },
+                  ]}
+                />
+              )}
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* ── Critical Findings — full-width Odoo card ── */}
+      {data.recentCriticalFindings.length > 0 && (
+        <div className="mt-8">
+          <div className="card overflow-hidden">
+            <div className="card-header">
+              <div className="flex items-center gap-3">
+                <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-red-50 text-sev-critical ring-1 ring-red-100">
+                  <AlertOctagon className="h-4 w-4" />
+                </div>
+                <div>
+                  <h3 className="text-sm font-semibold text-ink-100">Critical Findings</h3>
+                  <p className="text-xs text-ink-400">{data.recentCriticalFindings.length} critical issues requiring attention</p>
+                </div>
+              </div>
+              <Link href="/findings?severity=CRITICAL" className="hidden items-center gap-1 text-xs font-semibold text-brand-600 hover:text-brand-700 sm:inline-flex">
+                <Eye className="h-3.5 w-3.5" />
+                View all
+              </Link>
+            </div>
+
+            <div className="px-6 py-6">
+              <ul className="space-y-3">
+                {data.recentCriticalFindings.map((f) => (
+                  <li key={f.id}>
+                    <a
+                      href={`/findings/${f.id}`}
+                      className="group flex items-center justify-between gap-4 rounded-xl border border-surface-200 bg-white px-5 py-4 transition-all duration-150 hover:border-surface-300 hover:bg-surface-50/70 hover:shadow-odoo"
+                    >
+                      <div className="min-w-0 flex-1">
+                        <p className="truncate text-sm font-semibold leading-tight text-ink-100 group-hover:text-brand-700">{f.title}</p>
+                        <div className="mt-1.5 flex flex-wrap items-center gap-2 text-xs text-ink-400">
+                          {f.affected_vendor && (
+                            <span className="inline-flex rounded-md bg-surface-50 px-2 py-0.5 font-mono text-xs font-medium text-ink-500 ring-1 ring-surface-200">
+                              {f.affected_vendor}
+                            </span>
+                          )}
+                          <span className="inline-flex items-center gap-1">
+                            <span className="hidden sm:inline">{f.affected_device ?? '—'}</span>
+                            <span className="text-surface-300">·</span>
+                            {formatRelative(f.created_at)}
+                          </span>
+                        </div>
+                      </div>
+                      <div className="flex shrink-0 items-center gap-3">
+                        <SeverityBadge severity={f.severity} />
+                        <ArrowRight className="hidden h-4 w-4 text-ink-400 transition-transform duration-150 group-hover:translate-x-0.5 group-hover:text-ink-600 sm:block" />
+                      </div>
+                    </a>
+                  </li>
+                ))}
+              </ul>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ── Empty state — Odoo generous whitespace, centered ── */}
+      {!hasData && (
+        <div className="card mt-8 flex flex-col items-center px-8 py-16 text-center sm:py-20">
+          <div className="flex h-16 w-16 items-center justify-center rounded-2xl bg-brand-50 text-brand-600 ring-1 ring-brand-100">
+            <Activity className="h-7 w-7" strokeWidth={1.5} />
+          </div>
+          <h3 className="mt-6 text-lg font-bold tracking-tight text-ink-100">No data yet</h3>
+          <p className="mt-2 max-w-sm text-sm leading-relaxed text-ink-400">
+            Upload a device configuration to run your first CIS benchmark audit and see your security posture come to life.
+          </p>
+          <div className="mt-8 flex flex-wrap justify-center gap-3">
+            <Link href="/audit/new" className="btn-primary">
+              <PlayCircle className="h-4 w-4" />
+              Run First Audit
+              <ArrowRight className="h-4 w-4" />
+            </Link>
+            <Link href="/devices" className="btn-secondary">
+              <Server className="h-4 w-4" />
+              Manage Devices
+            </Link>
           </div>
         </div>
       )}

@@ -25,3 +25,5 @@ mypy==1.8.0
 bandit==1.7.6
 cryptography==42.0.2
 aiofiles==23.2.1
+scikit-learn==1.9.1
+joblib==1.6.0

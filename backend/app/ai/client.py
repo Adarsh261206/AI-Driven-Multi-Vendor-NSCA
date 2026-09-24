@@ -16,6 +16,37 @@ from dataclasses import dataclass, field
 from app.ai.providers import AIProvider, AIRequest, AIResponse, AIError
 
 
+def create_ai_client(provider: Optional[AIProvider] = None) -> "AIClient":
+    """
+    Factory function to create an AI client.
+    
+    If no provider is given, uses OpenAIProvider when OPENAI_API_KEY is set,
+    otherwise falls back to MockAIProvider.
+    """
+    from app.config import settings
+    
+    if provider is None:
+        if settings.OPENAI_API_KEY:
+            from app.ai.providers_openai import OpenAIProvider
+            provider = OpenAIProvider(
+                api_key=settings.OPENAI_API_KEY,
+                model=settings.OPENAI_MODEL,
+                base_url=settings.OPENAI_BASE_URL,
+                timeout=float(settings.AI_TIMEOUT_SECONDS),
+                max_retries=settings.AI_MAX_RETRIES,
+            )
+        else:
+            from app.ai.providers import MockAIProvider
+            provider = MockAIProvider()
+    
+    return AIClient(
+        provider=provider,
+        max_retries=settings.AI_MAX_RETRIES,
+        timeout=float(settings.AI_TIMEOUT_SECONDS),
+        cache_ttl=settings.AI_CACHE_TTL,
+    )
+
+
 @dataclass
 class AICacheEntry:
     """Cached AI response"""

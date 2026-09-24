@@ -81,9 +81,9 @@ export function DataTable<T>({
 
   if (loading) {
     return (
-      <div className={cn('space-y-2 p-4', className)} aria-busy="true">
+      <div className={cn('space-y-2.5 p-5', className)} aria-busy="true">
         {Array.from({ length: 6 }).map((_, i) => (
-          <Skeleton key={i} className="h-8 w-full" />
+          <Skeleton key={i} className="h-12 w-full" />
         ))}
       </div>
     );
@@ -101,19 +101,23 @@ export function DataTable<T>({
   }
 
   return (
-    <div className={cn('table-shell', className)}>
-      <table className="data-table">
+    <div className={cn('table-wrapper', className)}>
+      <table className="table">
         <thead>
           <tr>
             {columns.map((col) => (
               <th
                 key={col.key}
-                className={cn(col.align === 'right' && 'text-right', col.align === 'center' && 'text-center', col.className)}
+                className={cn(
+                  col.align === 'right' && 'text-right',
+                  col.align === 'center' && 'text-center',
+                  col.className
+                )}
               >
                 {sortable && col.sortValue ? (
                   <button
                     onClick={() => toggleSort(col.key)}
-                    className="inline-flex items-center gap-1 uppercase tracking-wider hover:text-slate-200"
+                    className="inline-flex items-center gap-1.5 transition-colors duration-150 hover:text-ink-600"
                   >
                     {col.header}
                     {sortKey === col.key ? (
@@ -123,7 +127,7 @@ export function DataTable<T>({
                         <ArrowDown className="h-3 w-3" />
                       )
                     ) : (
-                      <ChevronsUpDown className="h-3 w-3 opacity-40" />
+                      <ChevronsUpDown className="h-3 w-3 opacity-30" />
                     )}
                   </button>
                 ) : (
@@ -137,7 +141,7 @@ export function DataTable<T>({
           {sortedRows.map((row) => (
             <tr
               key={rowKey(row)}
-              className={cn(onRowClick && 'row-link')}
+              className={cn(onRowClick && 'cursor-pointer hover:bg-surface-50 transition-colors')}
               onClick={onRowClick ? () => onRowClick(row) : undefined}
             >
               {columns.map((col) => (
@@ -146,7 +150,7 @@ export function DataTable<T>({
                   className={cn(
                     col.align === 'right' && 'text-right',
                     col.align === 'center' && 'text-center',
-                    dense && 'py-2',
+                    dense && 'py-3',
                     col.className
                   )}
                 >
@@ -159,8 +163,8 @@ export function DataTable<T>({
       </table>
 
       {(page != null || total != null) && (
-        <div className="flex items-center justify-between border-t border-base-700 px-4 py-2.5">
-          <span className="text-xs text-slate-500">
+        <div className="flex items-center justify-between border-t border-surface-200 px-4 py-3">
+          <span className="text-sm text-ink-400">
             {total != null ? `${total.toLocaleString()} total` : `Page ${page ?? 1}`}
           </span>
           {totalPages != null && totalPages > 1 && (
@@ -169,18 +173,18 @@ export function DataTable<T>({
                 aria-label="Previous page"
                 disabled={!page || page <= 1}
                 onClick={() => onPageChange?.(Math.max(1, (page ?? 1) - 1))}
-                className="rounded p-1 text-slate-400 hover:bg-base-800 disabled:opacity-40"
+                className="rounded-md p-1.5 text-ink-400 transition-colors duration-150 hover:bg-surface-100 hover:text-ink-600 disabled:opacity-30"
               >
                 <ChevronLeft className="h-4 w-4" />
               </button>
-              <span className="px-2 font-mono text-xs text-slate-400">
+              <span className="px-2 font-mono text-sm text-ink-500">
                 {page ?? 1} / {totalPages}
               </span>
               <button
                 aria-label="Next page"
                 disabled={!page || (totalPages != null && page >= totalPages)}
                 onClick={() => onPageChange?.((page ?? 1) + 1)}
-                className="rounded p-1 text-slate-400 hover:bg-base-800 disabled:opacity-40"
+                className="rounded-md p-1.5 text-ink-400 transition-colors duration-150 hover:bg-surface-100 hover:text-ink-600 disabled:opacity-30"
               >
                 <ChevronRight className="h-4 w-4" />
               </button>

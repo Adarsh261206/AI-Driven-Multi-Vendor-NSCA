@@ -69,97 +69,109 @@ export default function ReportsPage() {
   return (
     <AppShell
       title="Reports"
-      subtitle="Generated compliance report artifacts"
+      subtitle="Generated compliance report artifacts — PDF exports from completed audits"
       actions={
-        <Button variant="secondary" onClick={load} aria-label="Refresh reports">
+        <button className="btn-secondary" onClick={load} aria-label="Refresh reports">
           <RefreshCw className="h-4 w-4" />
-        </Button>
+          Refresh
+        </button>
       }
     >
       {error && (
-        <div className="mb-5">
+        <div className="mb-6">
           <Alert variant="error" onDismiss={() => setError(null)}>
             {error}
           </Alert>
         </div>
       )}
 
-      <div className="panel">
-        <DataTable<Report>
-          loading={loading}
-          rows={reports}
-          rowKey={(r) => r.id}
-          page={page}
-          totalPages={meta?.total_pages}
-          total={meta?.total}
-          onPageChange={setPage}
-          emptyTitle="No reports yet"
-          emptyDescription="Completed audits automatically produce a PDF report."
-          columns={[
-            {
-              key: 'audit_name',
-              header: 'Audit',
-              render: (r) => (
-                <div className="flex items-center gap-2.5">
-                  <div className="flex h-7 w-7 items-center justify-center rounded-md border border-base-700 bg-base-900 text-slate-400">
-                    <FileText className="h-3.5 w-3.5" />
+      {/* Summary strip — Odoo airy */}
+      <div className="mb-6 flex items-center gap-3 text-xs text-ink-400">
+        <span className="inline-flex items-center gap-2 rounded-full bg-white px-3 py-1.5 ring-1 ring-surface-200 shadow-xs">
+          <FileText className="h-3.5 w-3.5" />
+          {meta?.total != null ? `${meta.total} reports` : 'Reports'}
+        </span>
+        <span className="hidden sm:inline">Each completed audit automatically produces a PDF report</span>
+      </div>
+
+      <div className="card overflow-hidden">
+        <div className="card-body p-0">
+          <DataTable<Report>
+            loading={loading}
+            rows={reports}
+            rowKey={(r) => r.id}
+            page={page}
+            totalPages={meta?.total_pages}
+            total={meta?.total}
+            onPageChange={setPage}
+            emptyTitle="No reports yet"
+            emptyDescription="Completed audits automatically produce a PDF report."
+            columns={[
+              {
+                key: 'audit_name',
+                header: 'Audit',
+                render: (r) => (
+                  <div className="flex items-center gap-3.5">
+                    <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-surface-50 text-ink-400 ring-1 ring-surface-200">
+                      <FileText className="h-4 w-4" />
+                    </div>
+                    <div className="min-w-0">
+                      <a href={`/audit/${r.audit_id}`} className="truncate text-sm font-semibold text-ink-100 transition-colors duration-150 hover:text-brand-600">
+                        {r.audit_name}
+                      </a>
+                      <p className="font-mono text-xs text-ink-400">{r.id}</p>
+                    </div>
                   </div>
-                  <div className="min-w-0">
-                    <a href={`/audit/${r.audit_id}`} className="truncate font-medium text-slate-200 hover:text-accent-300">
-                      {r.audit_name}
+                ),
+                sortValue: (r) => r.audit_name,
+              },
+              {
+                key: 'framework',
+                header: 'Framework',
+                render: () => <span className="badge-info">CIS</span>,
+              },
+              {
+                key: 'overall_score',
+                header: 'Score',
+                align: 'right',
+                render: (r) => (
+                  <span className="font-mono text-sm font-semibold text-ink-300">{formatPercent(r.overall_score)}</span>
+                ),
+                sortValue: (r) => r.overall_score,
+              },
+              {
+                key: 'generated_at',
+                header: 'Generated',
+                render: (r) => <span className="text-xs text-ink-400">{formatDate(r.generated_at)}</span>,
+                sortValue: (r) => r.generated_at,
+              },
+              {
+                key: 'actions',
+                header: 'Actions',
+                align: 'right',
+                render: (r) => (
+                  <div className="flex justify-end gap-1" onClick={(e) => e.stopPropagation()}>
+                    <a
+                      href={`/audit/${r.audit_id}`}
+                      className="rounded-lg p-2 text-ink-400 transition-colors duration-150 hover:bg-surface-100 hover:text-ink-300"
+                      aria-label={`View audit ${r.audit_name}`}
+                    >
+                      <FileText className="h-4 w-4" />
                     </a>
-                    <p className="text-[11px] text-slate-500">{r.id}</p>
+                    <button
+                      onClick={() => download(r)}
+                      disabled={downloading === r.id}
+                      className="rounded-lg p-2 text-ink-400 transition-colors duration-150 hover:bg-brand-50 hover:text-brand-600 disabled:opacity-50"
+                      aria-label={`Download PDF for ${r.audit_name}`}
+                    >
+                      <Download className="h-4 w-4" />
+                    </button>
                   </div>
-                </div>
-              ),
-              sortValue: (r) => r.audit_name,
-            },
-            {
-              key: 'framework',
-              header: 'Framework',
-              render: () => <TechBadge>CIS</TechBadge>,
-            },
-            {
-              key: 'overall_score',
-              header: 'Score',
-              align: 'right',
-              render: (r) => (
-                <span className="font-mono text-slate-200">{formatPercent(r.overall_score)}</span>
-              ),
-              sortValue: (r) => r.overall_score,
-            },
-            {
-              key: 'generated_at',
-              header: 'Generated',
-              render: (r) => <span className="text-xs text-slate-500">{formatDate(r.generated_at)}</span>,
-              sortValue: (r) => r.generated_at,
-            },
-            {
-              key: 'actions',
-              header: 'Actions',
-              align: 'right',
-              render: (r) => (
-                <div className="flex justify-end gap-1" onClick={(e) => e.stopPropagation()}>
-                  <a
-                    href={`/audit/${r.audit_id}`}
-                    className="rounded p-1.5 text-slate-500 hover:bg-base-800 hover:text-slate-300"
-                    aria-label={`View audit ${r.audit_name}`}
-                  >
-                    <FileText className="h-3.5 w-3.5" />
-                  </a>
-                  <button
-                    onClick={() => download(r)}
-                    disabled={downloading === r.id}
-                    className="rounded p-1.5 text-slate-500 hover:bg-base-800 hover:text-accent-300 disabled:opacity-50"
-                    aria-label={`Download PDF for ${r.audit_name}`}
-                  >
-                    <Download className="h-3.5 w-3.5" />
-                  </button>
-                </div>
-              ),
-            },
-          ]}
-        />
+                ),
+              },
+            ]}
+          />
+        </div>
       </div>
     </AppShell>
   );

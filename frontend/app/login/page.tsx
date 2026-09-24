@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { ShieldCheck, Activity, BookOpenCheck, BrainCircuit } from 'lucide-react';
+import { ShieldCheck, Activity, BookOpenCheck, BrainCircuit, ArrowRight } from 'lucide-react';
 import { useAuthStore } from '@/stores/authStore';
 import { Button } from '@/components/ui/Button';
 import { Alert } from '@/components/ui/Alert';
@@ -30,161 +30,185 @@ export default function LoginPage() {
         await register(email, password, fullName || undefined);
       }
       router.replace('/dashboard');
-    } catch {
-      // error surfaced via store
-    }
+    } catch {}
   };
 
   return (
-    <div className="flex min-h-screen">
-      {/* Left panel - product narrative */}
-      <div className="hidden w-[46%] flex-col justify-between border-r border-base-700 bg-base-900 p-10 lg:flex">
-        <div className="flex items-center gap-3">
-          <div className="flex h-10 w-10 items-center justify-center rounded-lg border border-accent-500/40 bg-accent-500/10">
-            <ShieldCheck className="h-5 w-5 text-accent-400" />
-          </div>
-          <div>
-            <p className="text-base font-semibold text-slate-100">GuardianAudit</p>
-            <p className="text-[11px] font-medium uppercase tracking-widest text-slate-500">
-              Compliance Operations Console
-            </p>
+    <div className="flex min-h-screen bg-surface-0">
+      {/* Left panel — brand narrative — Odoo generous */}
+      <div className="hidden w-[46%] flex-col justify-between bg-white px-12 py-10 lg:flex">
+        <div>
+          <div className="flex items-center gap-3">
+            <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-brand-600 text-white shadow-odoo">
+              <ShieldCheck className="h-5 w-5" strokeWidth={2} />
+            </div>
+            <p className="text-lg font-bold tracking-tight text-ink-800">ConfigShield</p>
           </div>
         </div>
 
-        <div className="space-y-8">
-          <h1 className="max-w-md text-2xl font-semibold leading-snug text-slate-100">
-            AI-driven security compliance auditing for multi-vendor networks.
-          </h1>
-          <div className="space-y-4">
+        <div className="space-y-12">
+          <div>
+            <h1 className="text-4xl font-extrabold leading-tight tracking-tight text-ink-800">
+              AI-driven security compliance
+              <br />
+              for multi-vendor networks.
+            </h1>
+            <p className="mt-4 max-w-md text-sm leading-relaxed text-ink-500">
+              Deterministic benchmarks, normalized security model and Human-in-the-Loop learning — built for enterprise governance.
+            </p>
+          </div>
+
+          <div className="max-w-md space-y-7">
             {[
               {
-                icon: <Activity className="h-4 w-4" />,
+                icon: <Activity className="h-4 w-4" strokeWidth={1.75} />,
                 title: 'Deterministic benchmark evaluation',
                 body: 'CIS benchmark controls evaluated with full evidence chains — PASS / FAIL / REVIEW.',
               },
               {
-                icon: <BookOpenCheck className="h-4 w-4" />,
-                title: 'Multi-vendor support',
+                icon: <BookOpenCheck className="h-4 w-4" strokeWidth={1.75} />,
+                title: 'Multi-vendor normalization',
                 body: 'Cisco IOS XE and Juniper JUNOS configurations normalized into one security model.',
               },
               {
-                icon: <BrainCircuit className="h-4 w-4" />,
-                title: 'Adaptive learning',
+                icon: <BrainCircuit className="h-4 w-4" strokeWidth={1.75} />,
+                title: 'Adaptive learning engine',
                 body: 'Unknown configuration syntax is interpreted by AI and confirmed by administrators.',
               },
             ].map((f) => (
-              <div key={f.title} className="flex gap-3">
-                <div className="mt-0.5 flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-md border border-base-700 bg-base-850 text-accent-400">
+              <div key={f.title} className="flex gap-4">
+                <div className="mt-0.5 flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-xl bg-brand-50 text-brand-600 ring-1 ring-brand-100">
                   {f.icon}
                 </div>
                 <div>
-                  <p className="text-sm font-medium text-slate-200">{f.title}</p>
-                  <p className="mt-0.5 text-xs text-slate-500">{f.body}</p>
+                  <p className="text-sm font-semibold text-ink-800">{f.title}</p>
+                  <p className="mt-1.5 text-sm leading-relaxed text-ink-500">{f.body}</p>
                 </div>
               </div>
             ))}
           </div>
         </div>
 
-        <p className="text-[11px] text-slate-600">
+        <p className="text-xs text-ink-400">
           SIH 2026 · Problem 26155 · NTRO — Blockchain &amp; Cybersecurity
         </p>
       </div>
 
-      {/* Right panel - auth form */}
-      <div className="flex flex-1 items-center justify-center p-6">
-        <div className="w-full max-w-sm">
-          <div className="mb-8 lg:hidden">
-            <div className="flex items-center gap-2.5">
-              <div className="flex h-9 w-9 items-center justify-center rounded-lg border border-accent-500/40 bg-accent-500/10">
-                <ShieldCheck className="h-4.5 w-4.5 text-accent-400" />
-              </div>
-              <p className="text-sm font-semibold text-slate-100">GuardianAudit</p>
+      {/* Right panel — auth form — Odoo card, generous */}
+      <div className="flex flex-1 items-center justify-center bg-surface-50 p-8">
+        <div className="w-full max-w-[420px]">
+          {/* Mobile logo */}
+          <div className="mb-8 flex items-center gap-2.5 lg:hidden">
+            <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-brand-600 text-white shadow-odoo">
+              <ShieldCheck className="h-4 w-4" strokeWidth={2} />
             </div>
+            <p className="text-sm font-bold tracking-tight text-ink-800">ConfigShield</p>
           </div>
 
-          <h2 className="text-lg font-semibold text-slate-100">
-            {mode === 'login' ? 'Sign in' : 'Create account'}
-          </h2>
-          <p className="mt-1 text-xs text-slate-500">
-            {mode === 'login'
-              ? 'Access the compliance operations console.'
-              : 'Register to start auditing network configurations.'}
-          </p>
+          <div className="card overflow-hidden">
+            <div className="px-8 py-8">
+              <div>
+                <h2 className="text-2xl font-extrabold tracking-tight text-ink-800">
+                  {mode === 'login' ? 'Sign in' : 'Create account'}
+                </h2>
+                <p className="mt-2 text-sm leading-relaxed text-ink-500">
+                  {mode === 'login'
+                    ? 'Welcome back — access the compliance console.'
+                    : 'Register to start auditing network configurations.'}
+                </p>
+              </div>
 
-          {error && (
-            <div className="mt-4">
-              <Alert variant="error" title="Sign in failed" onDismiss={clearError}>
-                {error}
-              </Alert>
+              {error && (
+                <div className="mt-6">
+                  <Alert variant="error" title="Sign in failed" onDismiss={clearError}>
+                    {error}
+                  </Alert>
+                </div>
+              )}
+
+              <form onSubmit={submit} className="mt-8 space-y-5">
+                {mode === 'register' && (
+                  <div>
+                    <label className="label">Full name</label>
+                    <input
+                      className="input"
+                      value={fullName}
+                      onChange={(e) => setFullName(e.target.value)}
+                      placeholder="Alex Rivera"
+                      autoComplete="name"
+                    />
+                  </div>
+                )}
+                <div>
+                  <label className="label">Email address</label>
+                  <input
+                    className="input"
+                    type="email"
+                    required
+                    value={email}
+                    onChange={(e) => setEmail(e.target.value)}
+                    placeholder="you@company.com"
+                    autoComplete="email"
+                  />
+                </div>
+                <div>
+                  <label className="label">Password</label>
+                  <input
+                    className="input"
+                    type="password"
+                    required
+                    value={password}
+                    onChange={(e) => setPassword(e.target.value)}
+                    placeholder="••••••••"
+                    autoComplete={mode === 'login' ? 'current-password' : 'new-password'}
+                  />
+                  {mode === 'register' && (
+                    <p className="mt-2 text-xs text-ink-400">Minimum 8 characters</p>
+                  )}
+                </div>
+                <button type="submit" className="btn-primary w-full py-3" disabled={isLoading}>
+                  {isLoading ? (
+                    <span className="inline-flex items-center gap-2">
+                      <span className="h-4 w-4 animate-spin rounded-full border-2 border-white/30 border-t-white" />
+                      {mode === 'login' ? 'Signing in…' : 'Creating account…'}
+                    </span>
+                  ) : (
+                    <span className="inline-flex items-center gap-2">
+                      {mode === 'login' ? 'Sign in' : 'Create account'}
+                      <ArrowRight className="h-4 w-4" />
+                    </span>
+                  )}
+                </button>
+              </form>
+
+              <p className="mt-6 text-center text-sm text-ink-500">
+                {mode === 'login' ? (
+                  <>
+                    No account?{' '}
+                    <button
+                      className="font-semibold text-brand-600 transition-colors hover:text-brand-700"
+                      onClick={() => { clearError(); setMode('register'); }}
+                    >
+                      Register
+                    </button>
+                  </>
+                ) : (
+                  <>
+                    Already registered?{' '}
+                    <button
+                      className="font-semibold text-brand-600 transition-colors hover:text-brand-700"
+                      onClick={() => { clearError(); setMode('login'); }}
+                    >
+                      Sign in
+                    </button>
+                  </>
+                )}
+              </p>
             </div>
-          )}
-
-          <form onSubmit={submit} className="mt-6 space-y-4">
-            {mode === 'register' && (
-              <Field label="Full name">
-                <Input
-                  value={fullName}
-                  onChange={(e) => setFullName(e.target.value)}
-                  placeholder="Alex Rivera"
-                  autoComplete="name"
-                />
-              </Field>
-            )}
-            <Field label="Email">
-              <Input
-                type="email"
-                required
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                placeholder="you@company.com"
-                autoComplete="email"
-              />
-            </Field>
-            <Field label="Password" hint={mode === 'register' ? 'Minimum 8 characters' : undefined}>
-              <Input
-                type="password"
-                required
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                placeholder="••••••••"
-                autoComplete={mode === 'login' ? 'current-password' : 'new-password'}
-              />
-            </Field>
-            <Button type="submit" className="w-full" size="lg" loading={isLoading}>
-              {mode === 'login' ? 'Sign in' : 'Create account'}
-            </Button>
-          </form>
-
-          <p className="mt-5 text-center text-xs text-slate-500">
-            {mode === 'login' ? (
-              <>
-                No account?{' '}
-                <button
-                  className="font-medium text-accent-400 hover:text-accent-300"
-                  onClick={() => {
-                    clearError();
-                    setMode('register');
-                  }}
-                >
-                  Register
-                </button>
-              </>
-            ) : (
-              <>
-                Already registered?{' '}
-                <button
-                  className="font-medium text-accent-400 hover:text-accent-300"
-                  onClick={() => {
-                    clearError();
-                    setMode('login');
-                  }}
-                >
-                  Sign in
-                </button>
-              </>
-            )}
-          </p>
+            <div className="border-t border-surface-100 bg-surface-50 px-8 py-4 text-center">
+              <p className="text-xs leading-relaxed text-ink-400">Secure by design · Encrypted at rest · Audit-trailed</p>
+            </div>
+          </div>
         </div>
       </div>
     </div>

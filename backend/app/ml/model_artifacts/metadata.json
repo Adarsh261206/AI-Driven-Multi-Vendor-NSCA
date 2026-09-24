@@ -1,0 +1,24 @@
+{
+  "vendor_classes": [
+    "cisco",
+    "fortinet",
+    "juniper",
+    "paloalto",
+    "unknown"
+  ],
+  "device_type_classes": [
+    "firewall",
+    "router",
+    "switch",
+    "unknown"
+  ],
+  "vendor_accuracy": 1.0,
+  "device_type_accuracy": 1.0,
+  "train_size": 307,
+  "test_size": 77,
+  "model": "TF-IDF + LogisticRegression",
+  "features_vendor": 5000,
+  "features_device": 3000,
+  "ngram_vendor": "1-3",
+  "ngram_device": "1-2"
+}

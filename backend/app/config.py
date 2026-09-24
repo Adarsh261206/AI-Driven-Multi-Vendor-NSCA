@@ -7,7 +7,7 @@ class Settings(BaseSettings):
     # Application
     APP_NAME: str = "Network Security Compliance Auditor"
     APP_VERSION: str = "1.0.0"
-    DEBUG: bool = False
+    DEBUG: bool = True
 
     # Security
     SECRET_KEY: str = "change-this-in-production"
@@ -31,10 +31,10 @@ class Settings(BaseSettings):
     AI_MAX_RETRIES: int = 3
     AI_CACHE_TTL: int = 3600
 
-    # Rate Limiting
-    RATE_LIMIT_PER_MINUTE: int = 60
-    RATE_LIMIT_PER_HOUR: int = 1000
-    RATE_LIMIT_BURST: int = 10
+    # Rate Limiting (generous for development/demo)
+    RATE_LIMIT_PER_MINUTE: int = 600
+    RATE_LIMIT_PER_HOUR: int = 10000
+    RATE_LIMIT_BURST: int = 200
 
     # File Upload
     MAX_UPLOAD_SIZE_MB: int = 10

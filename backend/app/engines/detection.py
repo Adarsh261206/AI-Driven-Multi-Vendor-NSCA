@@ -39,6 +39,8 @@ class VendorIdentification:
     firmware_version: Optional[str] = None
     detection_method: DetectionMethod = DetectionMethod.KEYWORD
     detection_evidence: list[DetectionEvidence] = field(default_factory=list)
+    device_type: str = "unknown"  # switch, router, firewall, unknown
+    hostname: Optional[str] = None
 
 
 class VendorDetector:
@@ -130,10 +132,37 @@ class VendorDetector:
             ],
         },
     }
+
+    # Device type patterns — switch vs router vs firewall
+    DEVICE_TYPE_PATTERNS = {
+        "switch": [
+            (r"interface\s+(?:FastEthernet|GigabitEthernet|Ethernet|TenGigabit)", DetectionMethod.COMMAND_SYNTAX),
+            (r"switchport\s+mode", DetectionMethod.COMMAND_SYNTAX),
+            (r"spanning-tree", DetectionMethod.KEYWORD),
+            (r"vlan\s+\d+", DetectionMethod.COMMAND_SYNTAX),
+            (r"Switch", DetectionMethod.KEYWORD),
+        ],
+        "router": [
+            (r"router\s+(?:ospf|bgp|eigrp|rip|isis)", DetectionMethod.COMMAND_SYNTAX),
+            (r"interface\s+(?:Serial|Loopback)", DetectionMethod.COMMAND_SYNTAX),
+            (r"ip\s+route\s+", DetectionMethod.COMMAND_SYNTAX),
+            (r"Router", DetectionMethod.KEYWORD),
+        ],
+        "firewall": [
+            (r"access-list|access-group", DetectionMethod.COMMAND_SYNTAX),
+            (r"nat\s+\(|object\s+network", DetectionMethod.COMMAND_SYNTAX),
+            (r"threat-detection|inspect\s+", DetectionMethod.KEYWORD),
+            (r"Firewall", DetectionMethod.KEYWORD),
+            (r"config\s+firewall\s+policy", DetectionMethod.CONFIG_STRUCTURE),
+            (r"set\s+rulebase\s+security", DetectionMethod.COMMAND_SYNTAX),
+        ],
+    }
     
     def detect(self, content: str) -> VendorIdentification:
         """
         Detect vendor from configuration content
+        
+        Uses ML model (TF-IDF + LogisticRegression) if available, fallback to regex.
         
         Args:
             content: Configuration content string
@@ -141,6 +170,46 @@ class VendorDetector:
         Returns:
             VendorIdentification with detection results
         """
+        # === ML path (real model) ===
+        try:
+            from app.ml.model import get_ml_detector
+            ml = get_ml_detector()
+            if ml.is_available:
+                ml_vendor, ml_platform, ml_device, ml_conf, ml_method = ml.predict(content)
+                if ml_conf >= 0.55 and ml_vendor != "unknown":
+                    # ML confident — use it, but also gather evidence via regex for explainability
+                    firmware_version = self._extract_firmware_version(
+                        content,
+                        self.VENDOR_PATTERNS.get(ml_vendor, {}).get("version_patterns", [])
+                    )
+                    hostname = self._extract_hostname(content)
+                    # Device type from ML if confident, else regex
+                    device_type = ml_device if ml_device != "unknown" else self._detect_device_type(content)
+                    # Next-level: Correct platform for Cisco ASA firewall (detected as ios_xe but should be asa)
+                    if ml_vendor == "cisco" and device_type == "firewall" and ml_platform == "ios_xe":
+                        if re.search(r"nameif|security-level\s+\d+", content, re.IGNORECASE):
+                            ml_platform = "asa"
+                    evidence = self._collect_evidence(content, ml_vendor, ml_platform)
+                    # Add ML evidence marker
+                    evidence.insert(0, DetectionEvidence(
+                        method=DetectionMethod.PATTERN,
+                        pattern="ML model: TF-IDF + LogisticRegression",
+                        matched_text=f"ML predicted {ml_vendor}/{ml_platform} ({ml_device}) conf={ml_conf:.2f}",
+                        line_number=None,
+                    ))
+                    return VendorIdentification(
+                        vendor=ml_vendor,
+                        platform=ml_platform,
+                        confidence=min(0.99, ml_conf * 1.05),  # slight boost for ML
+                        firmware_version=firmware_version,
+                        detection_method=DetectionMethod.PATTERN,
+                        detection_evidence=evidence,
+                        device_type=device_type,
+                        hostname=hostname,
+                    )
+        except Exception:
+            pass  # Fallback to regex
+
         lines = content.splitlines()
         
         # Track scores for each vendor
@@ -196,6 +265,12 @@ class VendorDetector:
                 self.VENDOR_PATTERNS[best_vendor].get("version_patterns", [])
             )
         
+        # Detect device type (switch/router/firewall)
+        device_type = self._detect_device_type(content)
+        
+        # Extract hostname
+        hostname = self._extract_hostname(content)
+
         # Collect detection evidence
         evidence = self._collect_evidence(content, best_vendor, best_platform)
         
@@ -211,6 +286,8 @@ class VendorDetector:
             firmware_version=firmware_version,
             detection_method=detection_method,
             detection_evidence=evidence,
+            device_type=device_type,
+            hostname=hostname,
         )
     
     def _extract_firmware_version(
@@ -265,3 +342,23 @@ class VendorDetector:
                         break  # Only one evidence per pattern
         
         return evidence[:10]  # Limit evidence to 10 items
+
+    def _detect_device_type(self, content: str) -> str:
+        """Detect device type: switch, router, firewall"""
+        scores: dict[str, float] = {"switch": 0, "router": 0, "firewall": 0}
+        for dtype, patterns in self.DEVICE_TYPE_PATTERNS.items():
+            for pattern, _ in patterns:
+                for line in content.splitlines():
+                    if re.search(pattern, line, re.IGNORECASE):
+                        scores[dtype] += 1.0
+                        break
+        best = max(scores, key=scores.get)
+        return best if scores[best] >= 2.0 else "unknown"
+
+    def _extract_hostname(self, content: str) -> Optional[str]:
+        """Extract hostname from config"""
+        for pattern in [r"^\s*hostname\s+(\S+)", r"^\s*host-name\s+(\S+)", r"^\s*set\s+system\s+host-name\s+(\S+)", r"^\s*set\s+hostname\s+\"?(\S+)\"?"]:
+            m = re.search(pattern, content, re.IGNORECASE | re.MULTILINE)
+            if m:
+                return m.group(1).strip('"').strip("'").strip(";")
+        return None

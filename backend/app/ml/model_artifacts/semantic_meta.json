@@ -1,0 +1,12 @@
+{
+  "type": "semantic",
+  "model": "TF-IDF(2000, 1-2) + LogisticRegression",
+  "train_size": 80,
+  "test_size": 20,
+  "accuracy": 1.0,
+  "classes": [
+    "HIGH",
+    "LOW",
+    "MEDIUM"
+  ]
+}

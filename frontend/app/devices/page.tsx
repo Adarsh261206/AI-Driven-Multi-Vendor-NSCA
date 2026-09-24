@@ -92,167 +92,171 @@ export default function DevicesPage() {
   return (
     <AppShell
       title="Devices"
-      subtitle="Network device inventory"
+      subtitle="Network device inventory — register, filter and manage your infrastructure"
       actions={
-        <Button onClick={() => setCreateOpen(true)}>
+        <button className="btn-primary" onClick={() => setCreateOpen(true)}>
           <Plus className="h-4 w-4" />
           Add Device
-        </Button>
+        </button>
       }
     >
       {error && (
-        <div className="mb-5">
+        <div className="mb-6">
           <Alert variant="error" title="Devices" onDismiss={() => setError(null)}>
             {error}
           </Alert>
         </div>
       )}
 
-      {/* Filters */}
-      <div className="mb-5 flex flex-wrap items-center gap-3">
-        <div className="relative min-w-[240px] flex-1">
-          <Search className="pointer-events-none absolute left-3 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-slate-500" />
-          <Input
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-            placeholder="Filter by name (client-side)..."
-            className="pl-8"
-            aria-label="Filter devices"
+      {/* Filters — Odoo: white card, generous padding, airy */}
+      <div className="card mb-6">
+        <div className="flex flex-wrap items-center gap-4 p-5">
+          <div className="relative min-w-[280px] flex-1">
+            <Search className="pointer-events-none absolute left-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-ink-400" />
+            <input
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+              placeholder="Filter by name (client-side)…"
+              className="input pl-10"
+              aria-label="Filter devices"
+            />
+          </div>
+          <select
+            value={vendorFilter}
+            onChange={(e) => {
+              setVendorFilter(e.target.value);
+              setPage(1);
+            }}
+            className="select w-44"
+            aria-label="Filter by vendor"
+          >
+            <option value="">All vendors</option>
+            {VENDORS.map((v) => (
+              <option key={v} value={v}>
+                {v.charAt(0).toUpperCase() + v.slice(1)}
+              </option>
+            ))}
+          </select>
+          <select
+            value={platformFilter}
+            onChange={(e) => {
+              setPlatformFilter(e.target.value);
+              setPage(1);
+            }}
+            className="select w-44"
+            aria-label="Filter by platform"
+          >
+            <option value="">All platforms</option>
+            <option value="ios_xe">IOS XE</option>
+            <option value="junos">JUNOS</option>
+            <option value="fortios">FortiOS</option>
+          </select>
+          <button className="btn-secondary" onClick={load} aria-label="Refresh devices">
+            <RefreshCw className="h-4 w-4" />
+            Refresh
+          </button>
+        </div>
+      </div>
+
+      <div className="card overflow-hidden">
+        <div className="card-body p-0">
+          <DataTable<Device>
+            loading={loading}
+            rows={search ? devices.filter((d) => d.name.toLowerCase().includes(search.toLowerCase())) : devices}
+            rowKey={(d) => d.id}
+            onRowClick={(d) => (window.location.href = `/devices/${d.id}`)}
+            page={page}
+            totalPages={meta?.total_pages}
+            total={meta?.total}
+            onPageChange={setPage}
+            emptyTitle="No devices found"
+            emptyDescription="Register a device or run an audit against an uploaded configuration."
+            columns={[
+              {
+                key: 'name',
+                header: 'Device',
+                render: (d) => (
+                  <div className="flex items-center gap-3.5">
+                    <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-surface-50 text-ink-400 ring-1 ring-surface-200">
+                      <Network className="h-4 w-4" />
+                    </div>
+                    <div className="min-w-0">
+                      <p className="truncate text-sm font-semibold text-ink-100">{d.name}</p>
+                      {d.ip_address && <p className="font-mono text-xs text-ink-400">{d.ip_address}</p>}
+                    </div>
+                  </div>
+                ),
+                sortValue: (d) => d.name,
+              },
+              {
+                key: 'vendor',
+                header: 'Vendor',
+                render: (d) =>
+                  d.vendor ? <span className="badge-info">{d.vendor}</span> : <span className="text-ink-400">—</span>,
+                sortValue: (d) => d.vendor ?? '',
+              },
+              {
+                key: 'platform',
+                header: 'Platform',
+                render: (d) =>
+                  d.platform ? <span className="badge-info">{d.platform}</span> : <span className="text-ink-400">—</span>,
+                sortValue: (d) => d.platform ?? '',
+              },
+              {
+                key: 'firmware_version',
+                header: 'Version',
+                render: (d) => (
+                  <span className="font-mono text-xs text-ink-400">{d.firmware_version ?? '—'}</span>
+                ),
+                sortValue: (d) => d.firmware_version ?? '',
+              },
+              {
+                key: 'configuration_count',
+                header: 'Configs',
+                align: 'right',
+                render: (d) => <span className="font-mono text-sm font-medium">{d.configuration_count}</span>,
+                sortValue: (d) => d.configuration_count,
+              },
+              {
+                key: 'last_audit_date',
+                header: 'Last Audit',
+                render: (d) => <span className="text-xs text-ink-400">{formatDate(d.last_audit_date)}</span>,
+                sortValue: (d) => d.last_audit_date ?? '',
+              },
+              {
+                key: 'created_at',
+                header: 'Added',
+                render: (d) => <span className="text-xs text-ink-400">{formatDate(d.created_at)}</span>,
+                sortValue: (d) => d.created_at,
+              },
+              {
+                key: 'actions',
+                header: '',
+                align: 'right',
+                render: (d) => (
+                  <div className="flex justify-end gap-1" onClick={(e) => e.stopPropagation()}>
+                    <Link
+                      href={`/devices/${d.id}`}
+                      className="rounded-lg p-2 text-ink-400 transition-colors duration-150 hover:bg-surface-100 hover:text-ink-300"
+                      aria-label={`View ${d.name}`}
+                    >
+                      <Network className="h-4 w-4" />
+                    </Link>
+                    <button
+                      onClick={() => deleteDevice(d)}
+                      className="rounded-lg p-2 text-ink-400 transition-colors duration-150 hover:bg-red-50 hover:text-red-600"
+                      aria-label={`Delete ${d.name}`}
+                    >
+                      <Trash2 className="h-4 w-4" />
+                    </button>
+                  </div>
+                ),
+              },
+            ]}
           />
         </div>
-        <Select
-          value={vendorFilter}
-          onChange={(e) => {
-            setVendorFilter(e.target.value);
-            setPage(1);
-          }}
-          className="w-40"
-          aria-label="Filter by vendor"
-        >
-          <option value="">All vendors</option>
-          {VENDORS.map((v) => (
-            <option key={v} value={v}>
-              {v.charAt(0).toUpperCase() + v.slice(1)}
-            </option>
-          ))}
-        </Select>
-        <Select
-          value={platformFilter}
-          onChange={(e) => {
-            setPlatformFilter(e.target.value);
-            setPage(1);
-          }}
-          className="w-40"
-          aria-label="Filter by platform"
-        >
-          <option value="">All platforms</option>
-          <option value="ios_xe">IOS XE</option>
-          <option value="junos">JUNOS</option>
-          <option value="fortios">FortiOS</option>
-        </Select>
-        <Button variant="secondary" onClick={load} aria-label="Refresh devices">
-          <RefreshCw className="h-3.5 w-3.5" />
-        </Button>
       </div>
 
-      <div className="panel">
-        <DataTable<Device>
-          loading={loading}
-          rows={search ? devices.filter((d) => d.name.toLowerCase().includes(search.toLowerCase())) : devices}
-          rowKey={(d) => d.id}
-          onRowClick={(d) => (window.location.href = `/devices/${d.id}`)}
-          page={page}
-          totalPages={meta?.total_pages}
-          total={meta?.total}
-          onPageChange={setPage}
-          emptyTitle="No devices found"
-          emptyDescription="Register a device or run an audit against an uploaded configuration."
-          columns={[
-            {
-              key: 'name',
-              header: 'Device',
-              render: (d) => (
-                <div className="flex items-center gap-2.5">
-                  <div className="flex h-7 w-7 items-center justify-center rounded-md border border-base-700 bg-base-900 text-slate-400">
-                    <Network className="h-3.5 w-3.5" />
-                  </div>
-                  <div className="min-w-0">
-                    <p className="truncate font-medium text-slate-200">{d.name}</p>
-                    {d.ip_address && <p className="font-mono text-[11px] text-slate-500">{d.ip_address}</p>}
-                  </div>
-                </div>
-              ),
-              sortValue: (d) => d.name,
-            },
-            {
-              key: 'vendor',
-              header: 'Vendor',
-              render: (d) =>
-                d.vendor ? <TechBadge>{d.vendor}</TechBadge> : <span className="text-slate-600">—</span>,
-              sortValue: (d) => d.vendor ?? '',
-            },
-            {
-              key: 'platform',
-              header: 'Platform',
-              render: (d) =>
-                d.platform ? <TechBadge>{d.platform}</TechBadge> : <span className="text-slate-600">—</span>,
-              sortValue: (d) => d.platform ?? '',
-            },
-            {
-              key: 'firmware_version',
-              header: 'Version',
-              render: (d) => (
-                <span className="font-mono text-xs text-slate-400">{d.firmware_version ?? '—'}</span>
-              ),
-              sortValue: (d) => d.firmware_version ?? '',
-            },
-            {
-              key: 'configuration_count',
-              header: 'Configs',
-              align: 'right',
-              render: (d) => <span className="font-mono">{d.configuration_count}</span>,
-              sortValue: (d) => d.configuration_count,
-            },
-            {
-              key: 'last_audit_date',
-              header: 'Last Audit',
-              render: (d) => <span className="text-xs text-slate-500">{formatDate(d.last_audit_date)}</span>,
-              sortValue: (d) => d.last_audit_date ?? '',
-            },
-            {
-              key: 'created_at',
-              header: 'Added',
-              render: (d) => <span className="text-xs text-slate-500">{formatDate(d.created_at)}</span>,
-              sortValue: (d) => d.created_at,
-            },
-            {
-              key: 'actions',
-              header: '',
-              align: 'right',
-              render: (d) => (
-                <div className="flex justify-end gap-1" onClick={(e) => e.stopPropagation()}>
-                  <Link
-                    href={`/devices/${d.id}`}
-                    className="rounded p-1.5 text-slate-500 hover:bg-base-800 hover:text-slate-300"
-                    aria-label={`View ${d.name}`}
-                  >
-                    <Network className="h-3.5 w-3.5" />
-                  </Link>
-                  <button
-                    onClick={() => deleteDevice(d)}
-                    className="rounded p-1.5 text-slate-500 hover:bg-red-500/10 hover:text-red-400"
-                    aria-label={`Delete ${d.name}`}
-                  >
-                    <Trash2 className="h-3.5 w-3.5" />
-                  </button>
-                </div>
-              ),
-            },
-          ]}
-        />
-      </div>
-
-      {/* Create device modal */}
       <CreateDeviceModal
         open={createOpen}
         onClose={() => setCreateOpen(false)}
@@ -311,63 +315,72 @@ function CreateDeviceModal({
       description="Add a network device to the inventory"
       footer={
         <>
-          <Button variant="secondary" onClick={onClose}>
+          <button className="btn-secondary" onClick={onClose}>
             Cancel
-          </Button>
-          <Button type="submit" form="create-device-form" loading={creating}>
-            Create Device
-          </Button>
+          </button>
+          <button type="submit" form="create-device-form" className="btn-primary" disabled={creating}>
+            {creating ? 'Creating…' : 'Create Device'}
+          </button>
         </>
       }
     >
-      <form id="create-device-form" onSubmit={submit} className="space-y-4">
+      <form id="create-device-form" onSubmit={submit} className="space-y-5">
         {error && <Alert variant="error">{error}</Alert>}
-        <Field label="Device name" hint="Required">
-          <Input
+        <div>
+          <label className="label">Device name <span className="text-red-500">*</span></label>
+          <input
             required
             value={name}
             onChange={(e) => setName(e.target.value)}
             placeholder="edge-router-01"
             autoFocus
+            className="input"
           />
-        </Field>
-        <div className="grid grid-cols-2 gap-4">
-          <Field label="Vendor">
-            <Select value={vendor} onChange={(e) => setVendor(e.target.value)}>
+        </div>
+        <div className="grid grid-cols-2 gap-5">
+          <div>
+            <label className="label">Vendor</label>
+            <select value={vendor} onChange={(e) => setVendor(e.target.value)} className="select">
               {VENDORS.map((v) => (
                 <option key={v} value={v}>
                   {v.charAt(0).toUpperCase() + v.slice(1)}
                 </option>
               ))}
-            </Select>
-          </Field>
-          <Field label="Platform">
-            <Select value={platform} onChange={(e) => setPlatform(e.target.value)}>
+            </select>
+          </div>
+          <div>
+            <label className="label">Platform</label>
+            <select value={platform} onChange={(e) => setPlatform(e.target.value)} className="select">
               <option value="ios_xe">IOS XE</option>
               <option value="junos">JUNOS</option>
               <option value="fortios">FortiOS</option>
-            </Select>
-          </Field>
+            </select>
+          </div>
         </div>
-        <div className="grid grid-cols-2 gap-4">
-          <Field label="Firmware version">
-            <Input
+        <div className="grid grid-cols-2 gap-5">
+          <div>
+            <label className="label">Firmware version</label>
+            <input
               value={firmwareVersion}
               onChange={(e) => setFirmwareVersion(e.target.value)}
               placeholder="17.9.4"
+              className="input"
             />
-          </Field>
-          <Field label="IP address">
-            <Input
+          </div>
+          <div>
+            <label className="label">IP address</label>
+            <input
               value={ipAddress}
               onChange={(e) => setIpAddress(e.target.value)}
               placeholder="10.0.0.1"
+              className="input"
             />
-          </Field>
+          </div>
         </div>
-        <Field label="Notes">
-          <Input value={notes} onChange={(e) => setNotes(e.target.value)} placeholder="Optional notes" />
-        </Field>
+        <div>
+          <label className="label">Notes</label>
+          <input value={notes} onChange={(e) => setNotes(e.target.value)} placeholder="Optional notes" className="input" />
+        </div>
       </form>
     </Modal>
   );

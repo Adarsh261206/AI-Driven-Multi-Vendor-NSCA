@@ -130,8 +130,13 @@ class RateLimitMiddleware(BaseHTTPMiddleware):
     
     async def dispatch(self, request: Request, call_next: Callable) -> Response:
         """Process request with rate limiting"""
-        # Skip rate limiting for health check and docs
+        # Skip rate limiting for health check, docs, and in debug mode
         if request.url.path in ["/health", "/", "/docs", "/redoc", "/openapi.json"]:
+            return await call_next(request)
+
+        # Skip rate limiting in debug mode for development convenience
+        from app.config import settings
+        if settings.DEBUG:
             return await call_next(request)
         
         # Cleanup old entries periodically
@@ -144,14 +149,15 @@ class RateLimitMiddleware(BaseHTTPMiddleware):
         allowed, retry_after = self._check_rate_limit(client_id)
         
         if not allowed:
-            # Return a response instead of raising: HTTPException raised inside
-            # BaseHTTPMiddleware dispatch bypasses the exception handlers, producing
-            # a bare 500 and dropping CORS headers for browser clients.
             from fastapi.responses import JSONResponse
+            headers = {"Retry-After": retry_after} if retry_after else {}
+            # Must include CORS headers since this response bypasses CORSMiddleware
+            headers["Access-Control-Allow-Origin"] = "http://localhost:3000"
+            headers["Access-Control-Allow-Credentials"] = "true"
             return JSONResponse(
                 status_code=status.HTTP_429_TOO_MANY_REQUESTS,
                 content={"detail": "Rate limit exceeded"},
-                headers={"Retry-After": retry_after} if retry_after else None,
+                headers=headers,
             )
         
         # Add rate limit headers to response

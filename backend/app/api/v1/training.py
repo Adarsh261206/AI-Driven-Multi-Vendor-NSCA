@@ -13,9 +13,9 @@ from app.schemas import (
 )
 from app.security.auth import get_current_user
 from app.ai.semantic import SemanticAnalyzer
-from app.ai.providers import MockAIProvider
-from app.ai.client import AIClient
+from app.ai.client import create_ai_client
 from app.repositories.audit_trail import AuditTrailRepository
+from app.repositories.knowledge_base import KnowledgeBaseRepository
 
 router = APIRouter()
 
@@ -248,17 +248,15 @@ async def get_ai_hypothesis(
     """
     # Log the request
     audit_trail = AuditTrailRepository(db)
+    kb_repo = KnowledgeBaseRepository(db)
     
-    # Check if we already have a mapping
-    existing = await db.execute(
-        select(TrainingMapping).where(
-            TrainingMapping.vendor == vendor,
-            TrainingMapping.platform == platform,
-            TrainingMapping.raw_syntax == raw_syntax,
-            TrainingMapping.admin_confirmed == True,
-        )
+    # Check if we already have a mapping in the knowledge base
+    existing_mapping = await kb_repo.lookup(
+        vendor=vendor,
+        platform=platform,
+        raw_syntax=raw_syntax,
+        require_confirmed=True,
     )
-    existing_mapping = existing.scalar_one_or_none()
     
     if existing_mapping:
         # Log KB hit
@@ -289,8 +287,7 @@ async def get_ai_hypothesis(
         )
     
     # Query AI for hypothesis
-    mock_provider = MockAIProvider()
-    ai_client = AIClient(mock_provider)
+    ai_client = create_ai_client()
     semantic_analyzer = SemanticAnalyzer(ai_client=ai_client)
     hypothesis = await semantic_analyzer.generate_hypothesis(
         raw_syntax=raw_syntax,

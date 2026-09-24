@@ -23,28 +23,30 @@ export function TopBar({ title, subtitle, actions }: { title?: string; subtitle?
   const crumbs = pathToBreadcrumb(pathname);
 
   return (
-    <header className="flex h-14 items-center justify-between gap-4 border-b border-base-700 bg-base-900/80 px-6 backdrop-blur">
-      <div className="min-w-0">
-        <nav aria-label="Breadcrumb" className="flex items-center gap-1.5 text-[11px] text-slate-500">
+    <header className="flex items-center justify-between border-b border-surface-100 bg-white px-8 py-4">
+      <div className="min-w-0 flex-1">
+        <nav aria-label="Breadcrumb" className="flex items-center gap-1.5 text-xs text-ink-400 mb-1">
           {crumbs.map((crumb, i) => (
             <span key={i} className="flex items-center gap-1.5">
-              {i > 0 && <span aria-hidden>/</span>}
+              {i > 0 && <span aria-hidden className="text-ink-500 font-light">/</span>}
               {crumb.href && i < crumbs.length - 1 ? (
-                <a href={crumb.href} className="hover:text-slate-300">
+                <a href={crumb.href} className="transition-colors duration-150 hover:text-brand-600 font-medium">
                   {crumb.label}
                 </a>
               ) : (
-                <span className={cn(i === crumbs.length - 1 && 'text-slate-300')}>{crumb.label}</span>
+                <span className={cn(i === crumbs.length - 1 && 'font-semibold text-ink-300')}>{crumb.label}</span>
               )}
             </span>
           ))}
         </nav>
-        <h1 className="mt-0.5 truncate text-[15px] font-semibold text-slate-100">
-          {title ?? crumbs[crumbs.length - 1].label}
-        </h1>
-        {subtitle && <p className="truncate text-xs text-slate-500">{subtitle}</p>}
+        {title && (
+          <h1 className="truncate text-xl font-bold tracking-tight text-ink-100">
+            {title}
+          </h1>
+        )}
+        {subtitle && <p className="mt-1 truncate text-sm text-ink-400 leading-relaxed">{subtitle}</p>}
       </div>
-      {actions && <div className="flex flex-shrink-0 items-center gap-2">{actions}</div>}
+      {actions && <div className="flex flex-shrink-0 items-center gap-2.5 ml-6">{actions}</div>}
     </header>
   );
 }

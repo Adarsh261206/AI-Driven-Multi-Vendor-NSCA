@@ -126,22 +126,47 @@ async def get_audit_report(
             "framework": cr.framework,
         })
 
-    # Fetch configuration count
+    # Fetch configuration count + file details (vendor, device_type, platform, hostname)
     config_count_result = await db.execute(
         select(func.count(AuditConfiguration.configuration_id))
         .where(AuditConfiguration.audit_id == audit_id)
     )
     config_count = config_count_result.scalar()
 
+    # Per-file device identification (real, from VendorIdentification + Configuration)
+    file_details = []
+    ac_result = await db.execute(
+        select(AuditConfiguration, Configuration)
+        .join(Configuration, AuditConfiguration.configuration_id == Configuration.id)
+        .where(AuditConfiguration.audit_id == audit_id)
+    )
+    for ac, cfg in ac_result.all():
+        vi = ac.vendor_identification or {}
+        file_details.append({
+            "filename": cfg.filename,
+            "vendor": vi.get("vendor", "unknown"),
+            "device_type": vi.get("device_type", "unknown"),
+            "platform": vi.get("platform", "unknown"),
+            "hostname": vi.get("hostname"),
+            "firmware_version": vi.get("firmware_version"),
+            "confidence": vi.get("confidence"),
+            "detection_method": vi.get("detection_method", ""),
+        })
+
+    # Determine framework display (dual-baseline if NIST present)
+    frameworks_in_audit = set(cr.framework for cr in compliance_orm)
+    framework_display = "+".join(sorted(frameworks_in_audit)) if frameworks_in_audit else "CIS"
+
     audit_data = {
         "audit_id": str(audit.id),
         "audit_name": audit.name,
-        "framework": "CIS",
+        "framework": framework_display,
         "status": audit.status,
         "overall_score": audit.overall_score or 0.0,
         "configuration_count": config_count,
         "started_at": audit.started_at.isoformat() if audit.started_at else None,
         "completed_at": audit.completed_at.isoformat() if audit.completed_at else None,
+        "file_details": file_details,
     }
 
     if format == "json":

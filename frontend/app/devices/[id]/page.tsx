@@ -6,7 +6,6 @@ import { useParams } from 'next/navigation';
 import { ArrowLeft, FileText, Network, PlayCircle, Server } from 'lucide-react';
 import { useRequireAuth } from '@/hooks/useAuth';
 import { AppShell } from '@/components/layout/AppShell';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/Card';
 import { Button } from '@/components/ui/Button';
 import { Alert } from '@/components/ui/Alert';
 import { TechBadge } from '@/components/ui/Badge';
@@ -60,109 +59,116 @@ export default function DeviceDetailPage() {
       actions={
         <>
           <Link href="/devices">
-            <Button variant="secondary">
+            <button className="btn-secondary">
               <ArrowLeft className="h-4 w-4" />
               Devices
-            </Button>
+            </button>
           </Link>
           <Link href={`/audit/new?device=${device.id}`}>
-            <Button>
+            <button className="btn-primary">
               <PlayCircle className="h-4 w-4" />
               Run Audit
-            </Button>
+            </button>
           </Link>
         </>
       }
     >
       {error && (
-        <div className="mb-5">
+        <div className="mb-6">
           <Alert variant="error" onDismiss={() => setError(null)}>
             {error}
           </Alert>
         </div>
       )}
 
-      <div className="grid grid-cols-1 gap-5 lg:grid-cols-3">
-        {/* Identity */}
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <Server className="h-4 w-4 text-accent-400" />
+      <div className="grid grid-cols-1 gap-6 lg:grid-cols-3 stagger-children">
+        {/* Identity Card — Odoo generous */}
+        <div className="card overflow-hidden transition-all duration-200 hover:shadow-odoo-md">
+          <div className="card-header">
+            <h3 className="section-title flex items-center gap-2.5">
+              <span className="flex h-8 w-8 items-center justify-center rounded-lg bg-brand-50 text-brand-600 ring-1 ring-brand-100">
+                <Server className="h-4 w-4" />
+              </span>
               Identity
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <dl className="space-y-3 text-sm">
-              <div className="flex justify-between gap-3">
-                <dt className="text-slate-500">Vendor</dt>
-                <dd>{device.vendor ? <TechBadge>{device.vendor}</TechBadge> : '—'}</dd>
+            </h3>
+          </div>
+          <div className="px-6 py-5">
+            <dl className="space-y-4 text-sm">
+              <div className="flex items-center justify-between gap-4">
+                <dt className="text-xs font-semibold uppercase tracking-wider text-ink-400">Vendor</dt>
+                <dd>{device.vendor ? <span className="badge-info">{device.vendor}</span> : <span className="text-ink-400 text-sm">—</span>}</dd>
               </div>
-              <div className="flex justify-between gap-3">
-                <dt className="text-slate-500">Platform</dt>
-                <dd>{device.platform ? <TechBadge>{device.platform}</TechBadge> : '—'}</dd>
+              <div className="flex items-center justify-between gap-4">
+                <dt className="text-xs font-semibold uppercase tracking-wider text-ink-400">Platform</dt>
+                <dd>{device.platform ? <span className="badge-info">{device.platform}</span> : <span className="text-ink-400 text-sm">—</span>}</dd>
               </div>
-              <div className="flex justify-between gap-3">
-                <dt className="text-slate-500">Firmware</dt>
-                <dd className="font-mono text-xs text-slate-300">{device.firmware_version ?? '—'}</dd>
+              <div className="flex items-center justify-between gap-4">
+                <dt className="text-xs font-semibold uppercase tracking-wider text-ink-400">Firmware</dt>
+                <dd className="font-mono text-xs font-medium text-ink-300">{device.firmware_version ?? '—'}</dd>
               </div>
-              <div className="flex justify-between gap-3">
-                <dt className="text-slate-500">IP address</dt>
-                <dd className="font-mono text-xs text-slate-300">{device.ip_address ?? '—'}</dd>
+              <div className="flex items-center justify-between gap-4">
+                <dt className="text-xs font-semibold uppercase tracking-wider text-ink-400">IP address</dt>
+                <dd className="font-mono text-xs font-medium text-ink-300">{device.ip_address ?? '—'}</dd>
               </div>
-              <div className="flex justify-between gap-3">
-                <dt className="text-slate-500">Registered</dt>
-                <dd className="text-xs text-slate-400">{formatDate(device.created_at)}</dd>
+              <div className="flex items-center justify-between gap-4 border-t border-surface-100 pt-4">
+                <dt className="text-xs font-semibold uppercase tracking-wider text-ink-400">Registered</dt>
+                <dd className="text-xs text-ink-400">{formatDate(device.created_at)}</dd>
               </div>
             </dl>
-          </CardContent>
-        </Card>
+          </div>
+        </div>
 
-        {/* Activity */}
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <FileText className="h-4 w-4 text-accent-400" />
+        {/* Configuration Activity Card */}
+        <div className="card overflow-hidden transition-all duration-200 hover:shadow-odoo-md">
+          <div className="card-header">
+            <h3 className="section-title flex items-center gap-2.5">
+              <span className="flex h-8 w-8 items-center justify-center rounded-lg bg-sky-50 text-sky-600 ring-1 ring-sky-100">
+                <FileText className="h-4 w-4" />
+              </span>
               Configuration Activity
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <p className="font-mono text-3xl font-semibold text-slate-100">{device.configuration_count}</p>
-            <p className="mt-1 text-xs text-slate-500">configurations on record</p>
-            <div className="mt-4 rounded-md border border-base-700 bg-base-900 px-3 py-2.5">
-              <p className="text-xs text-slate-500">
+            </h3>
+          </div>
+          <div className="px-6 py-6">
+            <p className="metric-value">{device.configuration_count}</p>
+            <p className="metric-label mt-1.5">configurations on record</p>
+            <div className="mt-5 rounded-xl border border-surface-200 bg-surface-50 px-4 py-3.5">
+              <p className="text-xs leading-relaxed text-ink-400">
                 Configurations are uploaded as part of audit runs and are not exposed as a separate
                 list by the API. Upload a configuration and run an audit to associate it with this
                 device.
               </p>
             </div>
-            <Link href={`/audit/new?device=${device.id}`} className="mt-4 block">
-              <Button className="w-full" variant="secondary">
+            <Link href={`/audit/new?device=${device.id}`} className="mt-5 block">
+              <button className="btn-secondary w-full">
                 <PlayCircle className="h-4 w-4" />
                 Audit this device
-              </Button>
+              </button>
             </Link>
-          </CardContent>
-        </Card>
+          </div>
+        </div>
 
-        {/* Notes */}
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <Network className="h-4 w-4 text-accent-400" />
+        {/* Notes Card */}
+        <div className="card overflow-hidden transition-all duration-200 hover:shadow-odoo-md">
+          <div className="card-header">
+            <h3 className="section-title flex items-center gap-2.5">
+              <span className="flex h-8 w-8 items-center justify-center rounded-lg bg-amber-50 text-amber-600 ring-1 ring-amber-100">
+                <Network className="h-4 w-4" />
+              </span>
               Notes
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
+            </h3>
+          </div>
+          <div className="px-6 py-6">
             {device.notes ? (
-              <p className="text-sm text-slate-400">{device.notes}</p>
+              <p className="text-sm leading-relaxed text-ink-300">{device.notes}</p>
             ) : (
-              <p className="text-xs text-slate-600">No notes recorded.</p>
+              <p className="text-sm text-ink-400">No notes recorded.</p>
             )}
-            <div className="mt-4 border-t border-base-700 pt-3 text-xs text-slate-500">
-              Last updated: {formatDateTime(device.updated_at)}
+            <div className="mt-6 flex items-center justify-between border-t border-surface-100 pt-4">
+              <span className="text-xs font-semibold uppercase tracking-wider text-ink-400">Last updated</span>
+              <span className="text-xs text-ink-400">{formatDateTime(device.updated_at)}</span>
             </div>
-          </CardContent>
-        </Card>
+          </div>
+        </div>
       </div>
     </AppShell>
   );

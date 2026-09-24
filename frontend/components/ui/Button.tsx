@@ -2,8 +2,8 @@ import { forwardRef, type ButtonHTMLAttributes } from 'react';
 import { Loader2 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
-type Variant = 'primary' | 'secondary' | 'ghost' | 'danger' | 'success';
-type Size = 'sm' | 'md' | 'lg';
+type Variant = 'primary' | 'secondary' | 'ghost' | 'danger' | 'success' | 'navy';
+type Size = 'sm' | 'md' | 'lg' | 'xl';
 
 export interface ButtonProps extends ButtonHTMLAttributes<HTMLButtonElement> {
   variant?: Variant;
@@ -12,22 +12,19 @@ export interface ButtonProps extends ButtonHTMLAttributes<HTMLButtonElement> {
 }
 
 const variantClasses: Record<Variant, string> = {
-  primary:
-    'bg-accent-600 text-white hover:bg-accent-500 active:bg-accent-700 border border-transparent disabled:bg-base-600 disabled:text-slate-400',
-  secondary:
-    'bg-base-800 text-slate-200 hover:bg-base-700 border border-base-600 disabled:opacity-50',
-  ghost:
-    'bg-transparent text-slate-300 hover:bg-base-800 hover:text-slate-100 border border-transparent disabled:opacity-50',
-  danger:
-    'bg-red-600/15 text-red-400 hover:bg-red-600/25 border border-red-500/30 disabled:opacity-50',
-  success:
-    'bg-green-600/15 text-green-400 hover:bg-green-600/25 border border-green-500/30 disabled:opacity-50',
+  primary: 'btn-primary',
+  navy: 'btn-primary',
+  secondary: 'btn-secondary',
+  ghost: 'btn-ghost',
+  danger: 'btn-danger',
+  success: 'bg-emerald-600 text-white hover:bg-emerald-700 active:bg-emerald-800 shadow-sm disabled:opacity-50 disabled:bg-surface-300 disabled:text-ink-700 disabled:shadow-none',
 };
 
 const sizeClasses: Record<Size, string> = {
-  sm: 'h-7 px-2.5 text-xs gap-1.5',
-  md: 'h-9 px-3.5 text-sm gap-2',
-  lg: 'h-11 px-5 text-sm gap-2',
+  sm: 'h-8 px-3 text-sm gap-1.5 rounded-lg font-medium',
+  md: 'h-10 px-4 text-sm gap-2 rounded-lg font-semibold',
+  lg: 'h-12 px-5 text-base gap-2 rounded-xl font-semibold',
+  xl: 'h-14 px-7 text-base gap-2.5 rounded-xl font-bold tracking-wide',
 };
 
 export const Button = forwardRef<HTMLButtonElement, ButtonProps>(
@@ -35,9 +32,10 @@ export const Button = forwardRef<HTMLButtonElement, ButtonProps>(
     <button
       ref={ref}
       className={cn(
-        'inline-flex items-center justify-center rounded font-medium transition-colors',
-        'focus-visible:outline-2 focus-visible:outline-accent-400',
+        'inline-flex items-center justify-center transition-all duration-200',
+        'focus-visible:outline-2 focus-visible:outline-brand-600 focus-visible:outline-offset-2',
         'disabled:cursor-not-allowed',
+        'active:scale-[0.98]',
         variantClasses[variant],
         sizeClasses[size],
         className
@@ -45,7 +43,7 @@ export const Button = forwardRef<HTMLButtonElement, ButtonProps>(
       disabled={disabled || loading}
       {...props}
     >
-      {loading && <Loader2 className="h-3.5 w-3.5 animate-spin" aria-hidden />}
+      {loading && <Loader2 className="h-4 w-4 animate-spin" aria-hidden />}
       {children}
     </button>
   )

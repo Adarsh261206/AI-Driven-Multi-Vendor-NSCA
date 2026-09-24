@@ -21,23 +21,23 @@ const NAV_SECTIONS: { label: string; items: { href: string; label: string; icon:
   {
     label: 'Operations',
     items: [
-      { href: '/dashboard', label: 'Dashboard', icon: <LayoutDashboard className="h-4 w-4" /> },
-      { href: '/devices', label: 'Devices', icon: <Network className="h-4 w-4" /> },
-      { href: '/audit/new', label: 'Run Audit', icon: <PlayCircle className="h-4 w-4" /> },
-      { href: '/audits', label: 'Audit History', icon: <Activity className="h-4 w-4" /> },
+      { href: '/dashboard', label: 'Dashboard', icon: <LayoutDashboard className="h-4 w-4" strokeWidth={1.75} /> },
+      { href: '/devices', label: 'Devices', icon: <Network className="h-4 w-4" strokeWidth={1.75} /> },
+      { href: '/audit/new', label: 'Run Audit', icon: <PlayCircle className="h-4 w-4" strokeWidth={1.75} /> },
+      { href: '/audits', label: 'Audit History', icon: <Activity className="h-4 w-4" strokeWidth={1.75} /> },
     ],
   },
   {
     label: 'Analysis',
     items: [
-      { href: '/frameworks', label: 'Frameworks', icon: <BookOpenCheck className="h-4 w-4" /> },
-      { href: '/reports', label: 'Reports', icon: <FileText className="h-4 w-4" /> },
-      { href: '/training', label: 'AI Training', icon: <BrainCircuit className="h-4 w-4" /> },
+      { href: '/frameworks', label: 'Frameworks', icon: <BookOpenCheck className="h-4 w-4" strokeWidth={1.75} /> },
+      { href: '/reports', label: 'Reports', icon: <FileText className="h-4 w-4" strokeWidth={1.75} /> },
+      { href: '/training', label: 'AI Training', icon: <BrainCircuit className="h-4 w-4" strokeWidth={1.75} /> },
     ],
   },
   {
     label: 'System',
-    items: [{ href: '/settings', label: 'Settings', icon: <Settings className="h-4 w-4" /> }],
+    items: [{ href: '/settings', label: 'Settings', icon: <Settings className="h-4 w-4" strokeWidth={1.75} /> }],
   },
 ];
 
@@ -60,28 +60,24 @@ export function Sidebar() {
   };
 
   return (
-    <aside className="fixed inset-y-0 left-0 z-40 flex w-60 flex-col border-r border-base-700 bg-base-900">
-      {/* Product identity */}
-      <div className="flex h-14 items-center gap-2.5 border-b border-base-700 px-4">
-        <div className="flex h-8 w-8 items-center justify-center rounded-md border border-accent-500/40 bg-accent-500/10">
-          <ShieldCheck className="h-4.5 w-4.5 text-accent-400" aria-hidden />
+    <aside className="fixed inset-y-0 left-0 z-40 flex w-[260px] flex-col border-r border-surface-200 bg-white">
+      {/* Brand — Odoo-like: clean, generous, well-spaced */}
+      <div className="flex h-16 items-center gap-3 border-b border-surface-100 px-6">
+        <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-brand-600 shadow-sm">
+          <ShieldCheck className="h-4 w-4 text-white" strokeWidth={2} />
         </div>
-        <div className="leading-tight">
-          <p className="text-[13px] font-semibold tracking-wide text-slate-100">GuardianAudit</p>
-          <p className="text-[10px] font-medium uppercase tracking-widest text-slate-500">
-            Compliance Console
-          </p>
-        </div>
+        <span className="text-sm font-bold tracking-tight text-ink-100">ConfigShield</span>
+        <span className="ml-auto rounded-full bg-brand-50 px-2 py-0.5 text-xs font-medium text-brand-700">SIH 2026</span>
       </div>
 
-      {/* Navigation */}
-      <nav className="flex-1 overflow-y-auto px-3 py-4" aria-label="Main navigation">
-        {NAV_SECTIONS.map((section) => (
-          <div key={section.label} className="mb-5">
-            <p className="mb-1.5 px-2 text-[10px] font-semibold uppercase tracking-widest text-slate-600">
+      {/* Navigation — Odoo-like: generous, clean, well-spaced */}
+      <nav className="flex-1 overflow-y-auto px-4 py-6" aria-label="Main navigation">
+        {NAV_SECTIONS.map((section, sIdx) => (
+          <div key={section.label} className={cn(sIdx < NAV_SECTIONS.length - 1 && 'mb-6')}>
+            <p className="mb-3 px-3 text-xs font-semibold uppercase tracking-wider text-ink-500">
               {section.label}
             </p>
-            <ul className="space-y-0.5">
+            <ul className="space-y-1">
               {section.items.map((item) => {
                 const active = isActive(item.href);
                 return (
@@ -90,15 +86,22 @@ export function Sidebar() {
                       href={item.href}
                       aria-current={active ? 'page' : undefined}
                       className={cn(
-                        'flex items-center gap-2.5 rounded-md px-2.5 py-2 text-[13px] font-medium transition-colors',
+                        'group flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm transition-all duration-150',
                         active
-                          ? 'bg-accent-500/10 text-accent-300'
-                          : 'text-slate-400 hover:bg-base-800 hover:text-slate-200'
+                          ? 'bg-brand-50 font-medium text-brand-700 shadow-sm'
+                          : 'text-ink-400 hover:bg-surface-50 hover:text-ink-300'
                       )}
                     >
-                      {item.icon}
-                      {item.label}
-                      {active && <span className="ml-auto h-1.5 w-1.5 rounded-full bg-accent-400" aria-hidden />}
+                      <span
+                        className={cn(
+                          'transition-colors duration-150',
+                          active ? 'text-brand-600' : 'text-ink-500 group-hover:text-ink-400'
+                        )}
+                      >
+                        {item.icon}
+                      </span>
+                      <span className="flex-1">{item.label}</span>
+                      {active && <span className="h-1.5 w-1.5 rounded-full bg-brand-600" />}
                     </Link>
                   </li>
                 );
@@ -108,35 +111,38 @@ export function Sidebar() {
         ))}
       </nav>
 
-      {/* User + environment */}
-      <div className="border-t border-base-700 p-3">
-        <div className="mb-2.5 flex items-center gap-2 rounded-md border border-base-700 bg-base-850 px-2.5 py-1.5">
+      {/* Bottom — Odoo-like: clean, well-spaced, subtle */}
+      <div className="border-t border-surface-100 px-4 py-4">
+        {/* Engine status — subtle, Odoo-like */}
+        <div className="mb-3 flex items-center gap-2.5 rounded-lg bg-surface-50 px-3 py-2">
           <span className="relative flex h-2 w-2">
-            <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-green-400 opacity-40" />
-            <span className="relative inline-flex h-2 w-2 rounded-full bg-green-500" />
+            <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-emerald-400 opacity-30" />
+            <span className="relative inline-flex h-2 w-2 rounded-full bg-emerald-500" />
           </span>
-          <span className="text-[11px] font-medium text-slate-400">Engine Online</span>
-          <span className="ml-auto font-mono text-[10px] text-slate-600">v1.0</span>
+          <span className="text-xs font-medium text-ink-400">Engine Online</span>
+          <span className="ml-auto text-xs text-ink-500">ML Ready</span>
         </div>
-        <div className="flex items-center gap-2.5 rounded-md px-2 py-1.5">
-          <div className="flex h-7 w-7 flex-shrink-0 items-center justify-center rounded-full bg-base-700 text-[11px] font-semibold text-slate-300">
+
+        {/* User — Odoo-like: clean, generous */}
+        <div className="flex items-center gap-3 rounded-xl bg-surface-50 px-3 py-3">
+          <div className="flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-full bg-brand-100 text-sm font-bold text-brand-700 ring-2 ring-white shadow-sm">
             {(user?.full_name || user?.email || '?').charAt(0).toUpperCase()}
           </div>
-          <div className="min-w-0 flex-1 leading-tight">
-            <p className="truncate text-xs font-medium text-slate-300">
+          <div className="min-w-0 flex-1">
+            <p className="truncate text-sm font-semibold text-ink-100">
               {user?.full_name || user?.email || 'User'}
             </p>
-            <p className="truncate text-[10px] uppercase tracking-wide text-slate-500">
-              {user?.role ?? 'auditor'}
+            <p className="truncate text-xs text-ink-400">
+              {user?.role ?? 'auditor'} • ConfigShield
             </p>
           </div>
           <button
             onClick={handleLogout}
             aria-label="Sign out"
             title="Sign out"
-            className="rounded p-1.5 text-slate-500 hover:bg-base-800 hover:text-red-400"
+            className="rounded-lg p-2 text-ink-500 transition-all duration-150 hover:bg-white hover:text-red-600 hover:shadow-sm"
           >
-            <LogOut className="h-3.5 w-3.5" />
+            <LogOut className="h-4 w-4" />
           </button>
         </div>
       </div>

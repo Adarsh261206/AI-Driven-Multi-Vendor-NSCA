@@ -74,7 +74,7 @@ class TestSampleConfigs:
 
     def test_insecure_config_loads(self):
         cfg = _load_sample("insecure.txt")
-        assert "hostname INSECURE-RTR-01" in cfg
+        assert "hostname INSECURE-RTR-01" in cfgss
 
     def test_mixed_config_loads(self):
         cfg = _load_sample("mixed.txt")

@@ -26,7 +26,7 @@ export function Tabs({
 
   return (
     <div className={className}>
-      <div role="tablist" aria-label="Sections" className="flex gap-1 border-b border-base-700">
+      <div role="tablist" aria-label="Sections" className="flex gap-0 border-b border-surface-200">
         {tabs.map((tab) => (
           <button
             key={tab.id}
@@ -37,22 +37,32 @@ export function Tabs({
               onChange?.(tab.id);
             }}
             className={cn(
-              'flex items-center gap-2 border-b-2 px-3.5 py-2.5 text-sm font-medium transition-colors',
+              'relative flex items-center gap-1.5 px-4 py-3 text-sm font-semibold transition-colors duration-200',
               tab.id === active
-                ? 'border-accent-500 text-slate-100'
-                : 'border-transparent text-slate-500 hover:text-slate-300'
+                ? 'text-brand-600'
+                : 'text-ink-400 hover:text-ink-600'
             )}
           >
             {tab.label}
             {tab.count != null && (
-              <span className="rounded bg-base-800 px-1.5 py-0.5 font-mono text-[11px] text-slate-400">
+              <span
+                className={cn(
+                  'rounded-full px-2 py-0.5 text-xs font-mono',
+                  tab.id === active
+                    ? 'bg-brand-100 text-brand-700'
+                    : 'bg-surface-100 text-ink-400'
+                )}
+              >
                 {tab.count}
               </span>
+            )}
+            {tab.id === active && (
+              <span className="absolute bottom-0 left-0 right-0 h-[2px] bg-brand-600" />
             )}
           </button>
         ))}
       </div>
-      <div className="pt-4">{activeTab?.content}</div>
+      <div className="pt-5">{activeTab?.content}</div>
     </div>
   );
 }

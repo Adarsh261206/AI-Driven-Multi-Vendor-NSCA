@@ -39,17 +39,16 @@ import { formatDate, formatConfidence } from '@/lib/format';
 import type { AIHypothesis, TrainingMapping, Audit } from '@/types';
 
 const RELEVANCE_COLORS: Record<string, string> = {
-  high: '#ef4444',
-  medium: '#f59e0b',
-  low: '#38bdf8',
-  none: '#94a3b8',
-  unknown: '#94a3b8',
+  high: '#dc2626',
+  medium: '#ca8a04',
+  low: '#2563eb',
+  none: '#6b7280',
+  unknown: '#6b7280',
 };
 
 export default function TrainingPage() {
   const { isLoading: authLoading } = useRequireAuth();
 
-  // Analysis state
   const [vendor, setVendor] = useState('cisco');
   const [platform, setPlatform] = useState('ios_xe');
   const [rawSyntax, setRawSyntax] = useState('');
@@ -57,7 +56,6 @@ export default function TrainingPage() {
   const [hypothesis, setHypothesis] = useState<AIHypothesis | null>(null);
   const [error, setError] = useState<string | null>(null);
 
-  // Confirm/Edit state
   const [confirmOpen, setConfirmOpen] = useState(false);
   const [editMeaning, setEditMeaning] = useState('');
   const [editPath, setEditPath] = useState('');
@@ -65,7 +63,6 @@ export default function TrainingPage() {
   const [saving, setSaving] = useState(false);
   const [savedMapping, setSavedMapping] = useState<TrainingMapping | null>(null);
 
-  // Re-analyze state
   const [reanalyzeOpen, setReanalyzeOpen] = useState(false);
   const [reanalyzeFile, setReanalyzeFile] = useState<File | null>(null);
   const [analyzing2, setAnalyzing2] = useState(false);
@@ -73,7 +70,6 @@ export default function TrainingPage() {
   const [afterReviews, setAfterReviews] = useState<number | null>(null);
   const [reanalyzeAudit, setReanalyzeAudit] = useState<Audit | null>(null);
 
-  // Mapping list
   const [mappings, setMappings] = useState<TrainingMapping[]>([]);
   const [mappingsLoading, setMappingsLoading] = useState(true);
   const [versionsFor, setVersionsFor] = useState<TrainingMapping | null>(null);
@@ -125,36 +121,19 @@ export default function TrainingPage() {
     setSaving(true);
     setError(null);
     try {
-      if (confirmed) {
-        const res = await request(
-          () =>
-            trainingAPI.createMapping({
-              vendor,
-              platform,
-              raw_syntax: rawSyntax.trim(),
-              semantic_meaning: editMeaning,
-              universal_model_path: editPath || undefined,
-              admin_notes: editNotes || undefined,
-            }),
-          'Failed to save mapping'
-        );
-        setSavedMapping(res as unknown as TrainingMapping);
-      } else {
-        // Edit flow: create with edited fields (mappings API creates confirmed at v1)
-        const res = await request(
-          () =>
-            trainingAPI.createMapping({
-              vendor,
-              platform,
-              raw_syntax: rawSyntax.trim(),
-              semantic_meaning: editMeaning,
-              universal_model_path: editPath || undefined,
-              admin_notes: editNotes || undefined,
-            }),
-          'Failed to save mapping'
-        );
-        setSavedMapping(res as unknown as TrainingMapping);
-      }
+      const res = await request(
+        () =>
+          trainingAPI.createMapping({
+            vendor,
+            platform,
+            raw_syntax: rawSyntax.trim(),
+            semantic_meaning: editMeaning,
+            universal_model_path: editPath || undefined,
+            admin_notes: editNotes || undefined,
+          }),
+        'Failed to save mapping'
+      );
+      setSavedMapping(res as unknown as TrainingMapping);
       setConfirmOpen(false);
       await loadMappings();
     } catch (err) {
@@ -173,7 +152,6 @@ export default function TrainingPage() {
         () => trainingAPI.rejectMapping('none', 'Rejected by administrator'),
         'Failed to reject'
       );
-      // No mapping existed for a fresh hypothesis; record rejection locally
       setHypothesis(null);
       setRawSyntax('');
     } catch (err) {
@@ -197,10 +175,6 @@ export default function TrainingPage() {
     }
   };
 
-  // ------------------------------------------------------------------
-  // Re-analyze: run a real audit, count REVIEWs before/after
-  // ------------------------------------------------------------------
-
   const runReanalyze = async (): Promise<number> => {
     if (!reanalyzeFile) return 0;
     setAnalyzing2(true);
@@ -220,7 +194,6 @@ export default function TrainingPage() {
           }),
         'Failed to start audit'
       );
-      // Poll until complete
       let reviews = 0;
       for (let i = 0; i < 60; i++) {
         await new Promise((r) => setTimeout(r, 4000));
@@ -248,117 +221,110 @@ export default function TrainingPage() {
 
   if (authLoading) return <PageLoader label="Loading" />;
 
-  const relevanceColor = hypothesis ? RELEVANCE_COLORS[hypothesis.security_relevance] ?? '#94a3b8' : '#94a3b8';
+  const relevanceColor = hypothesis ? RELEVANCE_COLORS[hypothesis.security_relevance] ?? '#6b7280' : '#6b7280';
 
   return (
     <AppShell
       title="AI Training"
-      subtitle="Teach the system to understand unknown configuration syntax"
+      subtitle="Teach the system to understand unknown configuration syntax — Human-in-the-Loop"
       actions={
-        <Button variant="secondary" onClick={loadMappings}>
+        <button className="btn-secondary" onClick={loadMappings}>
           <RefreshCw className="h-4 w-4" />
           Refresh Mappings
-        </Button>
+        </button>
       }
     >
       {error && (
-        <div className="mb-5">
+        <div className="mb-6">
           <Alert variant="error" onDismiss={() => setError(null)}>
             {error}
           </Alert>
         </div>
       )}
 
-      <div className="grid grid-cols-1 gap-5 xl:grid-cols-5">
-        {/* Analysis panel */}
+      <div className="grid grid-cols-1 gap-6 xl:grid-cols-5">
         <div className="xl:col-span-3">
-          <div className="panel">
-            <div className="panel-header">
+          <div className="card overflow-hidden">
+            <div className="card-header">
               <div>
-                <h2 className="flex items-center gap-2 text-sm font-semibold text-slate-200">
-                  <BrainCircuit className="h-4 w-4 text-accent-400" />
+                <h2 className="section-title flex items-center gap-2.5">
+                  <span className="flex h-8 w-8 items-center justify-center rounded-lg bg-brand-50 text-brand-600 ring-1 ring-brand-100">
+                    <BrainCircuit className="h-4 w-4" />
+                  </span>
                   Unknown Configuration Interpretation
                 </h2>
-                <p className="mt-0.5 text-xs text-slate-500">
-                  Submit syntax the deterministic engine could not map. AI proposes a hypothesis —
-                  you decide.
+                <p className="mt-2 text-sm leading-relaxed text-ink-400">
+                  Submit syntax the deterministic engine could not map. AI proposes a hypothesis — you decide.
                 </p>
               </div>
             </div>
-            <div className="panel-body space-y-4">
-              <div className="grid grid-cols-2 gap-4">
-                <Field label="Vendor">
-                  <Select value={vendor} onChange={(e) => setVendor(e.target.value)}>
+            <div className="px-6 py-6 space-y-5">
+              <div className="grid grid-cols-2 gap-5">
+                <div>
+                  <label className="label">Vendor</label>
+                  <select value={vendor} onChange={(e) => setVendor(e.target.value)} className="select">
                     <option value="cisco">Cisco</option>
                     <option value="juniper">Juniper</option>
                     <option value="fortinet">Fortinet</option>
-                  </Select>
-                </Field>
-                <Field label="Platform">
-                  <Select value={platform} onChange={(e) => setPlatform(e.target.value)}>
+                  </select>
+                </div>
+                <div>
+                  <label className="label">Platform</label>
+                  <select value={platform} onChange={(e) => setPlatform(e.target.value)} className="select">
                     <option value="ios_xe">IOS XE</option>
                     <option value="junos">JUNOS</option>
                     <option value="fortios">FortiOS</option>
-                  </Select>
-                </Field>
+                  </select>
+                </div>
               </div>
-              <Field
-                label="Raw syntax"
-                hint="Paste a configuration line the engine reported as unknown (REVIEW)."
-              >
-                <Textarea
+              <div>
+                <label className="label">Raw syntax <span className="font-normal normal-case tracking-normal text-ink-400">— Paste a configuration line the engine reported as unknown (REVIEW).</span></label>
+                <textarea
                   value={rawSyntax}
                   onChange={(e) => setRawSyntax(e.target.value)}
                   placeholder={'e.g., set system services ssh protocol-version v2'}
-                  className="font-mono text-xs"
+                  className="input font-mono text-xs min-h-[96px] resize-y"
                   rows={3}
                 />
-              </Field>
-              <Button onClick={analyze} loading={analyzing}>
+              </div>
+              <button className="btn-primary" onClick={analyze} disabled={analyzing}>
                 <Sparkles className="h-4 w-4" />
-                Generate AI Hypothesis
-              </Button>
+                {analyzing ? 'Generating…' : 'Generate AI Hypothesis'}
+              </button>
 
-              {/* Hypothesis result */}
               {hypothesis && (
-                <div className="mt-2 space-y-4 rounded-lg border border-accent-500/25 bg-accent-500/5 p-4">
-                  <div className="flex items-start justify-between gap-3">
+                <div className="space-y-5 rounded-xl border border-brand-200 bg-brand-50/40 p-6">
+                  <div className="flex items-start justify-between gap-4">
                     <div>
-                      <p className="text-[10px] font-semibold uppercase tracking-widest text-slate-500">
-                        AI Hypothesis
-                      </p>
-                      <p className="mt-1 text-sm font-medium text-slate-100">
+                      <p className="label mb-1">AI Hypothesis</p>
+                      <p className="text-sm font-semibold leading-relaxed text-ink-100">
                         {hypothesis.suggested_meaning}
                       </p>
                     </div>
-                    <TechBadge
+                    <span
                       className={cn(
-                        '!text-[11px]',
+                        'badge text-xs shrink-0',
                         hypothesis.confidence >= 0.7
-                          ? '!text-green-400'
+                          ? 'badge-pass'
                           : hypothesis.confidence >= 0.4
-                            ? '!text-amber-400'
-                            : '!text-red-400'
+                            ? 'badge-medium'
+                            : 'badge-critical'
                       )}
                     >
                       {formatConfidence(hypothesis.confidence)}
-                    </TechBadge>
+                    </span>
                   </div>
 
-                  <div className="grid grid-cols-2 gap-3 text-xs">
-                    <div>
-                      <p className="text-[10px] font-semibold uppercase tracking-wider text-slate-500">
-                        Security relevance
-                      </p>
-                      <p className="mt-0.5 font-medium" style={{ color: relevanceColor }}>
+                  <div className="grid grid-cols-2 gap-5 text-sm">
+                    <div className="rounded-xl bg-white border border-brand-100 px-4 py-3.5">
+                      <p className="label mb-1">Security relevance</p>
+                      <p className="font-semibold capitalize" style={{ color: relevanceColor }}>
                         {hypothesis.security_relevance}
                       </p>
                     </div>
-                    <div>
-                      <p className="text-[10px] font-semibold uppercase tracking-wider text-slate-500">
-                        Suggested universal path
-                      </p>
-                      <p className="mt-0.5 font-mono text-slate-300">
+                    <div className="rounded-xl bg-white border border-brand-100 px-4 py-3.5">
+                      <p className="label mb-1">Suggested universal path</p>
+                      <p className="font-mono text-xs text-ink-300">
                         {hypothesis.universal_model_path || 'none suggested'}
                       </p>
                     </div>
@@ -366,35 +332,33 @@ export default function TrainingPage() {
 
                   {hypothesis.reasoning && (
                     <div>
-                      <p className="text-[10px] font-semibold uppercase tracking-wider text-slate-500">Why</p>
-                      <p className="mt-0.5 text-xs text-slate-400">{hypothesis.reasoning}</p>
+                      <p className="label">Why</p>
+                      <p className="mt-1 text-xs leading-relaxed text-ink-400">{hypothesis.reasoning}</p>
                     </div>
                   )}
 
                   {hypothesis.alternative_interpretations?.length > 0 && (
                     <div>
-                      <p className="mb-1.5 text-[10px] font-semibold uppercase tracking-wider text-slate-500">
-                        Alternative interpretations
-                      </p>
-                      <ul className="space-y-1.5">
+                      <p className="label mb-2.5">Alternative interpretations</p>
+                      <ul className="space-y-2.5">
                         {hypothesis.alternative_interpretations.map((alt, i) => (
-                          <li key={i} className="rounded-md border border-base-700 bg-base-900 px-3 py-2">
+                          <li key={i} className="rounded-xl border border-surface-200 bg-white px-4 py-3.5">
                             <div className="flex items-center justify-between gap-2">
-                              <p className="text-xs text-slate-300">{alt.meaning}</p>
-                              <span className="font-mono text-[11px] text-slate-500">
+                              <p className="text-xs font-medium leading-relaxed text-ink-300">{alt.meaning}</p>
+                              <span className="font-mono text-xs font-medium text-ink-400">
                                 {formatConfidence(alt.confidence)}
                               </span>
                             </div>
-                            {alt.reasoning && <p className="mt-0.5 text-[11px] text-slate-500">{alt.reasoning}</p>}
+                            {alt.reasoning && <p className="mt-1.5 text-xs leading-relaxed text-ink-400">{alt.reasoning}</p>}
                           </li>
                         ))}
                       </ul>
                     </div>
                   )}
 
-                  <div className="flex flex-wrap gap-2 border-t border-base-700 pt-3">
-                    <Button
-                      variant="success"
+                  <div className="flex flex-wrap gap-2.5 border-t border-brand-200 pt-5">
+                    <button
+                      className="btn-primary"
                       onClick={() => {
                         setEditMeaning(hypothesis.suggested_meaning);
                         setEditPath(hypothesis.universal_model_path ?? '');
@@ -404,9 +368,9 @@ export default function TrainingPage() {
                     >
                       <Check className="h-4 w-4" />
                       Confirm
-                    </Button>
-                    <Button
-                      variant="secondary"
+                    </button>
+                    <button
+                      className="btn-secondary"
                       onClick={() => {
                         setEditMeaning(hypothesis.suggested_meaning);
                         setEditPath(hypothesis.universal_model_path ?? '');
@@ -416,59 +380,60 @@ export default function TrainingPage() {
                     >
                       <Pencil className="h-4 w-4" />
                       Edit & Confirm
-                    </Button>
-                    <Button variant="danger" onClick={reject} loading={saving}>
+                    </button>
+                    <button className="btn-danger" onClick={reject} disabled={saving}>
                       <X className="h-4 w-4" />
-                      Reject
-                    </Button>
+                      {saving ? 'Rejecting…' : 'Reject'}
+                    </button>
                   </div>
                 </div>
               )}
 
-              {/* Saved mapping state */}
               {savedMapping && (
-                <div className="rounded-lg border border-green-500/25 bg-green-500/5 p-4">
-                  <div className="flex items-center gap-2">
-                    <CheckCircle2 className="h-4 w-4 text-green-400" />
-                    <p className="text-sm font-medium text-green-300">Mapping saved</p>
-                    <TechBadge>v{savedMapping.version}</TechBadge>
+                <div className="rounded-xl border border-emerald-200 bg-emerald-50 p-6">
+                  <div className="flex items-center gap-2.5">
+                    <span className="flex h-7 w-7 items-center justify-center rounded-lg bg-white text-emerald-600 ring-1 ring-emerald-200">
+                      <CheckCircle2 className="h-4 w-4" />
+                    </span>
+                    <p className="text-sm font-semibold text-emerald-800">Mapping saved</p>
+                    <span className="badge-info">v{savedMapping.version}</span>
                   </div>
-                  <p className="mt-1.5 text-xs text-slate-400">
-                    <span className="font-mono">{savedMapping.raw_syntax}</span> →{' '}
-                    <span className="text-slate-300">{savedMapping.semantic_meaning}</span>
+                  <p className="mt-3 text-sm leading-relaxed text-ink-400">
+                    <span className="font-mono text-ink-300">{savedMapping.raw_syntax}</span> →{' '}
+                    <span className="text-ink-300">{savedMapping.semantic_meaning}</span>
                     {savedMapping.universal_model_path && (
                       <>
-                        {' '}· <span className="font-mono text-accent-400">{savedMapping.universal_model_path}</span>
+                        {' '}· <span className="font-mono text-brand-600">{savedMapping.universal_model_path}</span>
                       </>
                     )}
                   </p>
-                  <p className="mt-1 text-[11px] text-slate-500">
+                  <p className="mt-2 text-xs leading-relaxed text-ink-400">
                     Stored in the knowledge base with admin confirmation. The normalization engine
                     consults the knowledge base for subsequent audits.
                   </p>
                 </div>
               )}
 
-              {/* Re-analyze */}
-              <div className="rounded-lg border border-base-700 bg-base-900 p-4">
-                <p className="flex items-center gap-2 text-xs font-medium text-slate-300">
-                  <RefreshCw className="h-3.5 w-3.5 text-accent-400" />
+              <div className="rounded-xl border border-surface-200 bg-surface-50 px-6 py-5">
+                <p className="flex items-center gap-2.5 text-sm font-semibold text-ink-100">
+                  <span className="flex h-7 w-7 items-center justify-center rounded-lg bg-white text-brand-600 ring-1 ring-surface-200 shadow-xs">
+                    <RefreshCw className="h-3.5 w-3.5" />
+                  </span>
                   Re-analyze a configuration
                 </p>
-                <p className="mt-1 text-[11px] text-slate-500">
+                <p className="mt-2 text-xs leading-relaxed text-ink-400">
                   Run a real audit against a config and compare REVIEW counts before/after teaching.
                 </p>
-                <div className="mt-3 flex flex-wrap items-center gap-2">
+                <div className="mt-4 flex flex-wrap items-center gap-3">
                   <input
                     type="file"
                     accept=".txt,.cfg,.conf,.zip"
                     onChange={(e) => setReanalyzeFile(e.target.files?.[0] ?? null)}
-                    className="text-xs text-slate-400 file:mr-2 file:rounded file:border-0 file:bg-base-800 file:px-2.5 file:py-1 file:text-xs file:text-slate-300"
+                    className="text-xs text-ink-400 file:mr-3 file:rounded-lg file:border file:border-surface-200 file:bg-white file:px-4 file:py-2 file:text-xs file:font-medium file:text-ink-300 hover:file:bg-surface-50 file:shadow-xs"
                     aria-label="Choose configuration to re-analyze"
                   />
-                  <Button
-                    size="sm"
-                    variant="secondary"
+                  <button
+                    className="btn-secondary text-xs px-4 py-2"
                     disabled={!reanalyzeFile}
                     onClick={async () => {
                       setAnalyzing2(true);
@@ -486,22 +451,18 @@ export default function TrainingPage() {
                     }}
                   >
                     <PlayCircle className="h-3.5 w-3.5" />
-                    {analyzing2 ? 'Running audit...' : 'Run Analysis'}
-                  </Button>
+                    {analyzing2 ? 'Running audit…' : 'Run Analysis'}
+                  </button>
                 </div>
                 {beforeReviews != null && (
-                  <div className="mt-3 grid grid-cols-2 gap-3">
-                    <div className="rounded-md border border-base-700 px-3 py-2.5">
-                      <p className="text-[10px] font-semibold uppercase tracking-wider text-slate-500">
-                        Before training
-                      </p>
-                      <p className="font-mono text-xl font-semibold text-amber-400">{beforeReviews} REVIEW</p>
+                  <div className="mt-5 grid grid-cols-2 gap-4">
+                    <div className="rounded-xl border border-surface-200 bg-white px-5 py-4">
+                      <p className="label mb-1">Before training</p>
+                      <p className="font-mono text-lg font-bold text-amber-600">{beforeReviews} REVIEW</p>
                     </div>
-                    <div className="rounded-md border border-base-700 px-3 py-2.5">
-                      <p className="text-[10px] font-semibold uppercase tracking-wider text-slate-500">
-                        After confirmation
-                      </p>
-                      <p className="font-mono text-xl font-semibold text-slate-200">
+                    <div className="rounded-xl border border-surface-200 bg-white px-5 py-4">
+                      <p className="label mb-1">After confirmation</p>
+                      <p className="font-mono text-lg font-bold text-ink-300">
                         {afterReviews ?? '—'} REVIEW
                       </p>
                     </div>
@@ -512,22 +473,23 @@ export default function TrainingPage() {
           </div>
         </div>
 
-        {/* Mapping list */}
         <div className="xl:col-span-2">
-          <div className="panel">
-            <div className="panel-header">
+          <div className="card overflow-hidden">
+            <div className="card-header">
               <div>
-                <h2 className="flex items-center gap-2 text-sm font-semibold text-slate-200">
-                  <Lightbulb className="h-4 w-4 text-accent-400" />
+                <h2 className="section-title flex items-center gap-2.5">
+                  <span className="flex h-8 w-8 items-center justify-center rounded-lg bg-amber-50 text-amber-600 ring-1 ring-amber-100">
+                    <Lightbulb className="h-4 w-4" />
+                  </span>
                   Knowledge Base Mappings
                 </h2>
-                <p className="mt-0.5 text-xs text-slate-500">
+                <p className="mt-2 text-sm leading-relaxed text-ink-400">
                   Admin-confirmed syntax → security meaning translations
                 </p>
               </div>
-              <TechBadge>{mappings.length}</TechBadge>
+              <span className="rounded-full bg-surface-50 px-3 py-1 text-xs font-semibold text-ink-400 ring-1 ring-surface-200">{mappings.length}</span>
             </div>
-            <div className="panel-body p-0">
+            <div className="p-0">
               <DataTable<TrainingMapping>
                 loading={mappingsLoading}
                 rows={mappings}
@@ -542,8 +504,8 @@ export default function TrainingPage() {
                     header: 'Syntax',
                     render: (m) => (
                       <div className="min-w-0">
-                        <p className="truncate font-mono text-xs text-slate-300">{m.raw_syntax}</p>
-                        <p className="mt-0.5 truncate text-[11px] text-slate-500">{m.semantic_meaning}</p>
+                        <p className="truncate font-mono text-xs font-medium text-ink-300">{m.raw_syntax}</p>
+                        <p className="mt-1 truncate text-xs text-ink-400">{m.semantic_meaning}</p>
                       </div>
                     ),
                     sortValue: (m) => m.raw_syntax,
@@ -551,20 +513,20 @@ export default function TrainingPage() {
                   {
                     key: 'vendor',
                     header: 'Vendor',
-                    render: (m) => <TechBadge>{m.vendor}</TechBadge>,
+                    render: (m) => <span className="badge-info">{m.vendor}</span>,
                     sortValue: (m) => m.vendor,
                   },
                   {
                     key: 'version',
                     header: 'V',
                     align: 'center',
-                    render: (m) => <span className="font-mono text-xs text-slate-400">v{m.version}</span>,
+                    render: (m) => <span className="font-mono text-xs font-medium text-ink-400">v{m.version}</span>,
                     sortValue: (m) => m.version,
                   },
                   {
                     key: 'created_at',
                     header: 'Added',
-                    render: (m) => <span className="text-[11px] text-slate-500">{formatDate(m.created_at)}</span>,
+                    render: (m) => <span className="text-xs text-ink-400">{formatDate(m.created_at)}</span>,
                     sortValue: (m) => m.created_at,
                   },
                 ]}
@@ -574,7 +536,6 @@ export default function TrainingPage() {
         </div>
       </div>
 
-      {/* Confirm / edit modal */}
       <Modal
         open={confirmOpen}
         onClose={() => setConfirmOpen(false)}
@@ -582,44 +543,47 @@ export default function TrainingPage() {
         description="The confirmed mapping is stored in the knowledge base and used for subsequent audits."
         footer={
           <>
-            <Button variant="secondary" onClick={() => setConfirmOpen(false)}>
+            <button className="btn-secondary" onClick={() => setConfirmOpen(false)}>
               Cancel
-            </Button>
-            <Button onClick={() => saveMapping(true)} loading={saving}>
+            </button>
+            <button className="btn-primary" onClick={() => saveMapping(true)} disabled={saving}>
               <CheckCircle2 className="h-4 w-4" />
-              Save Mapping
-            </Button>
+              {saving ? 'Saving…' : 'Save Mapping'}
+            </button>
           </>
         }
       >
-        <div className="space-y-4">
-          <div className="rounded-md border border-base-700 bg-base-900 px-3 py-2.5">
-            <p className="text-[10px] font-semibold uppercase tracking-wider text-slate-500">Raw syntax</p>
-            <p className="mt-0.5 font-mono text-xs text-slate-300">{rawSyntax}</p>
+        <div className="space-y-5">
+          <div className="rounded-xl border border-surface-200 bg-surface-50 px-5 py-4">
+            <p className="label mb-1">Raw syntax</p>
+            <p className="font-mono text-xs font-medium text-ink-300">{rawSyntax}</p>
           </div>
-          <Field label="Semantic meaning">
-            <Input value={editMeaning} onChange={(e) => setEditMeaning(e.target.value)} />
-          </Field>
-          <Field label="Universal model path" hint="Use dotted notation, e.g. management.ssh.version">
-            <Input
+          <div>
+            <label className="label">Semantic meaning</label>
+            <input value={editMeaning} onChange={(e) => setEditMeaning(e.target.value)} className="input" />
+          </div>
+          <div>
+            <label className="label">Universal model path <span className="font-normal normal-case tracking-normal text-ink-400">— Use dotted notation, e.g. management.ssh.version</span></label>
+            <input
               value={editPath}
               onChange={(e) => setEditPath(e.target.value)}
               placeholder="management.ssh.version"
-              className="font-mono text-xs"
+              className="input font-mono text-xs"
             />
-          </Field>
-          <Field label="Admin notes">
-            <Textarea
+          </div>
+          <div>
+            <label className="label">Admin notes</label>
+            <textarea
               value={editNotes}
               onChange={(e) => setEditNotes(e.target.value)}
               placeholder="Context for other auditors"
+              className="input min-h-[72px] resize-y"
               rows={2}
             />
-          </Field>
+          </div>
         </div>
       </Modal>
 
-      {/* Version history modal */}
       <Modal
         open={versionsFor != null}
         onClose={() => setVersionsFor(null)}
@@ -628,26 +592,33 @@ export default function TrainingPage() {
         size="lg"
       >
         {versionsLoading ? (
-          <div className="py-6 text-center text-xs text-slate-500">Loading versions...</div>
+          <div className="py-10 text-center text-sm text-ink-400">Loading versions…</div>
         ) : versions.length === 0 ? (
-          <div className="py-6 text-center text-xs text-slate-500">No version history.</div>
+          <div className="flex flex-col items-center py-10 text-center">
+            <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-surface-50 text-ink-400 ring-1 ring-surface-200">
+              <History className="h-5 w-5" />
+            </div>
+            <p className="mt-3 text-sm text-ink-400">No version history.</p>
+          </div>
         ) : (
           <ol className="space-y-3">
             {versions.map((v) => (
-              <li key={v.version} className="rounded-md border border-base-700 bg-base-900 px-3.5 py-3">
+              <li key={v.version} className="rounded-xl border border-surface-200 bg-surface-50 px-5 py-4">
                 <div className="flex items-center justify-between gap-2">
-                  <span className="flex items-center gap-2 text-xs font-semibold text-slate-200">
-                    <GitBranch className="h-3.5 w-3.5 text-accent-400" />
+                  <span className="flex items-center gap-2.5 text-sm font-semibold text-ink-100">
+                    <span className="flex h-7 w-7 items-center justify-center rounded-lg bg-white text-brand-600 ring-1 ring-surface-200">
+                      <GitBranch className="h-4 w-4" />
+                    </span>
                     Version {v.version}
                   </span>
-                  <span className="text-[11px] text-slate-500">{formatDate(v.changed_at)}</span>
+                  <span className="text-xs text-ink-400">{formatDate(v.changed_at)}</span>
                 </div>
-                <p className="mt-1.5 text-xs text-slate-400">{v.semantic_meaning}</p>
+                <p className="mt-2.5 text-sm leading-relaxed text-ink-400">{v.semantic_meaning}</p>
                 {v.universal_model_path && (
-                  <TechBadge className="mt-1">{v.universal_model_path}</TechBadge>
+                  <span className="badge-info mt-2.5">{v.universal_model_path}</span>
                 )}
                 {v.change_reason && (
-                  <p className="mt-1 text-[11px] italic text-slate-500">Reason: {v.change_reason}</p>
+                  <p className="mt-2 text-xs italic leading-relaxed text-ink-400">Reason: {v.change_reason}</p>
                 )}
               </li>
             ))}

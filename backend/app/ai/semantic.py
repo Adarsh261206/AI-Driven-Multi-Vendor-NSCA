@@ -204,7 +204,7 @@ class SemanticAnalyzer:
         request = AIRequest(
             prompt=prompt,
             system_prompt=SYSTEM_PROMPT,
-            model="gpt-4",
+            model=None,  # Use provider's default model
             temperature=0.3,
             max_tokens=1000,
             response_format="json",

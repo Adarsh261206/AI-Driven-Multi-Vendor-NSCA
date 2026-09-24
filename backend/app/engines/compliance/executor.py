@@ -22,6 +22,7 @@ from app.engines.compliance.findings import Finding, FindingGenerator
 from app.engines.validation import ConfigurationValidator
 from app.engines.detection import VendorDetector
 from app.engines.parsing.cisco import CiscoIOSParser
+from app.engines.parsing.juniper import JunosParser
 from app.engines.normalization import NormalizationEngine
 from app.benchmarks.execution import BenchmarkExecutionEngine, BenchmarkExecutionResult
 
@@ -109,9 +110,22 @@ class AuditExecutor:
         self.finding_generator = FindingGenerator()
         self.validator = ConfigurationValidator()
         self.detector = VendorDetector()
-        self.parser = CiscoIOSParser()
         self.normalizer = NormalizationEngine()
         self.benchmark_engine = BenchmarkExecutionEngine()
+    
+    def _get_parser(self, vendor: str, platform: str):
+        """Get the appropriate parser for the detected vendor/platform."""
+        vendor_lower = vendor.lower()
+        if vendor_lower == "cisco":
+            return CiscoIOSParser()
+        elif vendor_lower == "juniper":
+            return JunosParser()
+        elif vendor_lower == "fortinet":
+            from app.engines.parsing.fortinet import FortiOSParser
+            return FortiOSParser()
+        else:
+            # Fallback to Cisco parser for unknown vendors
+            return CiscoIOSParser()
     
     def execute(
         self,
@@ -185,7 +199,8 @@ class AuditExecutor:
             result.steps[2].status = "running"
             result.steps[2].started_at = datetime.now(timezone.utc)
             
-            parse_result = self.parser.parse(config_content)
+            parser = self._get_parser(detection.vendor, detection.platform)
+            parse_result = parser.parse(config_content)
             result.parse_result = parse_result
             
             result.steps[2].status = "completed"

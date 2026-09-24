@@ -16,11 +16,11 @@ export function AppShell({
   actions?: React.ReactNode;
 }) {
   return (
-    <div className="min-h-screen bg-base-950">
+    <div className="min-h-screen bg-[#fafafb]">
       <Sidebar />
-      <div className="pl-60">
+      <div className="ml-[260px]">
         <TopBar title={title} subtitle={subtitle} actions={actions} />
-        <main className="mx-auto max-w-[1400px] px-6 py-6">{children}</main>
+        <main className="px-8 py-6">{children}</main>
       </div>
     </div>
   );

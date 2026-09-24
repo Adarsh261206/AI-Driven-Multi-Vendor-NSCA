@@ -1,5 +1,6 @@
 import type { ReactNode } from 'react';
 import { cn } from '@/lib/utils';
+import { TrendingUp, TrendingDown } from 'lucide-react';
 
 export function StatCard({
   label,
@@ -9,6 +10,8 @@ export function StatCard({
   accent,
   className,
   onClick,
+  size = 'md',
+  trend,
 }: {
   label: string;
   value: ReactNode;
@@ -17,22 +20,34 @@ export function StatCard({
   accent?: string;
   className?: string;
   onClick?: () => void;
+  size?: 'sm' | 'md' | 'lg';
+  trend?: { value: number; direction: 'up' | 'down' };
 }) {
   const inner = (
     <>
-      <div className="flex items-start justify-between">
-        <div className="min-w-0">
-          <p className="truncate text-[11px] font-semibold uppercase tracking-wider text-slate-500">{label}</p>
+      <div className="flex items-start justify-between gap-4">
+        <div className="min-w-0 flex-1">
+          <p className="metric-label">{label}</p>
           <p
-            className="mt-1.5 font-mono text-2xl font-semibold leading-none tracking-tight text-slate-100"
-            style={accent ? { color: accent } : undefined}
+            className={cn(
+              'font-extrabold tracking-tight',
+              size === 'lg' ? 'text-3xl mt-2.5' : size === 'sm' ? 'text-xl mt-1.5' : 'text-2xl mt-2',
+              'metric-value'
+            )}
+            style={{ color: accent ?? undefined }}
           >
             {value}
           </p>
-          {sub && <div className="mt-1.5 text-xs text-slate-500">{sub}</div>}
+          {trend && (
+            <div className={cn('flex items-center gap-1 mt-2 text-sm font-medium', trend.direction === 'up' ? 'text-emerald-600' : 'text-red-600')}>
+              {trend.direction === 'up' ? <TrendingUp className="h-3.5 w-3.5" /> : <TrendingDown className="h-3.5 w-3.5" />}
+              <span>{Math.abs(trend.value)}%</span>
+            </div>
+          )}
+          {sub && <div className="mt-2.5 text-sm text-ink-400">{sub}</div>}
         </div>
         {icon && (
-          <div className="flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-md border border-base-700 bg-base-900 text-slate-400">
+          <div className="flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-lg bg-brand-50 text-brand-600">
             {icon}
           </div>
         )}
@@ -45,7 +60,7 @@ export function StatCard({
       <button
         onClick={onClick}
         className={cn(
-          'panel w-full text-left transition-colors hover:border-base-500 cursor-pointer',
+          'card p-5 w-full text-left transition-all duration-200 hover:shadow-md cursor-pointer group',
           className
         )}
       >
@@ -54,5 +69,5 @@ export function StatCard({
     );
   }
 
-  return <div className={cn('panel', className)}>{inner}</div>;
+  return <div className={cn('card p-5', className)}>{inner}</div>;
 }

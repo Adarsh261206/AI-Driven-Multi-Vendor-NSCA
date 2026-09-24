@@ -136,11 +136,13 @@ class BenchmarkExecutionEngine:
         self._load_benchmarks()
 
     def _load_benchmarks(self) -> None:
-        """Load all registered benchmark control sets."""
+        """Load all registered benchmark control sets — dual-baseline: CIS + NIST in one go."""
         from app.benchmarks.cisco_ios_xe_controls import get_registry as cisco_registry
         from app.benchmarks.juniper_junos_controls import get_registry as juniper_registry
+        from app.benchmarks.nist_sp800_53_controls import get_registry as nist_registry
         self.control_registry.register_benchmark(cisco_registry())
         self.control_registry.register_benchmark(juniper_registry())
+        self.control_registry.register_benchmark(nist_registry())
 
     def execute(
         self,
@@ -176,8 +178,19 @@ class BenchmarkExecutionEngine:
         config_dict = {"raw_lines": raw_config.splitlines()}
         norm_result = self.normalizer.normalize(config_dict, vendor, effective_platform)
 
-        # Step 3: Get applicable controls
+        # Step 3: Get applicable controls — dual-baseline: vendor CIS + universal NIST
         controls = self.control_registry.get_controls_by_vendor_platform(vendor, effective_platform)
+        # Append NIST universal controls (evaluated alongside vendor-specific CIS for compliance loop)
+        try:
+            nist_controls = self.control_registry.get_controls_by_vendor_platform("universal", "network_device")
+            # Deduplicate by control_id
+            seen_ids = {c.control_id for c in controls}
+            for nc in nist_controls:
+                if nc.control_id not in seen_ids:
+                    controls.append(nc)
+                    seen_ids.add(nc.control_id)
+        except Exception:
+            pass
 
         # Step 4: Evaluate each control
         evaluations: list[ControlEvaluationResult] = []

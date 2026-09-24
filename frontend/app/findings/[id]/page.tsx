@@ -95,22 +95,21 @@ export default function FindingDetailPage() {
 
   const e = finding.evidence;
   const rem = finding.remediation;
-  const severityMeta = SEVERITY_META[finding.severity];
 
   const evidenceSteps = e
     ? [
         {
           label: 'Raw Configuration',
-          icon: <FileWarning className="h-3.5 w-3.5" />,
+          icon: <FileWarning className="h-4 w-4" />,
           body: e.raw_config ? (
             <CodeBlock
               code={e.raw_config}
               language={e.vendor || 'config'}
               lineNumbers
-              maxHeight={160}
+              maxHeight={180}
             />
           ) : (
-            <p className="text-xs text-slate-500">No raw evidence captured for this finding.</p>
+            <p className="text-xs leading-relaxed text-ink-400">No raw evidence captured for this finding.</p>
           ),
           detail: e.raw_config_line_numbers?.length
             ? `Source lines: ${e.raw_config_line_numbers.join(', ')}`
@@ -118,9 +117,9 @@ export default function FindingDetailPage() {
         },
         {
           label: 'Parsed Representation',
-          icon: <ChevronRight className="h-3.5 w-3.5" />,
+          icon: <ChevronRight className="h-4 w-4" />,
           body: (
-            <p className="font-mono text-xs text-slate-300">
+            <p className="font-mono text-xs leading-relaxed text-ink-300">
               {e.parsed_value != null ? valueToString(e.parsed_value) : 'Not captured (benchmark evaluation path)'}
             </p>
           ),
@@ -128,11 +127,11 @@ export default function FindingDetailPage() {
         },
         {
           label: 'Normalized Model',
-          icon: <Target className="h-3.5 w-3.5" />,
+          icon: <Target className="h-4 w-4" />,
           body: (
-            <div className="space-y-1.5">
-              <TechBadge>{e.universal_model_path || '—'}</TechBadge>
-              <p className="font-mono text-xs text-slate-300">
+            <div className="space-y-2">
+              <span className="badge-info font-mono text-xs">{e.universal_model_path || '—'}</span>
+              <p className="font-mono text-xs leading-relaxed text-ink-300">
                 {e.normalized_value != null ? valueToString(e.normalized_value) : '—'}
               </p>
             </div>
@@ -144,12 +143,12 @@ export default function FindingDetailPage() {
         },
         {
           label: 'Security Control',
-          icon: <ShieldAlert className="h-3.5 w-3.5" />,
+          icon: <ShieldAlert className="h-4 w-4" />,
           body: (
             <div className="space-y-1">
               <div className="flex flex-wrap items-center gap-2">
-                <TechBadge>{e.control_id || '—'}</TechBadge>
-                <span className="text-sm font-medium text-slate-200">
+                <span className="badge-info">{e.control_id || '—'}</span>
+                <span className="text-sm font-medium leading-relaxed text-ink-300">
                   {e.control_description || finding.title}
                 </span>
               </div>
@@ -159,16 +158,16 @@ export default function FindingDetailPage() {
         },
         {
           label: 'Expected vs Actual',
-          icon: <ArrowRight className="h-3.5 w-3.5" />,
+          icon: <ArrowRight className="h-4 w-4" />,
           body: (
-            <div className="grid grid-cols-2 gap-4">
-              <div>
-                <p className="text-[10px] font-semibold uppercase tracking-wider text-slate-500">Expected</p>
-                <p className="mt-1 font-mono text-xs text-slate-300">{valueToString(e.expected_value)}</p>
+            <div className="grid grid-cols-2 gap-5">
+              <div className="rounded-xl bg-surface-50 border border-surface-200 px-4 py-3.5">
+                <p className="label mb-1">Expected</p>
+                <p className="font-mono text-xs leading-relaxed text-ink-300">{valueToString(e.expected_value)}</p>
               </div>
-              <div>
-                <p className="text-[10px] font-semibold uppercase tracking-wider text-slate-500">Actual</p>
-                <p className="mt-1 font-mono text-xs text-slate-300">{valueToString(e.actual_value)}</p>
+              <div className="rounded-xl bg-surface-50 border border-surface-200 px-4 py-3.5">
+                <p className="label mb-1">Actual</p>
+                <p className="font-mono text-xs leading-relaxed text-ink-300">{valueToString(e.actual_value)}</p>
               </div>
             </div>
           ),
@@ -176,12 +175,12 @@ export default function FindingDetailPage() {
         },
         {
           label: 'Evaluation Result',
-          icon: <ClipboardCheck className="h-3.5 w-3.5" />,
+          icon: <ClipboardCheck className="h-4 w-4" />,
           body: (
-            <div className="space-y-2">
+            <div className="space-y-2.5">
               <ResultBadge result={e.result} />
               {e.result_reasoning && (
-                <p className="text-xs text-slate-400 italic">{e.result_reasoning}</p>
+                <p className="text-xs leading-relaxed text-ink-400 italic">{e.result_reasoning}</p>
               )}
             </div>
           ),
@@ -197,126 +196,120 @@ export default function FindingDetailPage() {
       actions={
         auditId ? (
           <Link href={`/audit/${auditId}`}>
-            <Button variant="secondary">Back to Audit</Button>
+            <button className="btn-secondary">Back to Audit</button>
           </Link>
         ) : undefined
       }
     >
       {error && (
-        <div className="mb-5">
+        <div className="mb-6">
           <Alert variant="error" onDismiss={() => setError(null)}>
             {error}
           </Alert>
         </div>
       )}
 
-      {/* Header row */}
-      <div className="mb-5 flex flex-wrap items-center gap-3">
+      <div className="mb-6 flex flex-wrap items-center gap-2.5">
         <SeverityBadge severity={finding.severity} />
         <FindingStatusBadge status={finding.status} />
-        <TechBadge>
+        <span className="badge-info">
           {finding.affected_vendor ? `${finding.affected_vendor}/${finding.affected_platform ?? '?'}` : 'vendor unknown'}
-        </TechBadge>
-        {finding.affected_device && <TechBadge>{finding.affected_device}</TechBadge>}
-        <span className="text-xs text-slate-500">Confidence {formatConfidence(finding.confidence)}</span>
-        <span className="text-xs text-slate-500">Created {formatDateTime(finding.created_at)}</span>
+        </span>
+        {finding.affected_device && <span className="badge-info">{finding.affected_device}</span>}
+        <span className="rounded-full bg-white px-3 py-1 text-xs font-medium text-ink-400 ring-1 ring-surface-200">Confidence {formatConfidence(finding.confidence)}</span>
+        <span className="text-xs text-ink-400">Created {formatDateTime(finding.created_at)}</span>
         <div className="ml-auto flex items-center gap-2">
-          <Select
+          <select
             value={finding.status}
             onChange={(e) => changeStatus(e.target.value)}
             disabled={updating}
-            className="!w-40"
+            className="select !w-44 !py-2 text-xs font-medium"
             aria-label="Change finding status"
           >
             <option value="open">Open</option>
             <option value="in_progress">In progress</option>
             <option value="resolved">Resolved</option>
             <option value="accepted">Accepted risk</option>
-          </Select>
+          </select>
         </div>
       </div>
 
-      <div className="grid grid-cols-1 gap-5 xl:grid-cols-3">
-        {/* Evidence chain */}
+      <div className="grid grid-cols-1 gap-6 xl:grid-cols-3">
+        {/* Evidence Chain — Odoo generous */}
         <div className="xl:col-span-2">
-          <div className="panel">
-            <div className="panel-header">
+          <div className="card overflow-hidden">
+            <div className="card-header">
               <div>
-                <h2 className="text-sm font-semibold text-slate-200">Evidence Chain</h2>
-                <p className="mt-0.5 text-xs text-slate-500">
+                <p className="label mb-1.5">Audit Trail</p>
+                <h2 className="section-title">Evidence Chain</h2>
+                <p className="mt-1.5 text-sm leading-relaxed text-ink-400">
                   Every stage traces from the raw configuration to the evaluation result
                 </p>
               </div>
             </div>
-            <div className="panel-body space-y-0">
-              {evidenceSteps.map((step, i) => (
-                <div key={step.label} className="relative pb-6 pl-9 last:pb-0">
-                  {/* Connector line */}
-                  {i < evidenceSteps.length - 1 && (
-                    <span className="absolute left-[15px] top-8 bottom-0 w-px bg-base-700" aria-hidden />
-                  )}
-                  <span
-                    className="absolute left-0 top-0 flex h-8 w-8 items-center justify-center rounded-full border border-base-600 bg-base-900 text-slate-400"
-                    aria-hidden
-                  >
-                    {step.icon}
-                  </span>
-                  <div>
-                    <div className="flex flex-wrap items-center gap-2">
-                      <h3 className="text-[11px] font-semibold uppercase tracking-widest text-slate-400">
-                        {step.label}
-                      </h3>
-                      {step.detail && <span className="text-[11px] text-slate-600">{step.detail}</span>}
+            <div className="px-6 py-6">
+              <div className="relative">
+                {evidenceSteps.map((step, i) => (
+                  <div key={step.label} className="relative pb-7 pl-12 last:pb-0">
+                    {i < evidenceSteps.length - 1 && (
+                      <span className="absolute left-[16px] top-9 bottom-0 w-px bg-surface-200" aria-hidden />
+                    )}
+                    <span
+                      className="absolute left-0 top-0 flex h-8 w-8 items-center justify-center rounded-xl border border-surface-200 bg-white text-ink-400 shadow-xs"
+                      aria-hidden
+                    >
+                      {step.icon}
+                    </span>
+                    <div>
+                      <div className="flex flex-wrap items-center gap-2.5">
+                        <h3 className="text-xs font-semibold uppercase tracking-wider text-ink-300">{step.label}</h3>
+                        {step.detail && <span className="rounded-full bg-surface-50 px-2.5 py-0.5 text-xs text-ink-400 ring-1 ring-surface-200">{step.detail}</span>}
+                      </div>
+                      <div className="mt-3">{step.body}</div>
                     </div>
-                    <div className="mt-2">{step.body}</div>
                   </div>
-                </div>
-              ))}
+                ))}
+              </div>
             </div>
           </div>
         </div>
 
-        {/* Remediation */}
-        <div className="space-y-5">
-          <div className="panel">
-            <div className="panel-header">
+        {/* Remediation sidebar — Odoo generous */}
+        <div className="space-y-6">
+          <div className="card overflow-hidden">
+            <div className="card-header">
               <div>
-                <h2 className="text-sm font-semibold text-slate-200">Remediation</h2>
-                <p className="mt-0.5 text-xs text-slate-500">Recommended configuration change</p>
+                <p className="label mb-1.5">Action Plan</p>
+                <h2 className="section-title">Remediation</h2>
+                <p className="mt-1.5 text-sm text-ink-400">Recommended configuration change</p>
               </div>
             </div>
-            <div className="panel-body space-y-4">
+            <div className="px-6 py-6 space-y-5">
               {rem && rem.recommended_config ? (
                 <>
                   <div>
-                    <p className="text-[10px] font-semibold uppercase tracking-wider text-slate-500">
-                      Why it matters
-                    </p>
-                    <p className="mt-1 text-xs text-slate-400">
+                    <p className="label">Why it matters</p>
+                    <p className="mt-1.5 text-sm leading-relaxed text-ink-400">
                       {rem.why_it_matters || rem.description || 'This control is required by the benchmark.'}
                     </p>
                   </div>
                   <div>
-                    <p className="mb-1.5 text-[10px] font-semibold uppercase tracking-wider text-slate-500">
-                      Recommended configuration
-                    </p>
+                    <p className="label mb-2.5">Recommended configuration</p>
                     <CodeBlock code={rem.recommended_config} language={rem.vendor || 'config'} />
                   </div>
                   {rem.vendor && rem.platform && (
                     <div className="flex gap-2">
-                      <TechBadge>{rem.vendor}</TechBadge>
-                      <TechBadge>{rem.platform}</TechBadge>
+                      <span className="badge-info">{rem.vendor}</span>
+                      <span className="badge-info">{rem.platform}</span>
                     </div>
                   )}
                   {rem.references && rem.references.length > 0 && (
                     <div>
-                      <p className="mb-1.5 text-[10px] font-semibold uppercase tracking-wider text-slate-500">
-                        Benchmark reference
-                      </p>
-                      <ul className="space-y-1">
+                      <p className="label mb-2.5">Benchmark reference</p>
+                      <ul className="space-y-2">
                         {rem.references.map((ref, i) => (
-                          <li key={i} className="flex items-start gap-1.5 text-xs text-slate-400">
-                            <BookOpen className="mt-0.5 h-3 w-3 flex-shrink-0 text-accent-400" />
+                          <li key={i} className="flex items-start gap-2.5 rounded-lg bg-surface-50 border border-surface-200 px-3 py-2.5 text-xs leading-relaxed text-ink-400">
+                            <BookOpen className="mt-0.5 h-3.5 w-3.5 flex-shrink-0 text-brand-600" />
                             <span className="break-all">{ref}</span>
                           </li>
                         ))}
@@ -324,53 +317,52 @@ export default function FindingDetailPage() {
                     </div>
                   )}
                   {rem.confidence != null && (
-                    <p className="text-xs text-slate-500">
+                    <p className="text-xs text-ink-400">
                       Remediation confidence: {formatConfidence(rem.confidence)}
                     </p>
                   )}
                 </>
               ) : (
-                <div className="rounded-md border border-base-700 bg-base-900 px-3.5 py-3">
-                  <p className="text-xs text-slate-400">
+                <div className="rounded-xl border border-surface-200 bg-surface-50 px-5 py-4">
+                  <p className="text-xs leading-relaxed text-ink-400">
                     No automated remediation metadata is available for this finding.
                   </p>
                 </div>
               )}
-              <p className="flex items-start gap-1.5 rounded-md border border-amber-500/20 bg-amber-500/5 px-3 py-2 text-[11px] text-amber-400">
-                <ShieldAlert className="mt-0.5 h-3 w-3 flex-shrink-0" />
-                Commands are never executed automatically. Apply changes manually after validating
-                against your change-management process.
-              </p>
+              <div className="flex items-start gap-3 rounded-xl border border-amber-200 bg-amber-50 px-4 py-3.5">
+                <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-lg bg-white text-amber-600 ring-1 ring-amber-200">
+                  <ShieldAlert className="h-4 w-4" />
+                </span>
+                <p className="text-xs leading-relaxed text-amber-800">
+                  Commands are never executed automatically. Apply changes manually after validating
+                  against your change-management process.
+                </p>
+              </div>
             </div>
           </div>
 
-          {/* Verification / rollback */}
           {rem && (rem.verification_steps?.length || rem.rollback_steps?.length) && (
-            <div className="panel">
-              <div className="panel-header">
-                <h2 className="text-sm font-semibold text-slate-200">Verification & Rollback</h2>
+            <div className="card overflow-hidden">
+              <div className="card-header">
+                <h2 className="section-title">Verification & Rollback</h2>
               </div>
-              <div className="panel-body space-y-4">
+              <div className="px-6 py-6 space-y-5">
                 {rem.verification_steps && rem.verification_steps.length > 0 && (
                   <div>
-                    <p className="mb-1.5 text-[10px] font-semibold uppercase tracking-wider text-slate-500">
-                      Verification
-                    </p>
-                    <ol className="list-decimal space-y-1 pl-4 text-xs text-slate-400">
+                    <p className="label mb-2.5">Verification</p>
+                    <ol className="list-decimal space-y-2 pl-4 text-xs leading-relaxed text-ink-400">
                       {rem.verification_steps.map((s, i) => (
-                        <li key={i}>{s}</li>
+                        <li key={i} className="pl-1">{s}</li>
                       ))}
                     </ol>
                   </div>
                 )}
                 {rem.rollback_steps && rem.rollback_steps.length > 0 && (
                   <div>
-                    <p className="mb-1.5 text-[10px] font-semibold uppercase tracking-wider text-slate-500">
-                      Rollback
-                    </p>
-                    <ol className="list-decimal space-y-1 pl-4 text-xs text-slate-400">
+                    <p className="label mb-2.5">Rollback</p>
+                    <ol className="list-decimal space-y-2 pl-4 text-xs leading-relaxed text-ink-400">
                       {rem.rollback_steps.map((s, i) => (
-                        <li key={i}>{s}</li>
+                        <li key={i} className="pl-1">{s}</li>
                       ))}
                     </ol>
                   </div>

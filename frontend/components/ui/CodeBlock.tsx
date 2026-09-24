@@ -2,6 +2,7 @@
 
 import { useState } from 'react';
 import { Check, Copy } from 'lucide-react';
+import { cn } from '@/lib/utils';
 
 export function CodeBlock({
   code,
@@ -23,35 +24,36 @@ export function CodeBlock({
       await navigator.clipboard.writeText(code);
       setCopied(true);
       setTimeout(() => setCopied(false), 1500);
-    } catch {
-      // clipboard unavailable
-    }
+    } catch {}
   };
 
   const lines = code.split('\n');
 
   return (
-    <div className={`overflow-hidden rounded-lg border border-base-700 bg-base-950 ${className ?? ''}`}>
-      <div className="flex items-center justify-between border-b border-base-800 px-3 py-1.5">
-        <span className="font-mono text-[11px] uppercase tracking-wider text-slate-500">
+    <div className={cn('overflow-hidden rounded-lg border border-surface-200 bg-ink-100', className)}>
+      <div className="flex items-center justify-between border-b border-surface-200 bg-surface-50 px-4 py-2">
+        <span className="font-mono text-xs uppercase tracking-wider text-ink-400">
           {language ?? 'config'}
         </span>
         <button
           onClick={copy}
           aria-label="Copy to clipboard"
-          className="flex items-center gap-1 rounded px-1.5 py-0.5 text-[11px] text-slate-400 hover:bg-base-800 hover:text-slate-200"
+          className="flex items-center gap-1.5 rounded-md px-2 py-1 text-xs font-medium text-ink-400 transition-colors duration-150 hover:bg-surface-200 hover:text-ink-600"
         >
-          {copied ? <Check className="h-3 w-3 text-green-400" /> : <Copy className="h-3 w-3" />}
+          {copied ? <Check className="h-3 w-3 text-emerald-500" /> : <Copy className="h-3 w-3" />}
           {copied ? 'Copied' : 'Copy'}
         </button>
       </div>
-      <div className="code-block overflow-auto p-3 text-slate-300" style={maxHeight ? { maxHeight } : undefined}>
+      <div
+        className="overflow-auto p-4 font-mono text-sm leading-relaxed text-ink-700"
+        style={maxHeight ? { maxHeight } : undefined}
+      >
         {lineNumbers ? (
           <table className="w-full border-collapse">
             <tbody>
               {lines.map((line, i) => (
                 <tr key={i}>
-                  <td className="w-10 select-none pr-3 text-right align-top font-mono text-[11px] leading-relaxed text-slate-600">
+                  <td className="w-12 select-none pr-4 text-right align-top text-xs text-ink-300">
                     {i + 1}
                   </td>
                   <td className="align-top">{line || ' '}</td>
@@ -60,7 +62,7 @@ export function CodeBlock({
             </tbody>
           </table>
         ) : (
-          code
+          <pre className="whitespace-pre-wrap">{code}</pre>
         )}
       </div>
     </div>

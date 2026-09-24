@@ -1,17 +1,62 @@
-from fastapi import APIRouter, HTTPException, status, Depends, UploadFile, File
+from fastapi import APIRouter, HTTPException, Query, status, Depends, UploadFile, File
 from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy import select
-from typing import Optional
+from sqlalchemy import select, func
+from typing import List, Optional
 from uuid import UUID
 import hashlib
 
 from app.database import get_db
 from app.models import User, Configuration
-from app.schemas import ConfigurationResponse, ConfigurationContentResponse
-from app.security.auth import get_current_user
+from app.schemas import ConfigurationResponse, ConfigurationContentResponse, ConfigurationListResponse, PaginationMeta
+from app.security.auth import get_current_user, require_admin, require_auditor
 from app.config import settings
 
 router = APIRouter()
+
+
+@router.get("/", response_model=ConfigurationListResponse)
+async def list_configurations(
+    page: int = Query(1, gt=0),
+    per_page: int = Query(20, gt=0, le=100),
+    device_id: Optional[UUID] = None,
+    db: AsyncSession = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+):
+    """List all configurations for the current user"""
+    query = select(Configuration)
+    count_query = select(func.count(Configuration.id))
+
+    if current_user.role != "admin":
+        from app.models import Device
+        user_device_ids = select(Device.id).where(Device.user_id == current_user.id)
+        query = query.where(
+            (Configuration.device_id.in_(user_device_ids)) | (Configuration.device_id.is_(None))
+        )
+        count_query = count_query.where(
+            (Configuration.device_id.in_(user_device_ids)) | (Configuration.device_id.is_(None))
+        )
+
+    if device_id:
+        query = query.where(Configuration.device_id == device_id)
+        count_query = count_query.where(Configuration.device_id == device_id)
+
+    total_result = await db.execute(count_query)
+    total = total_result.scalar()
+
+    offset = (page - 1) * per_page
+    query = query.offset(offset).limit(per_page).order_by(Configuration.uploaded_at.desc())
+    result = await db.execute(query)
+    configs = result.scalars().all()
+
+    return ConfigurationListResponse(
+        items=[ConfigurationResponse.from_orm(c) for c in configs],
+        meta=PaginationMeta(
+            page=page,
+            per_page=per_page,
+            total=total,
+            total_pages=(total + per_page - 1) // per_page if total else 0,
+        ),
+    )
 
 
 def calculate_content_hash(content: bytes) -> str:
@@ -24,7 +69,7 @@ async def upload_configuration(
     file: UploadFile = File(...),
     device_id: Optional[UUID] = None,
     db: AsyncSession = Depends(get_db),
-    current_user: User = Depends(get_current_user),
+    current_user: User = Depends(require_auditor),
 ):
     """Upload a configuration file"""
     # Validate file extension
@@ -55,15 +100,13 @@ async def upload_configuration(
     # Calculate hash
     content_hash = calculate_content_hash(content)
     
-    # Check for duplicate
+    # Check for duplicate — return existing instead of erroring
     existing = await db.execute(
         select(Configuration).where(Configuration.content_hash == content_hash)
     )
-    if existing.scalar_one_or_none():
-        raise HTTPException(
-            status_code=status.HTTP_409_CONFLICT,
-            detail="Configuration with same content already exists"
-        )
+    existing_config = existing.scalar_one_or_none()
+    if existing_config:
+        return ConfigurationResponse.from_orm(existing_config)
     
     # Decode content
     try:
@@ -116,6 +159,22 @@ async def get_configuration(
     if not config:
         raise HTTPException(status_code=404, detail="Configuration not found")
     
+    # Authorization check: admin can access all, others only their own device's configs
+    if current_user.role != "admin":
+        if config.device_id:
+            # Check if the device belongs to the current user
+            from app.models import Device
+            device_result = await db.execute(
+                select(Device).where(
+                    Device.id == config.device_id,
+                    Device.user_id == current_user.id,
+                )
+            )
+            if not device_result.scalar_one_or_none():
+                raise HTTPException(status_code=403, detail="Not authorized to access this configuration")
+        else:
+            raise HTTPException(status_code=403, detail="Not authorized to access this configuration")
+    
     return ConfigurationResponse.from_orm(config)
 
 
@@ -134,6 +193,22 @@ async def get_configuration_content(
     if not config:
         raise HTTPException(status_code=404, detail="Configuration not found")
     
+    # Authorization check: admin can access all, others only their own device's configs
+    if current_user.role != "admin":
+        if config.device_id:
+            # Check if the device belongs to the current user
+            from app.models import Device
+            device_result = await db.execute(
+                select(Device).where(
+                    Device.id == config.device_id,
+                    Device.user_id == current_user.id,
+                )
+            )
+            if not device_result.scalar_one_or_none():
+                raise HTTPException(status_code=403, detail="Not authorized to access this configuration")
+        else:
+            raise HTTPException(status_code=403, detail="Not authorized to access this configuration")
+    
     return ConfigurationContentResponse(content=config.raw_content)
 
 
@@ -141,7 +216,7 @@ async def get_configuration_content(
 async def delete_configuration(
     config_id: UUID,
     db: AsyncSession = Depends(get_db),
-    current_user: User = Depends(get_current_user),
+    current_user: User = Depends(require_admin),
 ):
     """Delete a configuration"""
     result = await db.execute(
