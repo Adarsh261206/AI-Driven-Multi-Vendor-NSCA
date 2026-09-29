@@ -86,3 +86,4 @@ reports/*.pdf
 # CIS Benchmark PDFs (copyrighted - keep private)
 docsss/
 private_resources/
+.opencode/

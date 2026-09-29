@@ -11,28 +11,34 @@ from dataclasses import dataclass, field
 from typing import Optional, Any
 
 from app.engines.compliance.models import (
-    Control, ComplianceResultType, Severity, Operator,
+    Control, ComplianceResultType, Operator,
 )
 
 
 @dataclass
 class EvidenceChain:
-    """Complete evidence chain for a compliance finding"""
+    """Complete evidence chain for a compliance finding.
+
+    Leads with the eight §12 canonical keys (raw_config, parsed_value,
+    normalized_value, security_control, expected_value, actual_value,
+    result, reasoning); the rest is traceability metadata.
+    """
     # Raw configuration
     raw_config: str = ""
     raw_config_line_numbers: list[int] = field(default_factory=list)
-    
+
     # Parsed value
     parsed_value: Any = None
     parsed_path: str = ""
-    
+
     # Normalized value
     normalized_value: Any = None
     universal_model_path: str = ""
     normalization_confidence: float = 0.0
-    
-    # Control reference
+
+    # Control reference (§12 security_control names the evaluated control)
     control_id: str = ""
+    security_control: str = ""
     control_description: str = ""
     
     # Evaluation
@@ -40,7 +46,7 @@ class EvidenceChain:
     actual_value: Any = None
     operator: str = ""
     result: str = ""
-    result_reasoning: str = ""
+    reasoning: str = ""
     
     # Confidence
     overall_confidence: float = 0.0
@@ -49,6 +55,33 @@ class EvidenceChain:
     vendor: str = ""
     platform: str = ""
     vendor_specific_syntax: str = ""
+
+    # REVIEW reason code + evaluation method (carried from benchmark
+    # evidence so persisted/reported evidence stays explainable).
+    review_code: str = ""
+    evaluation_method: str = ""
+
+    # Benchmark identity (carried from benchmark evidence for §6
+    # applicability reporting; "" when unknown — never invented).
+    benchmark_id: str = ""
+    benchmark_name: str = ""
+    framework_version: str = ""
+    framework: str = ""
+
+    # Scope + states (§8): every result retains its evaluation scope, the
+    # observed configuration state and the required state.
+    scope: str = ""
+    observed_state: str = ""
+    expected_state: str = ""
+    # Scope cardinality (Issue #1): evidence blocks vs affected interfaces.
+    evidence_block_count: int = 0
+    affected_scope_count: int = 0
+
+    # Device provenance (Issue #1): hostname + device type stamped from the
+    # single authoritative detection, so findings inherit lineage and
+    # finding evidence stays identical to evaluation evidence.
+    hostname: str = ""
+    device_type: str = ""
     
     def to_dict(self) -> dict[str, Any]:
         return {
@@ -60,16 +93,30 @@ class EvidenceChain:
             "universal_model_path": self.universal_model_path,
             "normalization_confidence": self.normalization_confidence,
             "control_id": self.control_id,
+            "security_control": self.security_control,
             "control_description": self.control_description,
             "expected_value": self.expected_value,
             "actual_value": self.actual_value,
             "operator": self.operator,
             "result": self.result,
-            "result_reasoning": self.result_reasoning,
+            "reasoning": self.reasoning,
             "overall_confidence": self.overall_confidence,
             "vendor": self.vendor,
             "platform": self.platform,
             "vendor_specific_syntax": self.vendor_specific_syntax,
+            "review_code": self.review_code,
+            "evaluation_method": self.evaluation_method,
+            "benchmark_id": self.benchmark_id,
+            "benchmark_name": self.benchmark_name,
+            "framework_version": self.framework_version,
+            "framework": self.framework,
+            "scope": self.scope,
+            "observed_state": self.observed_state,
+            "expected_state": self.expected_state,
+            "evidence_block_count": self.evidence_block_count,
+            "affected_scope_count": self.affected_scope_count,
+            "hostname": self.hostname,
+            "device_type": self.device_type,
         }
 
 
@@ -132,12 +179,13 @@ class EvidenceChainBuilder:
             universal_model_path=control.rule.target.model_path if control.rule else "",
             normalization_confidence=confidence,
             control_id=control.id,
+            security_control=control.id,
             control_description=control.description,
             expected_value=expected_value,
             actual_value=actual_value,
             operator=operator_str,
             result=result.value,
-            result_reasoning=reasoning,
+            reasoning=reasoning,
             overall_confidence=confidence,
             vendor=vendor,
             platform=platform,
@@ -225,16 +273,21 @@ class EvidenceChainBuilder:
                     return actual not in expected
                 return actual != expected
             elif operator == Operator.IS_TRUE:
-                return actual is True or actual == "true" or actual == True
+                # Equivalent to `actual == True or actual == "true"`
+                # (True/1/1.0 all compare equal to True) without E712.
+                return actual in (True, 1, 1.0) or actual == "true"
             elif operator == Operator.IS_FALSE:
-                return actual is False or actual == "false" or actual == False
+                # Equivalent to `actual == False or actual == "false"`.
+                return actual in (False, 0) or actual == "false"
             elif operator == Operator.IS_SET:
                 return actual is not None and actual != ""
             elif operator == Operator.IS_NOT_SET:
                 return actual is None or actual == ""
             elif operator == Operator.REGEX_MATCH:
                 import re
-                return bool(re.match(str(expected), str(actual)))
+                # Unanchored search — the single canonical regex semantics
+                # (F8/F10 drift fix; matches selection.apply_operator).
+                return bool(re.search(str(expected), str(actual)))
             else:
                 return False
         except (ValueError, TypeError):

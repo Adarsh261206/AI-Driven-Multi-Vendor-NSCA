@@ -7,7 +7,6 @@ pipeline unification, and full control coverage.
 
 from __future__ import annotations
 
-import re
 from pathlib import Path
 
 import pytest
@@ -15,13 +14,10 @@ import pytest
 from app.benchmarks.cisco_ios_xe_controls import get_all_controls, get_registry
 from app.benchmarks.execution import (
     BenchmarkExecutionEngine,
-    BenchmarkExecutionResult,
-    ControlEvaluationResult,
 )
-from app.benchmarks.models import AssessmentStatus, BenchmarkControl
 from app.benchmarks.registry import ControlRegistry
 from app.engines.normalization import NormalizationEngine
-from app.engines.compliance.executor import AuditExecutor, AuditResult
+from app.engines.compliance.executor import AuditExecutor
 
 
 SAMPLE_DIR = Path(__file__).parent / "sample_configs"
@@ -59,7 +55,8 @@ class TestSSHPTransport:
         result = engine.execute(cfg)
         ev = next(e for e in result.evaluations if e.control_id == "1.2.2")
         assert ev.result == "PASS"
-        assert ev.evidence.actual_value == "ssh"
+        assert any(b.get("result") == "PASS" and b.get("transports") == ["ssh"]
+                   for b in ev.evidence.actual_value)
 
     def test_transport_telnet_only(self, engine):
         """transport input telnet → FAIL"""
@@ -67,7 +64,8 @@ class TestSSHPTransport:
         result = engine.execute(cfg)
         ev = next(e for e in result.evaluations if e.control_id == "1.2.2")
         assert ev.result == "FAIL"
-        assert ev.evidence.actual_value == "telnet"
+        assert any(b.get("result") == "FAIL" and "telnet" in (b.get("transports") or [])
+                   for b in ev.evidence.actual_value)
 
     def test_transport_telnet_ssh(self, engine):
         """transport input telnet ssh → FAIL (not ssh-only)"""
@@ -75,7 +73,8 @@ class TestSSHPTransport:
         result = engine.execute(cfg)
         ev = next(e for e in result.evaluations if e.control_id == "1.2.2")
         assert ev.result == "FAIL"
-        assert ev.evidence.actual_value == "ssh telnet"
+        assert any(b.get("result") == "FAIL" and set(b.get("transports") or []) == {"ssh", "telnet"}
+                   for b in ev.evidence.actual_value)
 
     def test_transport_none(self, engine):
         """No transport input configured → REVIEW"""
@@ -91,7 +90,7 @@ class TestSSHPTransport:
         result = engine.execute(cfg)
         ev = next(e for e in result.evaluations if e.control_id == "1.2.2")
         assert ev.result == "PASS"
-        assert ev.evidence.actual_value == "ssh"
+        assert all(b.get("result") == "PASS" for b in ev.evidence.actual_value)
 
     def test_normalizer_extracts_transport(self, normalizer):
         """Normalizer correctly extracts transport input"""
@@ -367,7 +366,7 @@ class TestRegexControls:
         result = engine.execute(cfg)
         regex_controls = [
             e for e in result.evaluations
-            if e.evidence.target_model_path == "" and e.is_automated
+            if e.evidence.universal_model_path == "" and e.is_automated
         ]
         for ev in regex_controls:
             assert ev.result in ("PASS", "FAIL"), (
@@ -466,7 +465,7 @@ class TestFullTestMatrix:
         for name in self.ALL_CONFIGS:
             cfg = _load(name)
             result = engine.execute(cfg)
-            assert result.evaluated == 53, f"{name}: wrong count"
+            assert result.evaluated == 179, f"{name}: wrong count"
             assert 0 <= result.score <= 100, f"{name}: bad score"
 
     def test_secure_highest_score(self, engine):
@@ -494,17 +493,17 @@ class TestFullTestMatrix:
         """Malformed config should not crash the engine"""
         cfg = _load("malformed.txt")
         result = engine.execute(cfg)
-        assert result.evaluated == 53
+        assert result.evaluated == 179
 
     def test_unknown_commands_no_crash(self, engine):
         cfg = _load("unknown_commands.txt")
         result = engine.execute(cfg)
-        assert result.evaluated == 53
+        assert result.evaluated == 179
 
     def test_conflicting_settings_no_crash(self, engine):
         cfg = _load("conflicting.txt")
         result = engine.execute(cfg)
-        assert result.evaluated == 53
+        assert result.evaluated == 179
 
     def test_multiple_vty_ssh(self, engine):
         """Multiple VTY blocks both with ssh → PASS for 1.2.2"""
@@ -516,7 +515,7 @@ class TestFullTestMatrix:
     def test_nested_interfaces(self, engine):
         cfg = _load("nested_interfaces.txt")
         result = engine.execute(cfg)
-        assert result.evaluated == 53
+        assert result.evaluated == 179
 
 
 # =========================================================================
@@ -531,12 +530,12 @@ class TestEvidenceQuality:
         cfg = _load("secure.txt")
         result = engine.execute(cfg)
         for ev in result.evaluations:
-            if ev.evidence.target_model_path:
+            if ev.evidence.universal_model_path:
                 e = ev.evidence
                 assert e.control_id != ""
                 assert e.result in ("PASS", "FAIL", "REVIEW")
                 assert e.operator != "" or e.result == "REVIEW"
-                assert e.result_reasoning.strip() != ""
+                assert e.reasoning.strip() != ""
                 assert 0 < e.confidence <= 1
 
     def test_regex_controls_have_raw_evidence(self, engine):
@@ -544,7 +543,7 @@ class TestEvidenceQuality:
         cfg = _load("secure.txt")
         result = engine.execute(cfg)
         for ev in result.evaluations:
-            if not ev.evidence.target_model_path and ev.is_automated:
+            if not ev.evidence.universal_model_path and ev.is_automated:
                 assert ev.evidence.audit_regex_matched is not None
 
     def test_manual_controls_have_reasoning(self, engine):
@@ -554,7 +553,7 @@ class TestEvidenceQuality:
         for ev in result.evaluations:
             if ev.evidence.assessment_status == "Manual":
                 assert ev.result == "REVIEW"
-                assert "Manual control" in ev.evidence.result_reasoning
+                assert "Manual control" in ev.evidence.reasoning
 
     def test_evidence_chain_1_1_1(self, engine):
         """Full evidence chain for AAA control"""
@@ -562,7 +561,7 @@ class TestEvidenceQuality:
         result = engine.execute(cfg)
         ev = next(e for e in result.evaluations if e.control_id == "1.1.1")
         e = ev.evidence
-        assert e.target_model_path == "aaa.authentication_enabled"
+        assert e.universal_model_path == "aaa.authentication_enabled"
         assert e.actual_value is True
         assert e.expected_value is True
         assert e.operator == "equals"
@@ -575,7 +574,7 @@ class TestEvidenceQuality:
         result = engine.execute(cfg)
         ev = next(e for e in result.evaluations if e.control_id == "2.1.1")
         e = ev.evidence
-        assert e.target_model_path == "management.ssh.version"
+        assert e.universal_model_path == "management.ssh.version"
         assert e.actual_value == 2
         assert e.expected_value == 2
         assert e.result == "PASS"
@@ -639,14 +638,17 @@ class TestConflictDetection:
         assert ev.result == "PASS"
 
     def test_conflict_different_values_review(self, engine):
-        """Conflicting duplicate settings → REVIEW for conflict-affected controls"""
+        """Conflicting transport across VTY blocks → FAIL with block evidence.
+
+        1.2.2 is multi-block evaluated: one telnet block is explicit
+        contradictory evidence (§13), not an ambiguous conflict.
+        """
         # Use a config with conflicting transport across VTY blocks (control 1.2.2)
         cfg = "hostname TEST\nline vty 0 4\n transport input ssh\nline vty 5 15\n transport input telnet\n"
         result = engine.execute(cfg)
-        # 1.2.2 (transport) is conflict-affected and not multi-block → REVIEW
         ev = next(e for e in result.evaluations if e.control_id == "1.2.2")
-        assert ev.result == "REVIEW"
-        assert "Conflicting" in ev.evidence.result_reasoning
+        assert ev.result == "FAIL"
+        assert "line vty 5 15" in ev.evidence.reasoning
 
     def test_conflict_detected_in_normalizer(self, normalizer):
         """Normalizer detects conflicting duplicates"""
@@ -789,11 +791,15 @@ class TestEdgeCases:
         assert ev.result == "FAIL"
 
     def test_transport_input_none(self, engine):
-        """transport input none → SSH blocked"""
+        """transport input none → PASS (no remote access: satisfies intent).
+
+        `none` positively establishes that no insecure transport is possible,
+        so it is not a violation. Documented interpretation, evidence-backed.
+        """
         cfg = "hostname TEST\nline vty 0 4\n transport input none\n"
         result = engine.execute(cfg)
         ev = next(e for e in result.evaluations if e.control_id == "1.2.2")
-        assert ev.result == "FAIL"  # expected=ssh, got=none
+        assert ev.result == "PASS"
 
     def test_transport_telnet_only(self, engine):
         """transport input telnet only → FAIL"""
@@ -831,12 +837,12 @@ class TestEdgeCases:
         assert ev.result == "REVIEW"
 
     def test_multiple_vty_transport_conflict(self, engine):
-        """Multiple VTY blocks with different transport → REVIEW (conflict detected)"""
+        """Multiple VTY blocks with different transport → FAIL with block evidence (§13)"""
         cfg = "hostname TEST\nline vty 0 4\n transport input telnet\nline vty 5 15\n transport input ssh\n"
         result = engine.execute(cfg)
         ev = next(e for e in result.evaluations if e.control_id == "1.2.2")
-        assert ev.result == "REVIEW"
-        assert "Conflicting" in ev.evidence.result_reasoning
+        assert ev.result == "FAIL"
+        assert "line vty 0 4" in ev.evidence.reasoning
 
     def test_exec_timeout_malformed(self, engine):
         """exec-timeout with non-numeric values → REVIEW"""

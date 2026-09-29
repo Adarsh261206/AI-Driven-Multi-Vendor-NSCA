@@ -1,0 +1,5 @@
+source,label,p50_ms,p95_ms,p99_ms,throughput_mb_s
+pytest synthetic sizes,1024 chars,0.235,0.3264,0.3526,
+pytest synthetic sizes,102400 chars,27.4461,30.7824,31.0688,
+pytest synthetic sizes,1048576 chars,294.1773,318.4208,320.3508,
+real dataset sweep,validate() over 480 files,0.5477,24.7329,90.3617,

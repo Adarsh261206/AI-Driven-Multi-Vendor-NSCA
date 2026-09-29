@@ -1,0 +1,5 @@
+source,label,p50_ms,p95_ms,max_ms,note
+sweep-pass1,313 dataset files ingested into a fresh KB (max 120 lines each),0.1321,0.1753,0.2596,ms per create+resolve; sum of per-file load time=2876.4ms over 20420 created rows (KB sizes <= 120 rows)
+V06-94,200 creates=35ms; 800 creates=144ms,,,,time ratio=4.1x for 4x input
+V06-95,1000 sequential lookups,,,,1 ms (0.00 ms/lookup) (probe: 1000 lookups = 77ms)
+V06-96,50 lookups over 200 rows,,,,"73 ms total, 1.5 ms/lookup; only index is ix_semantic_mappings_vendor_platform (001_initial_migration.py:219) - raw_syntax is unindexed"

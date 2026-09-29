@@ -7,6 +7,7 @@ import {
   BookOpenCheck,
   FileText,
   LayoutDashboard,
+  ListChecks,
   Network,
   PlayCircle,
   Settings,
@@ -37,7 +38,14 @@ const NAV_SECTIONS: { label: string; items: { href: string; label: string; icon:
   },
   {
     label: 'System',
-    items: [{ href: '/settings', label: 'Settings', icon: <Settings className="h-4 w-4" strokeWidth={1.75} /> }],
+    items: [
+      {
+        href: '/settings/baseline',
+        label: 'Company Baseline',
+        icon: <ListChecks className="h-4 w-4" strokeWidth={1.75} />,
+      },
+      { href: '/settings', label: 'Settings', icon: <Settings className="h-4 w-4" strokeWidth={1.75} /> },
+    ],
   },
 ];
 

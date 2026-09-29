@@ -1,0 +1,6 @@
+source,label,p50_ms,p95_ms,p99_ms,throughput_mb_s
+pytest synthetic sizes,1024 bytes,0.0013,0.0028,0.0124,751.2
+pytest synthetic sizes,102400 bytes,0.0508,0.0528,0.0569,1922.4
+pytest synthetic sizes,1048576 bytes,0.6807,0.8221,0.9051,1469.1
+real dataset sweep,dataset decode (480 files),0.0019,0.0185,0.0771,
+real dataset sweep,dataset sha256 (480 files),0.0062,0.068,0.1703,

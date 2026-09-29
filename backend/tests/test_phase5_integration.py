@@ -19,14 +19,14 @@ current_dir = os.path.dirname(os.path.abspath(__file__))
 parent_dir = os.path.dirname(current_dir)
 sys.path.insert(0, parent_dir)
 
-from app.engines.validation import ConfigurationValidator
-from app.engines.detection import VendorDetector
-from app.engines.parsing.cisco import CiscoIOSParser
-from app.engines.normalization import NormalizationEngine
-from app.engines.compliance.executor import AuditExecutor
-from app.ai.semantic import SemanticAnalyzer
-from app.ai.providers import MockAIProvider, AIRequest, AIResponse
-from app.ai.client import AIClient
+from app.engines.validation import ConfigurationValidator  # noqa: E402
+from app.engines.detection import VendorDetector  # noqa: E402
+from app.engines.parsing.cisco import CiscoIOSParser  # noqa: E402
+from app.engines.normalization import NormalizationEngine  # noqa: E402
+from app.engines.compliance.executor import AuditExecutor  # noqa: E402
+from app.ai.semantic import SemanticAnalyzer  # noqa: E402
+from app.ai.providers import MockAIProvider, AIRequest  # noqa: E402
+from app.ai.client import AIClient  # noqa: E402
 
 
 class MockKBRepository:
@@ -191,7 +191,7 @@ async def test_database_persistence():
     )
     assert mapping is not None
     assert mapping["vendor"] == "cisco"
-    assert mapping["admin_confirmed"] == True
+    assert mapping["admin_confirmed"]
     print("  ✓ Create mapping: PASSED")
     
     # Lookup mapping
@@ -281,7 +281,7 @@ async def test_ai_provider():
     
     assert response1 is not None
     assert response2 is not None
-    assert response2.cached == True
+    assert response2.cached
     assert mock_provider.call_count == 1  # Only one actual call
     print("  ✓ Response caching: PASSED")
     
@@ -431,7 +431,7 @@ async def test_training_workflow():
         admin_notes="Confirmed: Enables NetFlow monitoring",
     )
     
-    assert mapping["admin_confirmed"] == True
+    assert mapping["admin_confirmed"]
     print("  ✓ Mapping confirmed: PASSED")
     
     # Step 5: Log the interaction

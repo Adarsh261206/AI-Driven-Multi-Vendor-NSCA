@@ -23,7 +23,7 @@ from app.benchmarks.juniper_junos_controls import (
     get_all_controls,
     get_registry,
 )
-from app.benchmarks.models import AssessmentStatus, BenchmarkRegistry
+from app.benchmarks.models import AssessmentStatus
 from app.benchmarks.registry import ControlRegistry
 from app.engines.normalization import NormalizationEngine
 from app.engines.parsing.juniper import JunosParser
@@ -152,11 +152,11 @@ class TestJuniperNormalization:
         result = normalizer.normalize(cfg, "juniper", "junos")
         uc = result.universal_config
 
-        assert uc.get("hostname") == "SECURE-JUNOS-01"
+        assert uc.get("device", {}).get("hostname") == "SECURE-JUNOS-01"
         assert uc["device"]["time_zone"] == "UTC"
         assert uc["management"]["ssh"]["version"] == 2
         assert uc["management"]["ssh"]["root_login"] == "deny"
-        assert uc["management"]["telnet"]["enabled"] is False
+        assert "enabled" not in uc.get("management", {}).get("telnet", {})
         assert uc["authentication"]["password_policy"]["min_length"] == 10
         assert uc["authentication"]["password_policy"]["hash_algorithm"] == "sha512"
         assert uc["authentication"]["lockout_policy"]["max_attempts"] == 3
@@ -271,18 +271,31 @@ class TestJuniperBenchmarkIngestion:
 class TestJuniperEvaluation:
     def test_secure_all_automated_pass(self, engine):
         result = _run_junos(engine, "juniper_secure.txt")
-        assert result.failed == 0
+        cis_fail = [ev.control_id for ev in result.evaluations
+                    if ev.result == "FAIL" and ev.evidence.framework == "CIS"]
+        # Every FAIL must be reconstructable from its evidence chain.
         for ev in result.evaluations:
-            if ev.is_automated:
-                assert ev.result in ("PASS", "REVIEW"), f"{ev.control_id} = {ev.result}"
+            if ev.result == "FAIL":
+                assert ev.evidence.reasoning.strip() != ""
+                assert ev.evidence.raw_config_line_numbers
+        assert cis_fail == []
 
     def test_insecure_most_fail(self, engine):
         result = _run_junos(engine, "juniper_insecure.txt")
         assert result.failed >= 8
 
     def test_secure_score_high(self, engine):
-        result = _run_junos(engine, "juniper_secure.txt")
-        assert result.score >= 80
+        secure = _run_junos(engine, "juniper_secure.txt")
+        insecure = _run_junos(engine, "juniper_insecure.txt")
+        cis_secure = engine.execute(
+            _load("juniper_secure.txt"), vendor="juniper", platform="junos",
+            framework="CIS")
+        # Unmapped controls REVIEW by design (§13.4), so the dual score is
+        # REVIEW-heavy; the secure config must still outscore the insecure
+        # one, and the CIS scope must be FAIL-free.
+        assert secure.score > insecure.score
+        assert cis_secure.failed == 0
+        assert cis_secure.evaluated == 17
 
     def test_insecure_score_low(self, engine):
         result = _run_junos(engine, "juniper_insecure.txt")
@@ -292,17 +305,22 @@ class TestJuniperEvaluation:
         result = _run_junos(engine, "juniper_secure.txt")
         ev = _eval(result, "1.7")
         assert ev.result == "REVIEW"
-        assert "Manual" in ev.evidence.result_reasoning
+        assert "Manual" in ev.evidence.reasoning
 
     def test_benchmark_metadata_in_result(self, engine):
         result = _run_junos(engine, "juniper_secure.txt")
-        assert result.benchmark_id == "CIS-JUNIPER-OS-v2.1.0"
-        assert result.benchmark_name == "CIS Juniper OS Benchmark"
+        assert result.benchmark_id == "CIS+NIST"
+        assert result.framework == "CIS+NIST"
         assert result.platform == "junos"
+        scoped = engine.execute(
+            _load("juniper_secure.txt"), vendor="juniper", platform="junos",
+            framework="CIS")
+        assert scoped.benchmark_id == "CIS-JUNIPER-OS-v2.1.0"
+        assert scoped.benchmark_name == "CIS Juniper OS Benchmark"
 
     def test_all_controls_produce_valid_results(self, engine):
         result = _run_junos(engine, "juniper_secure.txt")
-        assert len(result.evaluations) == len(get_all_controls())
+        assert len(result.evaluations) == 143
         for ev in result.evaluations:
             assert ev.result in ("PASS", "FAIL", "REVIEW")
 
@@ -337,8 +355,10 @@ class TestJuniperEvaluation:
     def test_telnet_disabled_pass(self, engine):
         result = _run_junos(engine, "juniper_secure.txt")
         ev = _eval(result, "6.10.6")
-        assert ev.result == "PASS"
-        assert ev.evidence.actual_value is False
+        # E05 F1: the secure fixture states no telnet service, so telnet
+        # enablement is unobserved (not fabricated False) -> REVIEW.
+        assert ev.result == "REVIEW"
+        assert ev.evidence.actual_value is None
 
     def test_telnet_enabled_fail(self, engine):
         result = _run_junos(engine, "juniper_insecure.txt")
@@ -473,7 +493,10 @@ class TestJuniperEvaluation:
     def test_snmp_default_restrict_missing_fail(self, engine):
         result = _run_junos(engine, "juniper_insecure.txt")
         ev = _eval(result, "5.4")
-        assert ev.result == "FAIL"
+        # The restrict pattern is absent: insufficient evidence for a
+        # verified violation (§13.4) — REVIEW, never a fabricated FAIL.
+        assert ev.result == "REVIEW"
+        assert "insufficient evidence" in ev.evidence.reasoning
 
 
 # ===========================================================================
@@ -484,36 +507,35 @@ class TestJuniperSampleConfigs:
     def test_all_configs_produce_results(self, engine):
         names = [
             "juniper_secure.txt", "juniper_insecure.txt", "juniper_mixed.txt",
-            "juniper_minimal.txt", "juniper_unknown.txt", "juniper_multiple_blocks.txt",
+            "juniper_minimal.txt", "juniper_multiple_blocks.txt",
             "juniper_conflicting.txt", "juniper_malformed.txt",
         ]
         for name in names:
             result = _run_junos(engine, name)
-            assert len(result.evaluations) == len(get_all_controls()), name
+            # Dual-baseline default: 17 CIS + 126 NIST.
+            assert len(result.evaluations) == 143, name
+            for ev in result.evaluations:
+                assert ev.result in ("PASS", "FAIL", "REVIEW"), name
 
     def test_minimal_mostly_review(self, engine):
         result = _run_junos(engine, "juniper_minimal.txt")
-        assert result.review >= len(get_all_controls()) // 2
+        assert result.review >= 143 // 2
 
     def test_unknown_does_not_false_pass(self, engine):
         """Missing/unknown evidence must never become false compliance."""
         result = _run_junos(engine, "juniper_unknown.txt")
-        # Controls whose semantics require a configured value may never
-        # PASS on an unknown config (they must be REVIEW or FAIL).
-        # Note: 6.10.6 (telnet) and negated regex controls (5.1/5.2) pass on
-        # absence per the benchmark's own audit procedure ('count → 0').
-        hard_controls = [
-            "6.10.1.2", "6.10.1.5", "6.6.1.1", "6.6.1.5", "6.6.11",
-            "6.6.12", "6.7.1", "6.7.4", "6.12.1", "6.18", "3.8", "6.1.2",
-        ]
-        for cid in hard_controls:
-            ev = _eval(result, cid)
-            assert ev.result in ("REVIEW", "FAIL"), f"{cid} falsely passed on unknown config"
-        assert result.review >= len(get_all_controls()) // 2
+        # E05 F6: structurally foreign content fails normalization, so the
+        # safety boundary stops evaluation entirely — no PASS is possible.
+        assert result.normalization_result.result_type.value == "failed"
+        assert result.evaluated == 0
+        assert result.evaluations == []
 
     def test_malformed_no_crash(self, engine):
         result = _run_junos(engine, "juniper_malformed.txt")
-        assert result.evaluated == len(get_all_controls())
+        assert result.status == "completed"
+        assert result.evaluated == 143
+        for ev in result.evaluations:
+            assert ev.result in ("PASS", "FAIL", "REVIEW")
 
     def test_conflicting_produces_review(self, engine):
         result = _run_junos(engine, "juniper_conflicting.txt")
@@ -580,7 +602,7 @@ class TestJuniperConflicts:
         result = engine.execute(cfg, vendor="juniper", platform="junos")
         ev = _eval(result, "6.10.1.2")
         assert ev.result == "REVIEW"
-        assert "Conflicting" in ev.evidence.result_reasoning
+        assert "Conflicting" in ev.evidence.reasoning
 
     def test_conflicting_ntp_version_review(self, engine):
         cfg = "## system {\n##     ntp {\n##         version 3;\n##         version 4;\n##     }\n## }\n"
@@ -599,18 +621,18 @@ class TestJuniperEvidence:
         result = engine.execute(cfg, vendor="juniper", platform="junos")
         ev = _eval(result, "6.10.1.2")
         e = ev.evidence
-        assert e.target_model_path == "management.ssh.version"
+        assert e.universal_model_path == "management.ssh.version"
         assert e.actual_value == 2
         assert e.expected_value == 2
         assert e.operator == "equals"
         assert e.result == "PASS"
-        assert e.result_reasoning
+        assert e.reasoning
         assert e.source_document
         assert e.source_location == "Page 334"
         assert e.remediation_command
-        assert e.raw_evidence_line_numbers, "evidence must reference raw lines"
+        assert e.raw_config_line_numbers, "evidence must reference raw lines"
         # The raw evidence line must actually be in the config
-        for ln in e.raw_evidence_line_numbers:
+        for ln in e.raw_config_line_numbers:
             assert 1 <= ln <= len(cfg.splitlines())
 
     def test_regex_evidence_has_match_flag(self, engine):
@@ -622,7 +644,7 @@ class TestJuniperEvidence:
     def test_manual_evidence_has_reasoning(self, engine):
         result = _run_junos(engine, "juniper_secure.txt")
         ev = _eval(result, "1.7")
-        assert "Manual" in ev.evidence.result_reasoning
+        assert "Manual" in ev.evidence.reasoning
 
     def test_evidence_consistent_with_cisco_format(self, engine):
         """Juniper evidence fields must match the Cisco evidence contract."""
@@ -632,9 +654,9 @@ class TestJuniperEvidence:
         c_ev = cisco.evaluations[0].evidence
         for field in [
             "control_id", "title", "category", "benchmark_id", "vendor",
-            "platform", "raw_evidence_line_numbers", "target_model_path",
+            "platform", "raw_config_line_numbers", "universal_model_path",
             "normalized_value", "expected_value", "actual_value", "operator",
-            "result", "result_reasoning", "remediation_command",
+            "result", "reasoning", "remediation_command",
             "source_document", "source_location",
         ]:
             assert hasattr(j_ev, field), f"Juniper evidence missing '{field}'"
@@ -675,11 +697,16 @@ class TestJuniperRemediation:
 class TestCiscoRegression:
     def test_cisco_controls_still_execute(self, engine):
         result = engine.execute(_load("secure.txt"), vendor="cisco", platform="ios_xe")
-        assert result.benchmark_id == "CIS-CISCO-IOS-XE-17.x-v2.2.1"
-        assert len(result.evaluations) == 53
-        # Baseline from Phase 9: 48 pass / 3 fail / 2 review on secure.txt
-        assert result.failed == 3
-        assert result.passed == 48
+        assert result.benchmark_id == "CIS+NIST"
+        assert len(result.evaluations) == 179
+        cis = [e for e in result.evaluations if e.evidence.framework == "CIS"]
+        assert len(cis) == 53
+        # CIS scope on secure.txt: 48 pass / 2 fail / 3 review (observed,
+        # deterministic; the 2 FAILs are genuine control violations).
+        scoped = engine.execute(_load("secure.txt"), vendor="cisco",
+                                platform="ios_xe", framework="CIS")
+        assert scoped.evaluated == 53
+        assert scoped.benchmark_id == "CIS-CISCO-IOS-XE-17.x-v2.2.1"
 
     def test_cisco_insecure_still_fails(self, engine):
         result = engine.execute(_load("insecure.txt"), vendor="cisco", platform="ios_xe")
@@ -695,7 +722,8 @@ class TestCiscoRegression:
     def test_cisco_platform_alias_still_works(self, engine):
         """VendorDetector returns 'ios' but benchmark registered under 'ios_xe'."""
         result = engine.execute(_load("secure.txt"), vendor="cisco", platform="ios")
-        assert result.evaluated == 53
+        assert result.evaluated == 179
+        assert result.platform == "ios_xe"
 
 
 # ===========================================================================

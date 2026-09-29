@@ -264,25 +264,48 @@ class FindingStatus(str, Enum):
 
 
 class EvidenceChain(BaseModel):
-    """Schema for evidence chain"""
-    raw_config: str
+    """Schema for evidence chain — the §12 EvidenceChain interface.
+
+    Value fields are Optional because honest chains carry null where
+    nothing was observed (e.g. no normalized value for raw-evidence
+    decisions, no parsed statement for absence-based results); the KEYS
+    are always present, which is what the contract guarantees.
+    """
+    raw_config: Optional[str] = ""
     raw_config_line_numbers: Optional[List[int]] = []
-    parsed_value: str
-    parsed_path: Optional[List[str]] = []
-    normalized_value: str
-    universal_model_path: Optional[str]
-    normalization_confidence: Optional[float]
-    security_control: str
-    control_description: Optional[str]
-    expected_value: str
-    actual_value: str
-    operator: Optional[str]
-    result: str
-    result_reasoning: str
-    overall_confidence: float
-    vendor: Optional[str]
-    platform: Optional[str]
-    vendor_specific_syntax: Optional[str]
+    parsed_value: Optional[Any] = None
+    parsed_path: Optional[Any] = ""
+    normalized_value: Optional[Any] = None
+    universal_model_path: Optional[str] = ""
+    normalization_confidence: Optional[float] = 0.0
+    security_control: Optional[str] = ""
+    control_description: Optional[str] = ""
+    expected_value: Optional[Any] = None
+    actual_value: Optional[Any] = None
+    operator: Optional[str] = ""
+    result: Optional[str] = ""
+    reasoning: Optional[str] = ""
+    overall_confidence: Optional[float] = 0.0
+    vendor: Optional[str] = ""
+    platform: Optional[str] = ""
+    vendor_specific_syntax: Optional[str] = ""
+    control_id: Optional[str] = ""
+    # Device provenance + evaluation traceability (Issue #1, §8/§21):
+    # persisted in evidence JSONB; exposed here so API consumers and
+    # report aggregation see the same lineage as the engine.
+    hostname: Optional[str] = ""
+    device_type: Optional[str] = ""
+    scope: Optional[str] = ""
+    observed_state: Optional[str] = ""
+    expected_state: Optional[str] = ""
+    evidence_block_count: Optional[int] = 0
+    affected_scope_count: Optional[int] = 0
+    review_code: Optional[str] = ""
+    evaluation_method: Optional[str] = ""
+    benchmark_id: Optional[str] = ""
+    benchmark_name: Optional[str] = ""
+    framework: Optional[str] = ""
+    framework_version: Optional[str] = ""
 
 
 class Remediation(BaseModel):
@@ -304,22 +327,33 @@ class Remediation(BaseModel):
 
 
 class FindingResponse(BaseModel):
-    """Schema for finding response"""
+    """Schema for finding response — the §12 Finding interface plus
+    retained operational fields (audit_id, affected_platform, timestamps).
+
+    control_id is mandatory: API consumers must identify exactly which
+    control produced the finding. evidence is the typed §12 EvidenceChain,
+    not an opaque dict.
+    """
     model_config = ConfigDict(from_attributes=True)
 
     id: UUID
     audit_id: Optional[UUID] = None
+    compliance_result_id: Optional[UUID] = None
+    control_id: Optional[str] = None
     title: str
     description: str
     severity: str
     confidence: float
     status: str
-    evidence: Optional[dict] = None
+    evidence: Optional[EvidenceChain] = None
     remediation: Optional[dict] = None
     affected_device: Optional[str] = None
     affected_vendor: Optional[str] = None
     affected_platform: Optional[str] = None
-    compliance_result_id: Optional[UUID] = None
+    risk_score: Optional[float] = None
+    priority: Optional[str] = None
+    risk_method: Optional[str] = None
+    risk_model_version: Optional[str] = None
     created_at: Optional[datetime] = None
     updated_at: Optional[datetime] = None
 
@@ -339,13 +373,24 @@ class FindingListResponse(BaseModel):
 # ============ Training Schemas ============
 
 class TrainingMappingCreate(BaseModel):
-    """Schema for creating a training mapping"""
+    """Schema for creating a training mapping.
+
+    `confidence` is an optional producer estimate (0.0-1.0); when omitted it
+    defaults to 0.5 for an unconfirmed proposal and 1.0 only when the
+    administrator explicitly asserts the mapping. `admin_confirmed`
+    therefore defaults to False: a stored proposal enters the review queue
+    (spec 14.3.2 low confidence -> REVIEW) and only an explicit
+    POST /mappings/{id}/confirm makes it reusable. Trust fields
+    (version/id/created_by) stay server-assigned.
+    """
     vendor: str = Field(..., max_length=50)
     platform: str = Field(..., max_length=50)
-    raw_syntax: str
-    semantic_meaning: str
+    raw_syntax: str = Field(..., min_length=1, max_length=4096)
+    semantic_meaning: str = Field(..., min_length=1, max_length=2000)
     universal_model_path: Optional[str] = None
-    admin_notes: Optional[str] = None
+    confidence: Optional[float] = Field(None, ge=0.0, le=1.0)
+    admin_confirmed: bool = False
+    admin_notes: Optional[str] = Field(None, max_length=2000)
 
 
 class TrainingMappingUpdate(BaseModel):
@@ -357,7 +402,7 @@ class TrainingMappingUpdate(BaseModel):
 
 
 class TrainingMappingResponse(BaseModel):
-    """Schema for training mapping response"""
+    """Schema for training mapping response (spec section 12 interface)"""
     model_config = ConfigDict(from_attributes=True)
 
     id: UUID
@@ -370,6 +415,7 @@ class TrainingMappingResponse(BaseModel):
     admin_confirmed: bool
     admin_notes: Optional[str]
     version: int
+    created_by: str
     created_at: datetime
     updated_at: datetime
 
@@ -380,6 +426,7 @@ class MappingVersionResponse(BaseModel):
     raw_syntax: str
     semantic_meaning: str
     universal_model_path: Optional[str]
+    confidence: Optional[float] = None
     changed_by: Optional[str]
     changed_at: datetime
     change_reason: Optional[str]
@@ -415,6 +462,13 @@ class MappingVersionListResponse(BaseModel):
     items: List[MappingVersionResponse]
 
 
+class ReanalyzeRequest(BaseModel):
+    """Schema for §9.2 step-5 re-analysis of a config with a mapping."""
+    config_content: str = Field(..., min_length=1, max_length=200000)
+    vendor: Optional[str] = Field(None, max_length=50)
+    platform: Optional[str] = Field(None, max_length=50)
+
+
 # ============ Report Schemas ============
 
 class ReportResponse(BaseModel):
@@ -442,10 +496,89 @@ class ReportListResponse(BaseModel):
     meta: PaginationMeta
 
 
-# ============ Health Schemas ============
+# ============ Audit Trail Schemas (Engine 12) ============
 
-class HealthResponse(BaseModel):
-    """Schema for health check response"""
+class AuditTrailResponse(BaseModel):
+    """One audit-trail record (spec 10.12 output)"""
+    model_config = ConfigDict(from_attributes=True)
+
+    id: UUID
+    action: str
+    entity_type: str
+    entity_id: Optional[UUID] = None
+    user_id: Optional[UUID] = None
+    # NULL for legacy rows predating E12 sanitization (which always
+    # writes {}); served as-is, never backfilled.
+    details: Optional[Dict[str, Any]] = None
+    ip_address: Optional[str] = None
+    user_agent: Optional[str] = None
+    created_at: datetime
+
+
+class AuditTrailListResponse(BaseModel):
+    """Schema for audit-trail query response"""
+    items: List[AuditTrailResponse]
+    meta: PaginationMeta
+
+
+# ============ Baseline Schemas ============
+
+class BaselineUploadRequest(BaseModel):
+    """Schema for company baseline upload during onboarding."""
+    name: str = Field(..., min_length=1, max_length=255)
+    framework: str = Field("CIS", max_length=50)
+    benchmark: str = Field("CIS Cisco IOS XE 17.x", max_length=255)
+    controls: list[str] = Field(..., min_length=1, description="CIS control IDs selected as company baseline")
+
+
+class BaselineValidationError(BaseModel):
+    """Schema for a single validation error."""
+    control_id: str
+    reason: str  # e.g. "duplicate", "unknown", "malformed", "unsupported"
+
+
+class BaselineValidationResult(BaseModel):
+    """Schema for baseline validation result."""
+    valid_count: int
+    errors: list[BaselineValidationError]
+    invalid_controls: list[str]  # control IDs that failed validation
+
+
+class BaselineActivationRequest(BaseModel):
+    """Schema for baseline activation confirmation."""
+    confirm: bool = Field(True, description="Must be True to activate the baseline")
+
+
+class CompanyBaselineSummary(BaseModel):
+    """Schema for company baseline summary in reports."""
+    name: str
+    framework: str
+    benchmark: str
+    control_count: int
     status: str
-    version: str
-    service: str
+    activated_at: Optional[datetime] = None
+
+
+class SideBySideComparison(BaseModel):
+    """Schema for side-by-side company baseline vs full CIS comparison."""
+    control_id: str
+    company_result: str  # PASS, FAIL, REVIEW, OUT_OF_SCOPE
+    full_cis_result: str  # PASS, FAIL, REVIEW
+    in_scope: bool  # True if control is in company baseline
+
+
+class ReportComparisonSection(BaseModel):
+    """Schema for a comparison section in the report."""
+    title: str
+    framework: str
+    control_count: int
+    passed: int
+    failed: int
+    review: int
+
+
+class BaselineNotConfiguredResponse(BaseModel):
+    """Schema for response when no baseline is configured."""
+    baseline_status: str = "NOT_CONFIGURED"
+    company_baseline_available: bool = False
+    evaluation_unavailable: bool = True

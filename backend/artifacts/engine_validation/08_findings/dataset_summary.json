@@ -1,0 +1,228 @@
+{
+  "files": 480,
+  "ok_files": 480,
+  "errors": 0,
+  "elapsed_s": 213.9,
+  "exec_ms": {
+    "p50": 558.3,
+    "p95": 742.3,
+    "max": 3431.0
+  },
+  "files_with_findings": 307,
+  "files_without_findings": 173,
+  "total_findings": 14221,
+  "severity_totals": {
+    "critical": 0,
+    "high": 8069,
+    "medium": 5515,
+    "low": 637,
+    "other": 0
+  },
+  "status_totals": {
+    "open": 14221,
+    "other": 0
+  },
+  "priority_totals": {
+    "p1": 0,
+    "p2": 8068,
+    "p3": 5516,
+    "other": 637
+  },
+  "evidence": {
+    "full_8_keys": 14221,
+    "partial": 0,
+    "none": 0,
+    "missing_keys_seen": []
+  },
+  "remediation": {
+    "present": 14221,
+    "missing_spec_keys": [],
+    "partial_of_present": 0
+  },
+  "pass_became_finding": 0,
+  "g_counts": {
+    "wrong_vendor_attributed": 71,
+    "label_detection_mismatch": 201
+  },
+  "by_label": {
+    "A10": {
+      "files": 3,
+      "errors": 0,
+      "files_with_findings": 1,
+      "findings": 51,
+      "sev": {
+        "critical": 0,
+        "high": 29,
+        "medium": 19,
+        "low": 3,
+        "other": 0
+      },
+      "g_files": 3
+    },
+    "Arista": {
+      "files": 38,
+      "errors": 0,
+      "files_with_findings": 36,
+      "findings": 1829,
+      "sev": {
+        "critical": 0,
+        "high": 1077,
+        "medium": 691,
+        "low": 61,
+        "other": 0
+      },
+      "g_files": 38
+    },
+    "Cisco": {
+      "files": 252,
+      "errors": 0,
+      "files_with_findings": 197,
+      "findings": 9992,
+      "sev": {
+        "critical": 0,
+        "high": 5730,
+        "medium": 3830,
+        "low": 432,
+        "other": 0
+      },
+      "g_files": 47
+    },
+    "F5": {
+      "files": 11,
+      "errors": 0,
+      "files_with_findings": 2,
+      "findings": 30,
+      "sev": {
+        "critical": 0,
+        "high": 10,
+        "medium": 18,
+        "low": 2,
+        "other": 0
+      },
+      "g_files": 11
+    },
+    "FRR": {
+      "files": 63,
+      "errors": 0,
+      "files_with_findings": 32,
+      "findings": 1696,
+      "sev": {
+        "critical": 0,
+        "high": 960,
+        "medium": 640,
+        "low": 96,
+        "other": 0
+      },
+      "g_files": 63
+    },
+    "Fortinet": {
+      "files": 30,
+      "errors": 0,
+      "files_with_findings": 0,
+      "findings": 0,
+      "sev": {
+        "critical": 0,
+        "high": 0,
+        "medium": 0,
+        "low": 0,
+        "other": 0
+      },
+      "g_files": 1
+    },
+    "Juniper": {
+      "files": 41,
+      "errors": 0,
+      "files_with_findings": 35,
+      "findings": 460,
+      "sev": {
+        "critical": 0,
+        "high": 176,
+        "medium": 249,
+        "low": 35,
+        "other": 0
+      },
+      "g_files": 6
+    },
+    "NAPALM": {
+      "files": 4,
+      "errors": 0,
+      "files_with_findings": 4,
+      "findings": 163,
+      "sev": {
+        "critical": 0,
+        "high": 87,
+        "medium": 68,
+        "low": 8,
+        "other": 0
+      },
+      "g_files": 0
+    },
+    "PaloAlto": {
+      "files": 38,
+      "errors": 0,
+      "files_with_findings": 0,
+      "findings": 0,
+      "sev": {
+        "critical": 0,
+        "high": 0,
+        "medium": 0,
+        "low": 0,
+        "other": 0
+      },
+      "g_files": 32
+    }
+  },
+  "contract_checks": [
+    {
+      "id": "C1",
+      "name": "no untyped errors (per-file exceptions recorded only)",
+      "probes": 480,
+      "violations": 0,
+      "detail": []
+    },
+    {
+      "id": "C2",
+      "name": "PASS evaluations never become findings",
+      "probes": 14221,
+      "violations": 0,
+      "detail": []
+    },
+    {
+      "id": "C3",
+      "name": "boundary runs carry zero findings; unsupported vendors zero decisive findings",
+      "probes": 480,
+      "violations": 0,
+      "detail": []
+    },
+    {
+      "id": "C4",
+      "name": "every finding carries the \u00a712 evidence interface",
+      "probes": 14221,
+      "violations": 0,
+      "detail": []
+    },
+    {
+      "id": "C5",
+      "name": "every finding carries the \u00a712 remediation interface",
+      "probes": 14221,
+      "violations": 0,
+      "detail": []
+    },
+    {
+      "id": "C6",
+      "name": "every severity is canonical uppercase",
+      "probes": 14221,
+      "violations": 0,
+      "detail": []
+    },
+    {
+      "id": "C7",
+      "name": "deterministic finding counts across runs",
+      "probes": 30,
+      "violations": 0,
+      "detail": []
+    }
+  ],
+  "contract_violations_total": 0,
+  "contract_verdict": "PASS"
+}

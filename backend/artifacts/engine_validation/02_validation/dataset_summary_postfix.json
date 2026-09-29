@@ -1,0 +1,279 @@
+{
+  "engine": "02_configuration_validation_postfix",
+  "dataset_root": "C:\\Users\\priye\\Downloads\\SIH Config\\final-dataset",
+  "files_total": 480,
+  "bytes_total": 11584713,
+  "is_valid_true": 479,
+  "is_valid_false": 1,
+  "files_with_zero_issues": 293,
+  "files_with_warnings": 186,
+  "files_with_errors": 1,
+  "files_with_info": 5,
+  "issue_code_totals": {
+    "UNKNOWN_CONTENT": 133,
+    "INSECURE_CONFIG": 16,
+    "SENSITIVE_DATA": 97,
+    "NO_SUBSTANTIVE_CONTENT": 1,
+    "MIXED_LINE_ENDINGS": 5,
+    "MIXED_VENDOR": 15,
+    "LONG_LINE": 2
+  },
+  "issue_code_file_counts": {
+    "UNKNOWN_CONTENT": 133,
+    "INSECURE_CONFIG": 12,
+    "SENSITIVE_DATA": 40,
+    "NO_SUBSTANTIVE_CONTENT": 1,
+    "MIXED_LINE_ENDINGS": 5,
+    "MIXED_VENDOR": 15,
+    "LONG_LINE": 2
+  },
+  "files_with_sensitive_data": 40,
+  "files_with_insecure_config": 12,
+  "files_with_empty_content": 0,
+  "files_with_binary_content": 0,
+  "files_with_null_byte": 0,
+  "files_with_no_substantive": 1,
+  "files_with_missing_value": 0,
+  "files_with_invalid_argument": 0,
+  "files_with_long_line": 2,
+  "files_with_mixed_endings": 5,
+  "files_with_unknown_content": 133,
+  "files_with_mixed_vendor": 15,
+  "files_with_vendor_hint_issues": 0,
+  "utf8_decode_failures": 0,
+  "determinism_mismatches": 0,
+  "timing_ms": {
+    "validate_p50": 2.3353,
+    "validate_p95": 115.3856,
+    "validate_p99": 370.9091,
+    "validate_mean": 24.2502,
+    "validate_max": 570.7462,
+    "sweep_wall_seconds": 28.815
+  },
+  "slowest_files": [
+    {
+      "relpath": "Juniper\\Routers\\T-Series\\chic.conf",
+      "validate_ms": 570.7462,
+      "size_bytes": 491015,
+      "line_count": 16221
+    },
+    {
+      "relpath": "Juniper\\Routers\\MX-Series\\chic.conf",
+      "validate_ms": 537.7493,
+      "size_bytes": 491015,
+      "line_count": 16221
+    },
+    {
+      "relpath": "Juniper\\Routers\\T-Series\\wash.conf",
+      "validate_ms": 463.1025,
+      "size_bytes": 420934,
+      "line_count": 14175
+    },
+    {
+      "relpath": "Juniper\\Routers\\MX-Series\\wash.conf",
+      "validate_ms": 447.1281,
+      "size_bytes": 420934,
+      "line_count": 14175
+    },
+    {
+      "relpath": "Juniper\\Routers\\MX-Series\\losa.conf",
+      "validate_ms": 370.9091,
+      "size_bytes": 314510,
+      "line_count": 10282
+    }
+  ],
+  "invalid_files": [
+    {
+      "relpath": "Cisco\\MultiAS-Lab\\pybatfish-test-snapshots\\fork-config.cfg",
+      "issue_codes": "NO_SUBSTANTIVE_CONTENTx1"
+    }
+  ],
+  "cross_engine_01_join": {
+    "joined_files": 480,
+    "e01_ingestible": 256,
+    "e01_ingestible_and_e02_valid": 255,
+    "e01_ingestible_and_e02_invalid": 1,
+    "e01_ingestible_and_e02_issues": 54,
+    "e01_rejected_extension": 143
+  },
+  "top_sensitive_files": [
+    {
+      "relpath": "Fortinet\\Firewalls\\FortiGate\\AzureVPN\\fortigate_show_full_configuration.txt",
+      "sensitive_hits": 12,
+      "insecure_hits": 0,
+      "lines": 10685
+    },
+    {
+      "relpath": "Cisco\\Routers\\IOS-XE\\csr1000v-connection-log.txt",
+      "sensitive_hits": 7,
+      "insecure_hits": 1,
+      "lines": 448
+    },
+    {
+      "relpath": "Fortinet\\Firewalls\\FortiGate\\U_FN_FortiGate_Firewall_NDM_STIG_V1R4_Manual-xccdf.xml",
+      "sensitive_hits": 4,
+      "insecure_hits": 0,
+      "lines": 1849
+    },
+    {
+      "relpath": "Juniper\\Firewalls\\SRX\\configs_junos-srx-1.cfg",
+      "sensitive_hits": 4,
+      "insecure_hits": 0,
+      "lines": 118
+    },
+    {
+      "relpath": "Juniper\\Firewalls\\SRX\\configs_junos-srx-2.cfg",
+      "sensitive_hits": 4,
+      "insecure_hits": 0,
+      "lines": 99
+    },
+    {
+      "relpath": "Juniper\\Firewalls\\SRX\\configs_junos-srx-3.cfg",
+      "sensitive_hits": 4,
+      "insecure_hits": 0,
+      "lines": 93
+    },
+    {
+      "relpath": "Cisco\\MultiAS-Lab\\PublicRepos\\cisco-configurations\\firewall_ASA1.cfg",
+      "sensitive_hits": 3,
+      "insecure_hits": 0,
+      "lines": 39
+    },
+    {
+      "relpath": "Cisco\\MultiAS-Lab\\PublicRepos\\cisco-configurations\\firewall_ASA2.cfg",
+      "sensitive_hits": 3,
+      "insecure_hits": 0,
+      "lines": 39
+    },
+    {
+      "relpath": "Cisco\\MultiAS-Lab\\PublicRepos\\cisco-configurations\\routers_R1.cfg",
+      "sensitive_hits": 3,
+      "insecure_hits": 0,
+      "lines": 29
+    },
+    {
+      "relpath": "Cisco\\MultiAS-Lab\\PublicRepos\\cisco-configurations\\routers_R2.cfg",
+      "sensitive_hits": 3,
+      "insecure_hits": 0,
+      "lines": 29
+    }
+  ],
+  "top_insecure_files": [
+    {
+      "relpath": "Cisco\\Wireless\\AccessPoint\\AP1141N-E-K9.conf",
+      "insecure_hits": 3,
+      "lines": 312
+    },
+    {
+      "relpath": "Cisco\\Routers\\IOS\\c2911-router.conf",
+      "insecure_hits": 2,
+      "lines": 592
+    },
+    {
+      "relpath": "Cisco\\Voice\\CUCME\\c2811-CUCME.conf",
+      "insecure_hits": 2,
+      "lines": 512
+    },
+    {
+      "relpath": "Cisco\\MultiAS-Lab\\hybrid-cloud\\exitgw.cfg",
+      "insecure_hits": 1,
+      "lines": 354
+    },
+    {
+      "relpath": "Cisco\\MultiAS-Lab\\lhr-border\\lhr-border-02.cfg",
+      "insecure_hits": 1,
+      "lines": 282
+    },
+    {
+      "relpath": "Cisco\\MultiAS-Lab\\PublicRepos\\network-labs\\10-ACL_configs_HR.txt",
+      "insecure_hits": 1,
+      "lines": 105
+    },
+    {
+      "relpath": "Cisco\\MultiAS-Lab\\PublicRepos\\network-labs\\11-NAT-PAT_configs_internet.txt",
+      "insecure_hits": 1,
+      "lines": 118
+    },
+    {
+      "relpath": "Cisco\\MultiAS-Lab\\PublicRepos\\network-labs\\11-NAT-PAT_configs_PC1.txt",
+      "insecure_hits": 1,
+      "lines": 118
+    },
+    {
+      "relpath": "Cisco\\MultiAS-Lab\\PublicRepos\\network-labs\\11-NAT-PAT_configs_PC2.txt",
+      "insecure_hits": 1,
+      "lines": 118
+    },
+    {
+      "relpath": "Cisco\\MultiAS-Lab\\PublicRepos\\network-labs\\11-NAT-PAT_configs_Router.txt",
+      "insecure_hits": 1,
+      "lines": 123
+    }
+  ],
+  "issue_code_by_extension": {
+    ".cfg": {
+      "INSECURE_CONFIG": 2,
+      "UNKNOWN_CONTENT": 2,
+      "SENSITIVE_DATA": 32,
+      "NO_SUBSTANTIVE_CONTENT": 1
+    },
+    ".conf": {
+      "SENSITIVE_DATA": 16,
+      "INSECURE_CONFIG": 8,
+      "UNKNOWN_CONTENT": 29
+    },
+    ".j2": {
+      "UNKNOWN_CONTENT": 4
+    },
+    ".md": {
+      "UNKNOWN_CONTENT": 24
+    },
+    ".txt": {
+      "INSECURE_CONFIG": 6,
+      "SENSITIVE_DATA": 37,
+      "MIXED_LINE_ENDINGS": 3,
+      "MIXED_VENDOR": 7,
+      "UNKNOWN_CONTENT": 3
+    },
+    ".xml": {
+      "MIXED_LINE_ENDINGS": 2,
+      "LONG_LINE": 2,
+      "MIXED_VENDOR": 1,
+      "SENSITIVE_DATA": 7,
+      "UNKNOWN_CONTENT": 30
+    },
+    ".xsl": {
+      "UNKNOWN_CONTENT": 1
+    },
+    ".yaml": {
+      "UNKNOWN_CONTENT": 24
+    },
+    ".yml": {
+      "UNKNOWN_CONTENT": 2,
+      "SENSITIVE_DATA": 2
+    },
+    "<none>": {
+      "MIXED_VENDOR": 7,
+      "UNKNOWN_CONTENT": 14,
+      "SENSITIVE_DATA": 3
+    }
+  },
+  "pre_fix_delta": {
+    "is_valid_true": -1,
+    "is_valid_false": 1,
+    "files_with_zero_issues": 70,
+    "issue_code_totals": {
+      "INSECURE_CONFIG": -118,
+      "MIXED_VENDOR": 15,
+      "NO_SUBSTANTIVE_CONTENT": 1,
+      "SENSITIVE_DATA": -9446,
+      "UNKNOWN_CONTENT": 133
+    },
+    "pre_fix_timing_ms": {
+      "validate_p50": 0.5477,
+      "validate_p95": 24.7329,
+      "validate_p99": 90.3617,
+      "validate_mean": 5.3492
+    }
+  }
+}

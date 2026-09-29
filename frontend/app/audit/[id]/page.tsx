@@ -7,10 +7,13 @@ import {
   Activity,
   AlertOctagon,
   AlertTriangle,
+  BookOpenCheck,
   CheckCircle2,
   Download,
   Eye,
   FileText,
+  Layers,
+  ListChecks,
   Network,
   RefreshCw,
   ShieldCheck,
@@ -445,6 +448,227 @@ export default function AuditDetailPage() {
               <Link href="/training" className="btn-secondary shrink-0">Open AI Training →</Link>
             </div>
           )}
+
+          {/* Company Baseline / Full CIS / NIST — three separate layers */}
+          {(() => {
+            const company = summary?.company_baseline;
+            const compliance = summary?.compliance ?? {};
+            const cis = compliance.CIS;
+            const nist = compliance.NIST;
+            const comparison = company?.comparison ?? [];
+            const hasCompany = company?.configured === true;
+
+            if (!hasCompany && !cis && !nist) return null;
+
+            return (
+              <div className="space-y-5">
+                <div className="flex items-center gap-2.5 text-sm text-ink-400">
+                  <Layers className="h-4 w-4" />
+                  <span>
+                    Three separate layers: Company Baseline scope, Full CIS reference, and NIST
+                    evaluation.
+                  </span>
+                </div>
+
+                <div className="grid grid-cols-1 gap-5 lg:grid-cols-3">
+                  {/* A. COMPANY BASELINE */}
+                  <div className="card overflow-hidden">
+                    <div className="card-header">
+                      <div>
+                        <p className="label mb-1">Company Compliance</p>
+                        <h3 className="section-title flex items-center gap-2">
+                          <ListChecks className="h-4 w-4 text-brand-600" />
+                          Company Baseline
+                        </h3>
+                      </div>
+                      {hasCompany ? <span className="badge-info">{company!.in_scope_count} in scope</span> : <span className="badge-info">Not configured</span>}
+                    </div>
+                    <div className="px-6 py-5">
+                      {hasCompany ? (
+                        <div className="space-y-4">
+                          <div className="flex items-end justify-between">
+                            <div>
+                              <p className="text-3xl font-bold tracking-tight text-ink-100">{formatPercent(company!.score)}</p>
+                              <p className="text-xs font-semibold uppercase tracking-widest text-ink-400 mt-1">company score</p>
+                            </div>
+                            <div className="text-right text-xs text-ink-400">
+                              <p>denominator: {company!.in_scope_count}</p>
+                              <p className="mt-0.5">{company!.out_of_scope} OUT_OF_SCOPE</p>
+                            </div>
+                          </div>
+                          <div className="grid grid-cols-3 gap-2.5">
+                            <div className="rounded-lg border border-emerald-200 bg-emerald-50 px-3 py-2.5 text-center">
+                              <p className="text-lg font-bold text-emerald-700">{company!.passed}</p>
+                              <p className="text-[10px] font-semibold uppercase tracking-wider text-emerald-600">PASS</p>
+                            </div>
+                            <div className="rounded-lg border border-red-200 bg-red-50 px-3 py-2.5 text-center">
+                              <p className="text-lg font-bold text-red-700">{company!.failed}</p>
+                              <p className="text-[10px] font-semibold uppercase tracking-wider text-red-600">FAIL</p>
+                            </div>
+                            <div className="rounded-lg border border-amber-200 bg-amber-50 px-3 py-2.5 text-center">
+                              <p className="text-lg font-bold text-amber-700">{company!.review}</p>
+                              <p className="text-[10px] font-semibold uppercase tracking-wider text-amber-600">REVIEW</p>
+                            </div>
+                          </div>
+                          <p className="text-xs leading-relaxed text-ink-400">
+                            {company!.name} — {company!.framework} · {company!.benchmark}. Controls
+                            outside this baseline are OUT_OF_SCOPE and never counted.
+                          </p>
+                        </div>
+                      ) : (
+                        <p className="text-sm leading-relaxed text-ink-400">
+                          No company baseline configured. Full CIS auditing continues normally — no
+                          company compliance score is generated.
+                        </p>
+                      )}
+                    </div>
+                  </div>
+
+                  {/* B. FULL CIS */}
+                  <div className="card overflow-hidden">
+                    <div className="card-header">
+                      <div>
+                        <p className="label mb-1">Full CIS Reference</p>
+                        <h3 className="section-title flex items-center gap-2">
+                          <BookOpenCheck className="h-4 w-4 text-blue-600" />
+                          Full CIS
+                        </h3>
+                      </div>
+                      {cis && <span className="badge-info">{cis.controls} controls</span>}
+                    </div>
+                    <div className="px-6 py-5">
+                      {cis && cis.controls > 0 ? (
+                        <div className="space-y-4">
+                          <div className="flex items-end justify-between">
+                            <div>
+                              <p className="text-3xl font-bold tracking-tight text-ink-100">
+                                {formatPercent(cis.controls > 0 ? (cis.pass / (cis.pass + cis.fail)) * 100 : null)}
+                              </p>
+                              <p className="text-xs font-semibold uppercase tracking-widest text-ink-400 mt-1">CIS score</p>
+                            </div>
+                            <div className="text-right text-xs text-ink-400">
+                              <p>denominator: {cis.pass + cis.fail}</p>
+                            </div>
+                          </div>
+                          <div className="grid grid-cols-3 gap-2.5">
+                            <div className="rounded-lg border border-emerald-200 bg-emerald-50 px-3 py-2.5 text-center">
+                              <p className="text-lg font-bold text-emerald-700">{cis.pass}</p>
+                              <p className="text-[10px] font-semibold uppercase tracking-wider text-emerald-600">PASS</p>
+                            </div>
+                            <div className="rounded-lg border border-red-200 bg-red-50 px-3 py-2.5 text-center">
+                              <p className="text-lg font-bold text-red-700">{cis.fail}</p>
+                              <p className="text-[10px] font-semibold uppercase tracking-wider text-red-600">FAIL</p>
+                            </div>
+                            <div className="rounded-lg border border-amber-200 bg-amber-50 px-3 py-2.5 text-center">
+                              <p className="text-lg font-bold text-amber-700">{cis.review}</p>
+                              <p className="text-[10px] font-semibold uppercase tracking-wider text-amber-600">REVIEW</p>
+                            </div>
+                          </div>
+                          <p className="text-xs leading-relaxed text-ink-400">
+                            The complete benchmark evaluation — authoritative and unchanged by the
+                            company baseline.
+                          </p>
+                        </div>
+                      ) : (
+                        <p className="text-sm leading-relaxed text-ink-400">No CIS evaluation rows for this audit.</p>
+                      )}
+                    </div>
+                  </div>
+
+                  {/* C. NIST */}
+                  <div className="card overflow-hidden">
+                    <div className="card-header">
+                      <div>
+                        <p className="label mb-1">NIST</p>
+                        <h3 className="section-title flex items-center gap-2">
+                          <ShieldCheck className="h-4 w-4 text-violet-600" />
+                          NIST SP 800-53
+                        </h3>
+                      </div>
+                      {nist && nist.controls > 0 && <span className="badge-info">{nist.controls} controls</span>}
+                    </div>
+                    <div className="px-6 py-5">
+                      {nist && nist.controls > 0 ? (
+                        <div className="space-y-4">
+                          <div className="grid grid-cols-3 gap-2.5">
+                            <div className="rounded-lg border border-emerald-200 bg-emerald-50 px-3 py-2.5 text-center">
+                              <p className="text-lg font-bold text-emerald-700">{nist.pass}</p>
+                              <p className="text-[10px] font-semibold uppercase tracking-wider text-emerald-600">PASS</p>
+                            </div>
+                            <div className="rounded-lg border border-red-200 bg-red-50 px-3 py-2.5 text-center">
+                              <p className="text-lg font-bold text-red-700">{nist.fail}</p>
+                              <p className="text-[10px] font-semibold uppercase tracking-wider text-red-600">FAIL</p>
+                            </div>
+                            <div className="rounded-lg border border-amber-200 bg-amber-50 px-3 py-2.5 text-center">
+                              <p className="text-lg font-bold text-amber-700">{nist.review}</p>
+                              <p className="text-[10px] font-semibold uppercase tracking-wider text-amber-600">REVIEW</p>
+                            </div>
+                          </div>
+                          <p className="text-xs leading-relaxed text-ink-400">
+                            Separate NIST SP 800-53 evaluation layer — independent of the company
+                            baseline scope.
+                          </p>
+                        </div>
+                      ) : (
+                        <p className="text-sm leading-relaxed text-ink-400">
+                          No NIST evaluation for this audit (CIS-only run).
+                        </p>
+                      )}
+                    </div>
+                  </div>
+                </div>
+
+                {/* Control-by-control comparison — Company Baseline vs Full CIS */}
+                {comparison.length > 0 && (
+                  <div className="card overflow-hidden">
+                    <div className="card-header">
+                      <div>
+                        <h3 className="section-title flex items-center gap-2">
+                          <ListChecks className="h-4 w-4 text-brand-600" />
+                          Control comparison
+                        </h3>
+                        <p className="mt-1 text-sm text-ink-400">
+                          Company Baseline scope vs Full CIS — {comparison.length} controls
+                        </p>
+                      </div>
+                    </div>
+                    <div className="overflow-x-auto">
+                      <table className="table">
+                        <thead>
+                          <tr>
+                            <th>Control ID</th>
+                            <th>Company Baseline</th>
+                            <th>Full CIS</th>
+                            <th>In Scope</th>
+                          </tr>
+                        </thead>
+                        <tbody>
+                          {comparison.map((row) => (
+                            <tr key={row.control_id}>
+                              <td className="font-mono font-semibold text-ink-100">{row.control_id}</td>
+                              <td>
+                                <ResultBadge result={row.company_result} />
+                              </td>
+                              <td>
+                                <ResultBadge result={row.full_cis_result} />
+                              </td>
+                              <td>
+                                {row.in_scope ? (
+                                  <span className="text-xs font-medium text-emerald-700">In scope</span>
+                                ) : (
+                                  <span className="text-xs font-medium text-slate-500">Out of scope</span>
+                                )}
+                              </td>
+                            </tr>
+                          ))}
+                        </tbody>
+                      </table>
+                    </div>
+                  </div>
+                )}
+              </div>
+            );
+          })()}
 
           <div className="flex items-center gap-2.5 text-sm text-ink-400">
             <Eye className="h-4 w-4" />

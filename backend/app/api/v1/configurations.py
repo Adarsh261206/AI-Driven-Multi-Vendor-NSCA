@@ -1,17 +1,27 @@
 from fastapi import APIRouter, HTTPException, Query, status, Depends, UploadFile, File
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select, func
-from typing import List, Optional
+from typing import Optional
 from uuid import UUID
-import hashlib
 
 from app.database import get_db
+from app.engines.ingestion import (
+    DuplicateConfigurationError,
+    FileTooLargeError,
+    IngestionEngine,
+    IngestionError,
+)
 from app.models import User, Configuration
+from app.models import AuditAction
+from app.repositories.audit_trail import AuditTrailRepository
 from app.schemas import ConfigurationResponse, ConfigurationContentResponse, ConfigurationListResponse, PaginationMeta
 from app.security.auth import get_current_user, require_admin, require_auditor
 from app.config import settings
 
 router = APIRouter()
+
+# Read granularity for bounded upload reading (E01 N10).
+_UPLOAD_CHUNK_BYTES = 1024 * 1024
 
 
 @router.get("/", response_model=ConfigurationListResponse)
@@ -59,11 +69,6 @@ async def list_configurations(
     )
 
 
-def calculate_content_hash(content: bytes) -> str:
-    """Calculate SHA-256 hash of file content"""
-    return hashlib.sha256(content).hexdigest()
-
-
 @router.post("/upload", response_model=ConfigurationResponse, status_code=status.HTTP_201_CREATED)
 async def upload_configuration(
     file: UploadFile = File(...),
@@ -71,76 +76,111 @@ async def upload_configuration(
     db: AsyncSession = Depends(get_db),
     current_user: User = Depends(require_auditor),
 ):
-    """Upload a configuration file"""
-    # Validate file extension
+    """Upload a configuration file.
+
+    Transport-level handling only: this route performs a bounded read
+    of the uploaded part and then delegates every ingestion rule —
+    extension, size, filename safety, content validation, content type,
+    duplicate detection, device association, persistence — to
+    IngestionEngine, the single source of truth for ingestion
+    (E01 F9/N10).
+    """
     if not file.filename:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail="Filename is required"
         )
-    
-    file_ext = "." + file.filename.rsplit(".", 1)[-1].lower() if "." in file.filename else ""
-    if file_ext not in settings.ALLOWED_EXTENSIONS:
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail=f"File extension {file_ext} not allowed. Allowed: {settings.ALLOWED_EXTENSIONS}"
-        )
-    
-    # Read file content
-    content = await file.read()
-    
-    # Validate file size
+
     max_size = settings.MAX_UPLOAD_SIZE_MB * 1024 * 1024
-    if len(content) > max_size:
+
+    # Bounded read: stop as soon as the upload exceeds the limit so an
+    # oversized body is never fully materialised in memory (N10). The
+    # ASGI-level guard in app/main.py rejects oversized requests even
+    # earlier — before multipart parsing begins.
+    buffer = bytearray()
+    while True:
+        chunk = await file.read(_UPLOAD_CHUNK_BYTES)
+        if not chunk:
+            break
+        buffer.extend(chunk)
+        if len(buffer) > max_size:
+            raise HTTPException(
+                status_code=status.HTTP_413_REQUEST_ENTITY_TOO_LARGE,
+                detail=f"File size exceeds maximum of {settings.MAX_UPLOAD_SIZE_MB}MB"
+            )
+    content = bytes(buffer)
+
+    engine = IngestionEngine(db)
+    try:
+        result = await engine.ingest(
+            file_content=content,
+            filename=file.filename,
+            content_type=file.content_type,
+            device_id=device_id,
+        )
+    except DuplicateConfigurationError as exc:
+        # Preserved API semantics: identical content is idempotent and
+        # returns the existing row. Detection itself lives in the
+        # engine — this only fetches the row the engine identified.
+        # E12: the idempotent replay is still an access event — logged
+        # with duplicate=true so history distinguishes replays from
+        # newly stored configurations.
+        if exc.configuration_id is not None:
+            existing = await db.get(Configuration, exc.configuration_id)
+            if existing is not None:
+                trail = AuditTrailRepository(db)
+                await trail.log(
+                    action=AuditAction.CONFIG_UPLOADED,
+                    entity_type="configuration",
+                    entity_id=str(existing.id),
+                    user_id=str(current_user.id),
+                    details={
+                        "filename": file.filename,
+                        "duplicate": True,
+                        "configuration_id": str(existing.id),
+                    },
+                )
+                await db.flush()
+                return ConfigurationResponse.from_orm(existing)
+        raise HTTPException(
+            status_code=status.HTTP_409_CONFLICT,
+            detail="Configuration with identical content already exists",
+        )
+    except FileTooLargeError as exc:
         raise HTTPException(
             status_code=status.HTTP_413_REQUEST_ENTITY_TOO_LARGE,
-            detail=f"File size exceeds maximum of {settings.MAX_UPLOAD_SIZE_MB}MB"
+            detail=str(exc),
         )
-    
-    # Calculate hash
-    content_hash = calculate_content_hash(content)
-    
-    # Check for duplicate — return existing instead of erroring
-    existing = await db.execute(
-        select(Configuration).where(Configuration.content_hash == content_hash)
+    except IngestionError as exc:
+        # Every predictable input problem arrives here as a typed
+        # engine error; raw DB/Python exceptions never do.
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=str(exc),
+        )
+
+    config = await db.get(Configuration, result.configuration_id)
+    if config is None:  # pragma: no cover - flush guarantees the row
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="Ingested configuration could not be loaded",
+        )
+    # E12: a newly stored configuration is a tracked change.
+    trail = AuditTrailRepository(db)
+    await trail.log(
+        action=AuditAction.CONFIG_UPLOADED,
+        entity_type="configuration",
+        entity_id=str(config.id),
+        user_id=str(current_user.id),
+        details={
+            "filename": file.filename,
+            "content_type": file.content_type,
+            "size_bytes": len(content),
+            "duplicate": False,
+            "configuration_id": str(config.id),
+        },
     )
-    existing_config = existing.scalar_one_or_none()
-    if existing_config:
-        return ConfigurationResponse.from_orm(existing_config)
-    
-    # Decode content
-    try:
-        raw_content = content.decode("utf-8")
-        encoding = "utf-8"
-    except UnicodeDecodeError:
-        try:
-            raw_content = content.decode("latin-1")
-            encoding = "latin-1"
-        except UnicodeDecodeError:
-            raise HTTPException(
-                status_code=status.HTTP_400_BAD_REQUEST,
-                detail="Unable to decode file content"
-            )
-    
-    # Count lines
-    line_count = len(raw_content.splitlines())
-    
-    # Create configuration record
-    config = Configuration(
-        device_id=device_id,
-        filename=file.filename,
-        content_hash=content_hash,
-        raw_content=raw_content,
-        content_type=file.content_type or "text/plain",
-        size_bytes=len(content),
-        line_count=line_count,
-        encoding=encoding,
-    )
-    
-    db.add(config)
     await db.flush()
-    await db.refresh(config)
-    
     return ConfigurationResponse.from_orm(config)
 
 

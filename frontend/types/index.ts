@@ -150,6 +150,8 @@ export interface AuditExecutionSummary {
   findings_by_status: Partial<Record<FindingStatusValue, number>>;
   started_at: string | null;
   completed_at: string | null;
+  compliance?: Partial<Record<string, PerFrameworkCompliance>>;
+  company_baseline?: CompanyBaselineProjection;
 }
 
 // ---------------------------------------------------------------------------
@@ -320,4 +322,111 @@ export interface ReportJSON {
     severity: string;
     framework: string;
   }[];
+}
+
+// ---------------------------------------------------------------------------
+// Company Baseline
+// ---------------------------------------------------------------------------
+
+export type BaselineStateValue = 'NOT_CONFIGURED' | 'PENDING_VALIDATION' | 'ACTIVE';
+
+export type ComplianceResultValue = 'PASS' | 'FAIL' | 'REVIEW' | 'OUT_OF_SCOPE';
+
+export interface CompanyBaselineSummary {
+  name: string;
+  framework: string;
+  benchmark: string;
+  control_count: number;
+  status: string;
+  activated_at: string | null;
+}
+
+export interface BaselineStatusResponse {
+  baseline_status: BaselineStateValue;
+  baseline_available: boolean;
+  evaluation_unavailable: boolean;
+  organization_name?: string | null;
+  baseline?: CompanyBaselineSummary | null;
+}
+
+export interface BaselineValidationErrorItem {
+  control_id: string;
+  reason: 'duplicate' | 'unknown' | 'malformed';
+}
+
+export interface BaselineValidationResult {
+  valid_count: number;
+  errors: BaselineValidationErrorItem[];
+  invalid_controls: string[];
+}
+
+export interface BaselineValidateResponse {
+  status: 'valid' | 'invalid';
+  validation_result: BaselineValidationResult;
+  name: string;
+  framework: string;
+  benchmark: string;
+  control_count: number;
+}
+
+export interface BaselineUploadPayload {
+  name: string;
+  framework: string;
+  benchmark: string;
+  controls: string[];
+}
+
+export interface BaselineOnboardingResponse {
+  status: string;
+  validation_result?: BaselineValidationResult;
+  baseline?: {
+    id: string;
+    name: string;
+    framework: string;
+    benchmark: string;
+    control_count: number;
+    status: string;
+  };
+  activation_blocked?: boolean;
+  reason?: string;
+  message?: string;
+}
+
+export interface BaselineResolveResponse {
+  has_baseline: boolean;
+  baseline_id: string | null;
+  baseline_name: string | null;
+  framework?: string;
+  benchmark?: string;
+  in_scope_controls: string[];
+  out_of_scope_controls: string[];
+  baseline_status: string;
+}
+
+export interface PerFrameworkCompliance {
+  controls: number;
+  pass: number;
+  fail: number;
+  review: number;
+}
+
+export interface CompanyBaselineProjection {
+  configured: boolean;
+  has_baseline: boolean;
+  name?: string;
+  framework?: string;
+  benchmark?: string;
+  in_scope_count: number;
+  passed: number;
+  failed: number;
+  review: number;
+  out_of_scope: number;
+  score: number | null;
+  control_ids: string[];
+  comparison?: Array<{
+    control_id: string;
+    company_result: ComplianceResultValue;
+    full_cis_result: 'PASS' | 'FAIL' | 'REVIEW';
+    in_scope: boolean;
+  }>;
 }

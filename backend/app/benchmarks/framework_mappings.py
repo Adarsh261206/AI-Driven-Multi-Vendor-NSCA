@@ -1,8 +1,9 @@
 """
 Cross-Framework Security Concept Mappings
 
-One normalized universal security concept can be evaluated against multiple
-framework controls. This module defines the mapping layer:
+REFERENCE ONLY — not an evaluation source (F10). One normalized universal
+security concept can be evaluated against multiple framework controls. This
+module defines the mapping layer:
 
     Universal concept (e.g., management.ssh.version)
         → CIS Juniper OS control (e.g., 6.10.1.2)
@@ -10,7 +11,9 @@ framework controls. This module defines the mapping layer:
         → Juniper SRX SG NDM STIG rule (e.g., JUSX-DM-xxxxxx)
 
 This is a framework mapping problem - NOT separate parsing or evaluation
-logic. The normalization and execution layers are shared.
+logic. The normalization and execution layers are shared. No production
+evaluation code imports this module; STIG references here are Manual-only
+crosswalk entries, never automated verdicts.
 
 STIG Analysis (v1.0.0, 07-27-2022):
   - Juniper Router RTR STIG: 96 rule IDs (JUNI-RT-*), ALL Manual status.

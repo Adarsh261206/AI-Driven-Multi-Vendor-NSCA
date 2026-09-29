@@ -10,8 +10,8 @@ import asyncio
 import time
 import json
 import hashlib
-from typing import Optional, Any
-from dataclasses import dataclass, field
+from typing import Optional
+from dataclasses import dataclass
 
 from app.ai.providers import AIProvider, AIRequest, AIResponse, AIError
 

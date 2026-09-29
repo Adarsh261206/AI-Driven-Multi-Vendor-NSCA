@@ -1,0 +1,150 @@
+{
+  "files": 480,
+  "ok_files": 480,
+  "errors": 0,
+  "elapsed_s": 34.3,
+  "findings": 14221,
+  "remediated": 14221,
+  "exec_ms": {
+    "p50": 16.3,
+    "p95": 218.8,
+    "max": 1539.5
+  },
+  "coverage": {
+    "recommended_config": 13100,
+    "verification_steps": 14221,
+    "rollback_steps": 2908,
+    "references": 14221
+  },
+  "g_flags": {
+    "wrong_vendor_attributed": 71,
+    "risk_vendor_unsupported": 140
+  },
+  "by_label": {
+    "A10": {
+      "files": 3,
+      "errors": 0,
+      "findings": 51,
+      "remediated": 51,
+      "cmd_present": 49,
+      "g_files": 2
+    },
+    "Arista": {
+      "files": 38,
+      "errors": 0,
+      "findings": 1829,
+      "remediated": 1829,
+      "cmd_present": 1718,
+      "g_files": 37
+    },
+    "Cisco": {
+      "files": 252,
+      "errors": 0,
+      "findings": 9992,
+      "remediated": 9992,
+      "cmd_present": 9126,
+      "g_files": 28
+    },
+    "F5": {
+      "files": 11,
+      "errors": 0,
+      "findings": 30,
+      "remediated": 30,
+      "cmd_present": 30,
+      "g_files": 9
+    },
+    "FRR": {
+      "files": 63,
+      "errors": 0,
+      "findings": 1696,
+      "remediated": 1696,
+      "cmd_present": 1565,
+      "g_files": 62
+    },
+    "Fortinet": {
+      "files": 30,
+      "errors": 0,
+      "findings": 0,
+      "remediated": 0,
+      "cmd_present": 0,
+      "g_files": 30
+    },
+    "Juniper": {
+      "files": 41,
+      "errors": 0,
+      "findings": 460,
+      "remediated": 460,
+      "cmd_present": 460,
+      "g_files": 6
+    },
+    "NAPALM": {
+      "files": 4,
+      "errors": 0,
+      "findings": 163,
+      "remediated": 163,
+      "cmd_present": 152,
+      "g_files": 0
+    },
+    "PaloAlto": {
+      "files": 38,
+      "errors": 0,
+      "findings": 0,
+      "remediated": 0,
+      "cmd_present": 0,
+      "g_files": 37
+    }
+  },
+  "contract_checks": [
+    {
+      "id": "C1",
+      "name": "no untyped errors (per-file exceptions recorded only)",
+      "probes": 480,
+      "violations": 0,
+      "detail": []
+    },
+    {
+      "id": "C2",
+      "name": "every finding remediation carries the \u00a712 interface",
+      "probes": 14221,
+      "violations": 0,
+      "detail": []
+    },
+    {
+      "id": "C3",
+      "name": "remediation linkage matches its own finding",
+      "probes": 14221,
+      "violations": 0,
+      "detail": []
+    },
+    {
+      "id": "C4",
+      "name": "no cross-family command syntax",
+      "probes": 14221,
+      "violations": 0,
+      "detail": []
+    },
+    {
+      "id": "C5",
+      "name": "boundary runs carry zero remediations",
+      "probes": 480,
+      "violations": 0,
+      "detail": []
+    },
+    {
+      "id": "C6",
+      "name": "unsupported vendors zero decisive remediations",
+      "probes": 480,
+      "violations": 0,
+      "detail": []
+    },
+    {
+      "id": "C7",
+      "name": "deterministic remediations across runs",
+      "probes": 30,
+      "violations": 0,
+      "detail": []
+    }
+  ],
+  "contract_violations_total": 0,
+  "contract_verdict": "PASS"
+}

@@ -11,7 +11,7 @@ from dataclasses import dataclass, field
 from typing import Optional, Any
 
 from app.engines.compliance.models import (
-    Control, ComplianceResultType, Severity, RuleType,
+    Control, ComplianceResultType, Severity,
 )
 from app.engines.compliance.evidence import EvidenceChain, EvidenceChainBuilder
 
@@ -28,6 +28,13 @@ class ControlEvaluation:
     confidence: float
     evidence: EvidenceChain
     remediation: Optional[dict] = None
+    # Authoritative framework attribution from the control's own metadata
+    # (F3) — attached by the canonical path so persistence cannot infer it.
+    framework: str = ""
+    framework_version: str = ""
+    # Persistence linkage (E08 F1): the compliance_results row id, attached
+    # by the persistence layer after insert (empty before persistence).
+    compliance_result_id: str = ""
     
     def to_dict(self) -> dict[str, Any]:
         return {
@@ -54,7 +61,16 @@ class ComplianceEvaluation:
     overall_score: float = 0.0
     vendor: str = ""
     platform: str = ""
-    
+    # Device identity provenance (Issue #1): stamped by the executor from
+    # the single authoritative detection result, so every downstream
+    # finding carries hostname/device lineage without re-derivation.
+    device_type: str = ""
+    hostname: str = ""
+    os_family: str = ""
+    # E05 F5: provenance of the single authoritative normalization result.
+    normalization_id: Optional[str] = None
+    universal_model_version: Optional[str] = None
+
     def to_dict(self) -> dict[str, Any]:
         return {
             "evaluations": [e.to_dict() for e in self.evaluations],
@@ -66,16 +82,22 @@ class ComplianceEvaluation:
                 "overall_score": self.overall_score,
                 "vendor": self.vendor,
                 "platform": self.platform,
+                "normalization_id": self.normalization_id,
+                "universal_model_version": self.universal_model_version,
             },
         }
 
 
 class RuleEngine:
-    """
-    Rule Engine Core
-    
-    Deterministic compliance evaluation engine.
-    No LLM used for PASS/FAIL decisions.
+    """DEPRECATED — retired legacy evaluator (F10).
+
+    Deterministic compliance evaluation engine. No LLM used for PASS/FAIL
+    decisions.
+
+    This class is NOT part of the canonical audit path (the executor uses
+    BenchmarkExecutionEngine exclusively). It is retained only so existing
+    unit tests keep importing; no production code may instantiate it for
+    real evaluations.
     """
     
     def __init__(self):
@@ -200,7 +222,7 @@ class RuleEngine:
         
         # Build remediation if FAIL
         remediation = None
-        if evidence.result == "fail" and control.remediation:
+        if evidence.result == "FAIL" and control.remediation:
             remediation = {
                 "title": control.remediation.title,
                 "description": control.remediation.description,

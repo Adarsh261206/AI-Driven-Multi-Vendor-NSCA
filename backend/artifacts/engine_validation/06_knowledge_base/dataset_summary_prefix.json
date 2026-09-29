@@ -1,0 +1,358 @@
+{
+  "engine": "06_knowledge_base",
+  "dataset_root": "C:\\Users\\priye\\Downloads\\SIH Config\\final-dataset",
+  "files_seen": 480,
+  "files_ingested": 479,
+  "caps": {
+    "max_lines_per_file": 120,
+    "max_chars": 200
+  },
+  "pass1_per_file": {
+    "files": 479,
+    "lines_loaded": 31952,
+    "absorbed": 216,
+    "absorbed_exact": 0,
+    "absorbed_fuzzy": 216,
+    "absorption_rate": 0.0068,
+    "fuzzy_absorption_rate": 0.0068,
+    "lookup_exact": 31736,
+    "lookup_collision": 216,
+    "lookup_miss": 0,
+    "collision_rate": 0.0068,
+    "load_ms_sum": 4679.8,
+    "load_ms_max": 37.4,
+    "ms_per_create_max": 0.3113
+  },
+  "pass1_by_label": {
+    "a10": {
+      "files": 3,
+      "lines_loaded": 156,
+      "absorbed": 0,
+      "absorbed_exact": 0,
+      "absorbed_fuzzy": 0,
+      "absorption_rate": 0.0,
+      "fuzzy_absorption_rate": 0.0,
+      "lookup_exact": 156,
+      "lookup_collision": 0,
+      "lookup_miss": 0,
+      "collision_rate": 0.0,
+      "load_ms_sum": 21.7,
+      "load_ms_max": 20.0,
+      "ms_per_create_max": 0.1665
+    },
+    "arista": {
+      "files": 38,
+      "lines_loaded": 2963,
+      "absorbed": 1,
+      "absorbed_exact": 0,
+      "absorbed_fuzzy": 1,
+      "absorption_rate": 0.0003,
+      "fuzzy_absorption_rate": 0.0003,
+      "lookup_exact": 2962,
+      "lookup_collision": 1,
+      "lookup_miss": 0,
+      "collision_rate": 0.0003,
+      "load_ms_sum": 448.9,
+      "load_ms_max": 23.7,
+      "ms_per_create_max": 0.2063
+    },
+    "cisco": {
+      "files": 251,
+      "lines_loaded": 16798,
+      "absorbed": 85,
+      "absorbed_exact": 0,
+      "absorbed_fuzzy": 85,
+      "absorption_rate": 0.0051,
+      "fuzzy_absorption_rate": 0.0051,
+      "lookup_exact": 16713,
+      "lookup_collision": 85,
+      "lookup_miss": 0,
+      "collision_rate": 0.0051,
+      "load_ms_sum": 2504.4,
+      "load_ms_max": 30.9,
+      "ms_per_create_max": 0.2572
+    },
+    "f5": {
+      "files": 11,
+      "lines_loaded": 500,
+      "absorbed": 0,
+      "absorbed_exact": 0,
+      "absorbed_fuzzy": 0,
+      "absorption_rate": 0.0,
+      "fuzzy_absorption_rate": 0.0,
+      "lookup_exact": 500,
+      "lookup_collision": 0,
+      "lookup_miss": 0,
+      "collision_rate": 0.0,
+      "load_ms_sum": 49.8,
+      "load_ms_max": 20.7,
+      "ms_per_create_max": 0.1728
+    },
+    "fortinet": {
+      "files": 30,
+      "lines_loaded": 2061,
+      "absorbed": 19,
+      "absorbed_exact": 0,
+      "absorbed_fuzzy": 19,
+      "absorption_rate": 0.0092,
+      "fuzzy_absorption_rate": 0.0092,
+      "lookup_exact": 2042,
+      "lookup_collision": 19,
+      "lookup_miss": 0,
+      "collision_rate": 0.0092,
+      "load_ms_sum": 354.2,
+      "load_ms_max": 37.4,
+      "ms_per_create_max": 0.3113
+    },
+    "frr": {
+      "files": 63,
+      "lines_loaded": 1868,
+      "absorbed": 4,
+      "absorbed_exact": 0,
+      "absorbed_fuzzy": 4,
+      "absorption_rate": 0.0021,
+      "fuzzy_absorption_rate": 0.0021,
+      "lookup_exact": 1864,
+      "lookup_collision": 4,
+      "lookup_miss": 0,
+      "collision_rate": 0.0021,
+      "load_ms_sum": 135.0,
+      "load_ms_max": 20.9,
+      "ms_per_create_max": 0.2116
+    },
+    "juniper": {
+      "files": 41,
+      "lines_loaded": 3319,
+      "absorbed": 66,
+      "absorbed_exact": 0,
+      "absorbed_fuzzy": 66,
+      "absorption_rate": 0.0199,
+      "fuzzy_absorption_rate": 0.0199,
+      "lookup_exact": 3253,
+      "lookup_collision": 66,
+      "lookup_miss": 0,
+      "collision_rate": 0.0199,
+      "load_ms_sum": 496.0,
+      "load_ms_max": 26.9,
+      "ms_per_create_max": 0.2343
+    },
+    "napalm": {
+      "files": 4,
+      "lines_loaded": 152,
+      "absorbed": 0,
+      "absorbed_exact": 0,
+      "absorbed_fuzzy": 0,
+      "absorption_rate": 0.0,
+      "fuzzy_absorption_rate": 0.0,
+      "lookup_exact": 152,
+      "lookup_collision": 0,
+      "lookup_miss": 0,
+      "collision_rate": 0.0,
+      "load_ms_sum": 9.9,
+      "load_ms_max": 3.1,
+      "ms_per_create_max": 0.0706
+    },
+    "paloalto": {
+      "files": 38,
+      "lines_loaded": 4135,
+      "absorbed": 41,
+      "absorbed_exact": 0,
+      "absorbed_fuzzy": 41,
+      "absorption_rate": 0.0099,
+      "fuzzy_absorption_rate": 0.0099,
+      "lookup_exact": 4094,
+      "lookup_collision": 41,
+      "lookup_miss": 0,
+      "collision_rate": 0.0099,
+      "load_ms_sum": 659.8,
+      "load_ms_max": 36.4,
+      "ms_per_create_max": 0.3031
+    }
+  },
+  "pass1_worst_absorption": [
+    {
+      "relpath": "Juniper\\Firewalls\\SRX\\juniper_firewall",
+      "fuzzy_absorbed": 26,
+      "exact_absorbed": 0,
+      "loaded": 46,
+      "fuzzy_rate": 0.5652
+    },
+    {
+      "relpath": "Juniper\\Switches\\QFX\\juniper_vlan",
+      "fuzzy_absorbed": 2,
+      "exact_absorbed": 0,
+      "loaded": 10,
+      "fuzzy_rate": 0.2
+    },
+    {
+      "relpath": "Cisco\\MultiAS-Lab\\mpls-infrastructure\\bgp-config.j2",
+      "fuzzy_absorbed": 8,
+      "exact_absorbed": 0,
+      "loaded": 50,
+      "fuzzy_rate": 0.16
+    },
+    {
+      "relpath": "Cisco\\Routers\\MPLS\\bgp-config.j2",
+      "fuzzy_absorbed": 8,
+      "exact_absorbed": 0,
+      "loaded": 50,
+      "fuzzy_rate": 0.16
+    },
+    {
+      "relpath": "Juniper\\Firewalls\\SRX\\configs_junos-srx-1.cfg",
+      "fuzzy_absorbed": 15,
+      "exact_absorbed": 0,
+      "loaded": 115,
+      "fuzzy_rate": 0.1304
+    },
+    {
+      "relpath": "Juniper\\Firewalls\\SRX\\juniper_syslog",
+      "fuzzy_absorbed": 11,
+      "exact_absorbed": 0,
+      "loaded": 92,
+      "fuzzy_rate": 0.1196
+    },
+    {
+      "relpath": "FRR\\Routers\\SONiC\\README.md",
+      "fuzzy_absorbed": 2,
+      "exact_absorbed": 0,
+      "loaded": 17,
+      "fuzzy_rate": 0.1176
+    },
+    {
+      "relpath": "Cisco\\MultiAS-Lab\\mpls-infrastructure\\nodes.j2",
+      "fuzzy_absorbed": 4,
+      "exact_absorbed": 0,
+      "loaded": 48,
+      "fuzzy_rate": 0.0833
+    },
+    {
+      "relpath": "Cisco\\MultiAS-Lab\\mpls-infrastructure\\vpnv4-config.j2",
+      "fuzzy_absorbed": 2,
+      "exact_absorbed": 0,
+      "loaded": 24,
+      "fuzzy_rate": 0.0833
+    },
+    {
+      "relpath": "Cisco\\Routers\\MPLS\\nodes.j2",
+      "fuzzy_absorbed": 4,
+      "exact_absorbed": 0,
+      "loaded": 48,
+      "fuzzy_rate": 0.0833
+    }
+  ],
+  "pass1_slowest_per_create": [
+    {
+      "relpath": "Fortinet\\Firewalls\\FortiGate\\U_FN_FortiGate_Firewall_NDM_STIG_V1R4_Manual-xccdf.xml",
+      "ms_per_create": 0.3113,
+      "kb_size": 112
+    },
+    {
+      "relpath": "Fortinet\\Firewalls\\FortiGate\\U_FN_FortiGate_Firewall_STIG_V1R3_Manual-xccdf.xml",
+      "ms_per_create": 0.3056,
+      "kb_size": 111
+    },
+    {
+      "relpath": "PaloAlto\\Firewalls\\Panorama\\template_panorama_set_commands_iron_skillet_panorama_full.conf",
+      "ms_per_create": 0.3031,
+      "kb_size": 114
+    },
+    {
+      "relpath": "PaloAlto\\Firewalls\\PAN-OS\\panos_v10.1\\iron_skillet_panorama_set-commands.conf",
+      "ms_per_create": 0.2991,
+      "kb_size": 114
+    },
+    {
+      "relpath": "PaloAlto\\Firewalls\\PAN-OS\\PAN-OS\\iron-skillet-panorama\\iron_skillet_panorama_set-commands.conf",
+      "ms_per_create": 0.2846,
+      "kb_size": 114
+    },
+    {
+      "relpath": "PaloAlto\\Firewalls\\PAN-OS\\PAN-OS\\iron-skillet-panos\\iron_skillet_panos_set-commands.conf",
+      "ms_per_create": 0.283,
+      "kb_size": 118
+    },
+    {
+      "relpath": "PaloAlto\\Firewalls\\PAN-OS\\panos_v10.1\\iron_skillet_panos_set-commands.conf",
+      "ms_per_create": 0.2773,
+      "kb_size": 118
+    },
+    {
+      "relpath": "PaloAlto\\Firewalls\\Panorama\\sample-set-commands_panorama_iron_skillet_panorama_full.conf",
+      "ms_per_create": 0.269,
+      "kb_size": 114
+    },
+    {
+      "relpath": "Cisco\\Routers\\IOS-XE\\csr1000v-running-config.txt",
+      "ms_per_create": 0.2572,
+      "kb_size": 120
+    },
+    {
+      "relpath": "Cisco\\Switches\\Nexus\\nxos-connection-log.txt",
+      "ms_per_create": 0.2398,
+      "kb_size": 120
+    }
+  ],
+  "pass2_cross_file": [
+    {
+      "pair": "Cisco\\MultiAS-Lab\\drift-snapshot\\as2border1.cfg -> Cisco\\MultiAS-Lab\\example-bgp\\as2border1.cfg",
+      "label": "cisco",
+      "stored_from_file_a": 120,
+      "queries_from_file_b": 120,
+      "exact": 120,
+      "collision": 0,
+      "miss": 0,
+      "collision_rate": 0.0,
+      "b_lines_absorbed_into_a_rows": 120,
+      "b_absorbed_exact": 120,
+      "b_absorbed_fuzzy": 0,
+      "b_absorption_rate": 1.0
+    },
+    {
+      "pair": "Juniper\\Routers\\MX-Series\\atla.conf -> Juniper\\Routers\\MX-Series\\chic.conf",
+      "label": "juniper",
+      "stored_from_file_a": 120,
+      "queries_from_file_b": 120,
+      "exact": 82,
+      "collision": 0,
+      "miss": 38,
+      "collision_rate": 0.0,
+      "b_lines_absorbed_into_a_rows": 82,
+      "b_absorbed_exact": 82,
+      "b_absorbed_fuzzy": 0,
+      "b_absorption_rate": 0.6833
+    },
+    {
+      "pair": "Fortinet\\Firewalls\\FortiGate\\4D-Demo\\4D-NGFW_NGFW-Demo-Config_NGFW_Demo.txt -> Fortinet\\Firewalls\\FortiGate\\4D-Demo\\4D-Switching_LAN_Edge_Demo.txt",
+      "label": "fortinet",
+      "stored_from_file_a": 120,
+      "queries_from_file_b": 120,
+      "exact": 14,
+      "collision": 0,
+      "miss": 106,
+      "collision_rate": 0.0,
+      "b_lines_absorbed_into_a_rows": 14,
+      "b_absorbed_exact": 14,
+      "b_absorbed_fuzzy": 0,
+      "b_absorption_rate": 0.1167
+    }
+  ],
+  "pass3_isolation": {
+    "pass": 3,
+    "relpath": "cross-vendor isolation",
+    "dir_label": "cisco,juniper,fortinet,paloalto",
+    "vendor": "all",
+    "platform": "all",
+    "lines_eligible": 136,
+    "lines_loaded": 136,
+    "absorbed": 0,
+    "absorption_rate": 0.0,
+    "lookup_exact": 0,
+    "lookup_collision": 0,
+    "lookup_miss": 0,
+    "lookup_ms": 18.725,
+    "note": "408 queries of a stored line under a DIFFERENT vendor label; collision column = isolation breaches",
+    "kb_size": 136
+  },
+  "elapsed_s": 5.48
+}

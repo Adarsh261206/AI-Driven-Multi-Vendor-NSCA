@@ -1,0 +1,76 @@
+{
+  "engine": "01_configuration_ingestion",
+  "phase": "post_fix (E01 F1-F11, N1-N10)",
+  "dataset_root": "C:\\Users\\priye\\Downloads\\SIH Config\\final-dataset",
+  "allowed_extensions": [
+    ".txt",
+    ".cfg",
+    ".conf"
+  ],
+  "files_total": 480,
+  "bytes_total": 11584713,
+  "pipeline_outcome_counts": {
+    "accepted": 337,
+    "InvalidFileExtensionError": 143
+  },
+  "filename_stage_rejected": 0,
+  "by_fixture_class": {
+    "Known-good": 127,
+    "Unsupported": 143,
+    "Edge": 129,
+    "Duplicate": 81
+  },
+  "pre_fix_by_fixture_class": {
+    "Known-good": 127,
+    "Unsupported": 143,
+    "Edge": 129,
+    "Duplicate": 81
+  },
+  "fixture_class_delta_vs_pre_fix": {
+    "Duplicate": 0,
+    "Edge": 0,
+    "Known-good": 0,
+    "Unsupported": 0
+  },
+  "would_be_accepted_by_ingest": 256,
+  "pre_fix_would_be_accepted": 256,
+  "duplicate_rejected_by_ingest": 81,
+  "extension_accepted": 337,
+  "extension_rejected": 143,
+  "decode_only_distribution": {
+    "utf-8": 480
+  },
+  "pre_fix_encoding_distribution": {
+    "utf-8": 480
+  },
+  "likely_binary_files": 0,
+  "nul_containing_files": 0,
+  "filename_over_255": 0,
+  "traversal_shaped_names": 0,
+  "duplicate_basenames": 277,
+  "duplicate_content_groups": 86,
+  "duplicate_content_files": 184,
+  "empty_files": 0,
+  "max_size_bytes": 491015,
+  "determinism_mismatches": 0,
+  "timing_ms": {
+    "pipeline_p50": 0.0832,
+    "pipeline_p95": 2.2862,
+    "pipeline_p99": 8.7521,
+    "decode_p50": 0.0019,
+    "decode_p95": 0.0225,
+    "decode_p99": 0.1011,
+    "hash_p50": 0.0165,
+    "hash_p95": 0.0948,
+    "hash_p99": 0.1635,
+    "pipeline_mean": 0.486,
+    "decode_mean": 0.006,
+    "hash_mean": 0.0267
+  },
+  "notes": [
+    "pipeline_outcome is what IngestionEngine._validate_and_decode (the ingest() validation path minus the DB) returns per file; every rejection is a typed IngestionError subclass.",
+    "duplicate_rejected_by_ingest is hash-simulated (first eligible upload wins); in production the unique index uq_configurations_content_hash is the arbiter (E01 N5).",
+    "encoding/decode columns run _decode_content in isolation so they stay comparable with the pre-fix sweep, which decoded independently of the extension gate.",
+    "pre-fix values are read from dataset_summary.json (preserved in 01_ingestion_pre_fix/ as well)."
+  ]
+}

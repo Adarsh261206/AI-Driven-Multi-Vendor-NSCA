@@ -1,0 +1,988 @@
+{
+  "engine": "07_compliance",
+  "scope": "backend/app/benchmarks/{selection,registry,execution,models,cisco_ios_xe_controls,juniper_junos_controls,nist_sp800_53_controls,framework_mappings}.py, backend/app/engines/compliance/{models,loader,engine,evidence,executor,findings,cisco_controls}.py, backend/app/api/v1/{compliance,audit_execution,reports}.py and backend/app/models (compliance_results) + alembic 006, validated against docs/PROJECT_MASTER_SPEC.md 9.1 step 6, 10.7, 12, 13.1-13.4, 14.3.2 and the compliance_results DDL",
+  "pytest": {
+    "evidence_rows": 116,
+    "status_counts": {
+      "PASS": 116
+    },
+    "classification_counts": {
+      "CONFIRMED BEHAVIOR": 116
+    },
+    "category_counts": {
+      "A": 10,
+      "B": 17,
+      "C": 18,
+      "D": 9,
+      "E": 8,
+      "F": 9,
+      "G": 4,
+      "H": 3,
+      "I": 6,
+      "J": 3,
+      "K": 3,
+      "L": 5,
+      "M": 6,
+      "N": 4,
+      "O": 2,
+      "P": 3,
+      "Q": 3,
+      "R": 3
+    },
+    "category_status": {
+      "A": {
+        "PASS": 10
+      },
+      "B": {
+        "PASS": 17
+      },
+      "C": {
+        "PASS": 18
+      },
+      "D": {
+        "PASS": 9
+      },
+      "E": {
+        "PASS": 8
+      },
+      "F": {
+        "PASS": 9
+      },
+      "G": {
+        "PASS": 4
+      },
+      "H": {
+        "PASS": 3
+      },
+      "I": {
+        "PASS": 6
+      },
+      "J": {
+        "PASS": 3
+      },
+      "K": {
+        "PASS": 3
+      },
+      "L": {
+        "PASS": 5
+      },
+      "M": {
+        "PASS": 6
+      },
+      "N": {
+        "PASS": 4
+      },
+      "O": {
+        "PASS": 2
+      },
+      "P": {
+        "PASS": 3
+      },
+      "Q": {
+        "PASS": 3
+      },
+      "R": {
+        "PASS": 3
+      }
+    },
+    "fail_rows": []
+  },
+  "hypotheses": [
+    {
+      "id": "H07-01",
+      "statement": "framework selection is a no-op: AuditExecutor.execute accepts framework/framework_version but never reads them, so the API's framework request (audit_execution.py:241-246) cannot select rules (spec 9.1 step 6, spec 10.7 'Load framework rules') and framework_version is never persisted (spec 12)",
+      "evidence_tests": [
+        "V07-17",
+        "V07-55",
+        "V07-99",
+        "V07-100",
+        "V07-101"
+      ],
+      "observed_statuses": [
+        "PASS",
+        "PASS",
+        "PASS",
+        "PASS",
+        "PASS"
+      ],
+      "conclusion": "REJECTED",
+      "classifications": [
+        "CONFIRMED BEHAVIOR"
+      ]
+    },
+    {
+      "id": "H07-02",
+      "statement": "control selection depends on caller-supplied casing: registry keys are exact-case, so vendor='Cisco' silently drops all 53 CIS controls and platform='JUNOS' drops all 17 juniper controls (only the cisco platform alias is normalized)",
+      "evidence_tests": [
+        "V07-14",
+        "V07-15",
+        "V07-16"
+      ],
+      "observed_statuses": [
+        "PASS",
+        "PASS",
+        "PASS"
+      ],
+      "conclusion": "REJECTED",
+      "classifications": [
+        "CONFIRMED BEHAVIOR"
+      ]
+    },
+    {
+      "id": "H07-03",
+      "statement": "the controls API cannot filter correctly: a vendor-only request returns every CIS control, the ios->ios_xe alias is missing (platform=ios returns 0), and the registry's platform-only filter ignores platform",
+      "evidence_tests": [
+        "V07-19",
+        "V07-20",
+        "V07-21",
+        "V07-100",
+        "V07-113"
+      ],
+      "observed_statuses": [
+        "PASS",
+        "PASS",
+        "PASS",
+        "PASS",
+        "PASS"
+      ],
+      "conclusion": "REJECTED",
+      "classifications": [
+        "CONFIRMED BEHAVIOR"
+      ]
+    },
+    {
+      "id": "H07-04",
+      "statement": "three operator vocabularies drift (models.Operator enum, canonical engine, ControlRegistry): the spec's 'in' operator is unimplemented, the registry falls through to equality for greater/less_than_or_equal (wrong verdicts for the juniper controls that use them), and unknown operators silently evaluate as equals",
+      "evidence_tests": [
+        "V07-07",
+        "V07-08",
+        "V07-33",
+        "V07-34"
+      ],
+      "observed_statuses": [
+        "PASS",
+        "PASS",
+        "PASS",
+        "PASS"
+      ],
+      "conclusion": "REJECTED",
+      "classifications": [
+        "CONFIRMED BEHAVIOR"
+      ]
+    },
+    {
+      "id": "H07-05",
+      "statement": "control structure defects make six controls permanently REVIEW (target.model_path values that are not Universal Security Model leaves) and let a duplicate control_id silently overwrite another vendor's control in the registry",
+      "evidence_tests": [
+        "V07-05",
+        "V07-10"
+      ],
+      "observed_statuses": [
+        "PASS",
+        "PASS"
+      ],
+      "conclusion": "REJECTED",
+      "classifications": [
+        "CONFIRMED BEHAVIOR"
+      ]
+    },
+    {
+      "id": "H07-06",
+      "statement": "framework attribution is derived, not stored: controls carry no framework field, persistence infers it from the control-id shape, a user who requests NIST gets their CIS rows labelled NIST (and reports filter on that label), the API advertises framework versions no control carries, and the report list hardcodes framework='CIS'",
+      "evidence_tests": [
+        "V07-03",
+        "V07-57",
+        "V07-58",
+        "V07-62",
+        "V07-25"
+      ],
+      "observed_statuses": [
+        "PASS",
+        "PASS",
+        "PASS",
+        "PASS",
+        "PASS"
+      ],
+      "conclusion": "REJECTED",
+      "classifications": [
+        "CONFIRMED BEHAVIOR"
+      ]
+    },
+    {
+      "id": "H07-07",
+      "statement": "the section 13.3 step 4 confidence model is unimplemented: controls have no rule-confidence field, normalization confidence never reaches the evidence (always 0.0), result confidence is a hardcoded constant, and the section 13.4 <70%-confidence REVIEW trigger exists only in the dead legacy path",
+      "evidence_tests": [
+        "V07-43",
+        "V07-44"
+      ],
+      "observed_statuses": [
+        "PASS",
+        "PASS"
+      ],
+      "conclusion": "REJECTED",
+      "classifications": [
+        "CONFIRMED BEHAVIOR"
+      ]
+    },
+    {
+      "id": "H07-08",
+      "statement": "evidence chains deviate from spec 12 and spec 13.3: the canonical evidence lacks raw_config/parsed_value/security_control/reasoning, the persisted chain never populates parsed_value, a multi-block decisive result leaves normalized_value null, two decisive controls carry no raw evidence lines, and regex-only controls PASS/FAIL with no normalized value at all",
+      "evidence_tests": [
+        "V07-37",
+        "V07-38",
+        "V07-46",
+        "V07-47",
+        "V07-48",
+        "V07-49"
+      ],
+      "observed_statuses": [
+        "PASS",
+        "PASS",
+        "PASS",
+        "PASS",
+        "PASS",
+        "PASS"
+      ],
+      "conclusion": "REJECTED",
+      "classifications": [
+        "CONFIRMED BEHAVIOR"
+      ]
+    },
+    {
+      "id": "H07-09",
+      "statement": "one audit run exposes two different overall_score values - passed/evaluated (46.9) on AuditResult and passed/(passed+failed) (95.5) on ComplianceEvaluation - so downstream consumers can report either",
+      "evidence_tests": [
+        "V07-42",
+        "V07-116"
+      ],
+      "observed_statuses": [
+        "PASS",
+        "PASS"
+      ],
+      "conclusion": "REJECTED",
+      "classifications": [
+        "CONFIRMED BEHAVIOR"
+      ]
+    },
+    {
+      "id": "H07-10",
+      "statement": "SEPARATE RECORD (category G): control selection and verdicts are produced for wrong or unsupported inputs - the engine trusts its caller over detection, unsupported vendors get NIST verdicts (including decisive FAILs) evaluated from raw text, and an empty configuration yields two decisive FAILs instead of REVIEW (spec 13.4)",
+      "evidence_tests": [
+        "V07-72",
+        "V07-73",
+        "V07-74",
+        "V07-75",
+        "V07-111",
+        "V07-112"
+      ],
+      "observed_statuses": [
+        "PASS",
+        "PASS",
+        "PASS",
+        "PASS",
+        "PASS",
+        "PASS"
+      ],
+      "conclusion": "REJECTED",
+      "classifications": [
+        "CONFIRMED BEHAVIOR"
+      ]
+    },
+    {
+      "id": "H07-11",
+      "statement": "two control systems coexist with drift: the legacy loader/RuleEngine (10 controls, no NIST) vs the canonical registry (196), platform labels ios vs ios_xe make legacy rules inapplicable, applicability contracts differ, and is_set/regex_match semantics disagree between the evaluators",
+      "evidence_tests": [
+        "V07-63",
+        "V07-65",
+        "V07-66",
+        "V07-67",
+        "V07-69",
+        "V07-70"
+      ],
+      "observed_statuses": [
+        "PASS",
+        "PASS",
+        "PASS",
+        "PASS",
+        "PASS",
+        "PASS"
+      ],
+      "conclusion": "REJECTED",
+      "classifications": [
+        "CONFIRMED BEHAVIOR"
+      ]
+    },
+    {
+      "id": "H07-12",
+      "statement": "persistence drifts from the spec: result values are stored lowercase ('pass') where spec 12 mandates PASS/FAIL/REVIEW, and the table's link column / confidence precision differ from the spec DDL (which itself disagrees with the spec-12 interface)",
+      "evidence_tests": [
+        "V07-59",
+        "V07-60",
+        "V07-102",
+        "V07-103",
+        "V07-104",
+        "V07-105"
+      ],
+      "observed_statuses": [
+        "PASS",
+        "PASS",
+        "PASS",
+        "PASS",
+        "PASS",
+        "PASS"
+      ],
+      "conclusion": "REJECTED",
+      "classifications": [
+        "CONFIRMED BEHAVIOR"
+      ]
+    },
+    {
+      "id": "H07-13",
+      "statement": "unknown vendors are silently parsed with CiscoIOSParser, so detection, parsing and normalization disagree about the device before evaluation ever runs",
+      "evidence_tests": [
+        "V07-83"
+      ],
+      "observed_statuses": [
+        "PASS"
+      ],
+      "conclusion": "REJECTED",
+      "classifications": [
+        "CONFIRMED BEHAVIOR"
+      ]
+    },
+    {
+      "id": "H07-14",
+      "statement": "hostile inputs lose their error signal: None input surfaces a raw AttributeError string, an invalid (NUL) config fails with no step recording why (validation is marked completed), and a control with an invalid audit_regex yields a confident FAIL for every input",
+      "evidence_tests": [
+        "V07-91",
+        "V07-92",
+        "V07-93",
+        "V07-96",
+        "V07-97",
+        "V07-98"
+      ],
+      "observed_statuses": [
+        "PASS",
+        "PASS",
+        "PASS",
+        "PASS",
+        "PASS",
+        "PASS"
+      ],
+      "conclusion": "REJECTED",
+      "classifications": [
+        "CONFIRMED BEHAVIOR"
+      ]
+    },
+    {
+      "id": "H07-15",
+      "statement": "dead rule data remains in the tree: framework_mappings.py has zero referencing modules, and the executor still imports the retired ControlLoader/RuleEngine without using them",
+      "evidence_tests": [
+        "V07-68",
+        "V07-71"
+      ],
+      "observed_statuses": [
+        "PASS",
+        "PASS"
+      ],
+      "conclusion": "REJECTED",
+      "classifications": [
+        "CONFIRMED BEHAVIOR"
+      ]
+    },
+    {
+      "id": "H07-16",
+      "statement": "result metadata understates the dual baseline: benchmark_id is taken from controls[0], so a run that evaluated 126 NIST controls alongside CIS is labelled as a single CIS benchmark",
+      "evidence_tests": [
+        "V07-26"
+      ],
+      "observed_statuses": [
+        "PASS"
+      ],
+      "conclusion": "REJECTED",
+      "classifications": [
+        "CONFIRMED BEHAVIOR"
+      ]
+    },
+    {
+      "id": "H07-17",
+      "statement": "selection loses or duplicates controls under normal (correct-case) inputs",
+      "evidence_tests": [
+        "V07-11",
+        "V07-13",
+        "V07-27"
+      ],
+      "observed_statuses": [
+        "PASS",
+        "PASS",
+        "PASS"
+      ],
+      "conclusion": "REJECTED",
+      "classifications": [
+        "CONFIRMED BEHAVIOR"
+      ]
+    },
+    {
+      "id": "H07-18",
+      "statement": "the truth tables of the supported operators (equals/not_equals/contains/greater_than/less_than/*_or_equal) are wrong",
+      "evidence_tests": [
+        "V07-28",
+        "V07-29",
+        "V07-30",
+        "V07-31",
+        "V07-32"
+      ],
+      "observed_statuses": [
+        "PASS",
+        "PASS",
+        "PASS",
+        "PASS",
+        "PASS"
+      ],
+      "conclusion": "REJECTED",
+      "classifications": [
+        "CONFIRMED BEHAVIOR"
+      ]
+    },
+    {
+      "id": "H07-19",
+      "statement": "verdicts are fabricated: missing values or manual controls produce PASS/FAIL instead of REVIEW",
+      "evidence_tests": [
+        "V07-35",
+        "V07-36",
+        "V07-39",
+        "V07-76",
+        "V07-77",
+        "V07-78"
+      ],
+      "observed_statuses": [
+        "PASS",
+        "PASS",
+        "PASS",
+        "PASS",
+        "PASS",
+        "PASS"
+      ],
+      "conclusion": "REJECTED",
+      "classifications": [
+        "CONFIRMED BEHAVIOR"
+      ]
+    },
+    {
+      "id": "H07-20",
+      "statement": "evaluation is non-deterministic across runs",
+      "evidence_tests": [
+        "V07-85",
+        "V07-86",
+        "V07-87",
+        "V07-106",
+        "V07-107"
+      ],
+      "observed_statuses": [
+        "PASS",
+        "PASS",
+        "PASS",
+        "PASS",
+        "PASS"
+      ],
+      "conclusion": "REJECTED",
+      "classifications": [
+        "CONFIRMED BEHAVIOR"
+      ]
+    },
+    {
+      "id": "H07-21",
+      "statement": "the offline pipeline does not run end to end or findings are not wired from the evaluation",
+      "evidence_tests": [
+        "V07-79",
+        "V07-80",
+        "V07-81",
+        "V07-82",
+        "V07-114",
+        "V07-115"
+      ],
+      "observed_statuses": [
+        "PASS",
+        "PASS",
+        "PASS",
+        "PASS",
+        "PASS",
+        "PASS"
+      ],
+      "conclusion": "REJECTED",
+      "classifications": [
+        "CONFIRMED BEHAVIOR"
+      ]
+    },
+    {
+      "id": "H07-22",
+      "statement": "performance is unusable or super-quadratic on large inputs",
+      "evidence_tests": [
+        "V07-88",
+        "V07-89",
+        "V07-90",
+        "V07-95",
+        "V07-108",
+        "V07-109",
+        "V07-110"
+      ],
+      "observed_statuses": [
+        "PASS",
+        "PASS",
+        "PASS",
+        "PASS",
+        "PASS",
+        "PASS",
+        "PASS"
+      ],
+      "conclusion": "REJECTED",
+      "classifications": [
+        "CONFIRMED BEHAVIOR"
+      ]
+    },
+    {
+      "id": "H07-23",
+      "statement": "the API inventory or the current-inventory framework inference is wrong (missing controls, wrong labels)",
+      "evidence_tests": [
+        "V07-22",
+        "V07-23",
+        "V07-24",
+        "V07-56",
+        "V07-84"
+      ],
+      "observed_statuses": [
+        "PASS",
+        "PASS",
+        "PASS",
+        "PASS",
+        "PASS"
+      ],
+      "conclusion": "REJECTED",
+      "classifications": [
+        "CONFIRMED BEHAVIOR"
+      ]
+    },
+    {
+      "id": "H07-24",
+      "statement": "the retired legacy pipeline still executes in production (double scoring / double evaluation)",
+      "evidence_tests": [
+        "V07-64"
+      ],
+      "observed_statuses": [
+        "PASS"
+      ],
+      "conclusion": "REJECTED",
+      "classifications": [
+        "CONFIRMED BEHAVIOR"
+      ]
+    },
+    {
+      "id": "H07-25",
+      "statement": "confidence or remediation disagree between the benchmark and legacy layers after conversion",
+      "evidence_tests": [
+        "V07-52",
+        "V07-53"
+      ],
+      "observed_statuses": [
+        "PASS",
+        "PASS"
+      ],
+      "conclusion": "REJECTED",
+      "classifications": [
+        "CONFIRMED BEHAVIOR"
+      ]
+    },
+    {
+      "id": "H07-26",
+      "statement": "the loaded inventory is missing spec-13.2 structure, severity vocabulary, supported operators or unique ids",
+      "evidence_tests": [
+        "V07-01",
+        "V07-02",
+        "V07-04",
+        "V07-06",
+        "V07-09"
+      ],
+      "observed_statuses": [
+        "PASS",
+        "PASS",
+        "PASS",
+        "PASS",
+        "PASS"
+      ],
+      "conclusion": "REJECTED",
+      "classifications": [
+        "CONFIRMED BEHAVIOR"
+      ]
+    },
+    {
+      "id": "H07-27",
+      "statement": "the cisco platform alias and the unsupported-vendor NIST fallback are broken",
+      "evidence_tests": [
+        "V07-12",
+        "V07-18"
+      ],
+      "observed_statuses": [
+        "PASS",
+        "PASS"
+      ],
+      "conclusion": "REJECTED",
+      "classifications": [
+        "CONFIRMED BEHAVIOR"
+      ]
+    },
+    {
+      "id": "H07-28",
+      "statement": "conflicting duplicate settings or negated controls produce unsafe verdicts (guessed PASS/FAIL instead of REVIEW)",
+      "evidence_tests": [
+        "V07-40",
+        "V07-41"
+      ],
+      "observed_statuses": [
+        "PASS",
+        "PASS"
+      ],
+      "conclusion": "REJECTED",
+      "classifications": [
+        "CONFIRMED BEHAVIOR"
+      ]
+    },
+    {
+      "id": "H07-29",
+      "statement": "the persisted audit score or counts are inconsistent with the evaluation",
+      "evidence_tests": [
+        "V07-45",
+        "V07-61"
+      ],
+      "observed_statuses": [
+        "PASS",
+        "PASS"
+      ],
+      "conclusion": "REJECTED",
+      "classifications": [
+        "CONFIRMED BEHAVIOR"
+      ]
+    },
+    {
+      "id": "H07-30",
+      "statement": "per-row evidence is missing operator/reasoning or is not wired into persistence",
+      "evidence_tests": [
+        "V07-50",
+        "V07-51",
+        "V07-54"
+      ],
+      "observed_statuses": [
+        "PASS",
+        "PASS",
+        "PASS"
+      ],
+      "conclusion": "REJECTED",
+      "classifications": [
+        "CONFIRMED BEHAVIOR"
+      ]
+    },
+    {
+      "id": "H07-31",
+      "statement": "non-ASCII (unicode) content breaks evaluation",
+      "evidence_tests": [
+        "V07-94"
+      ],
+      "observed_statuses": [
+        "PASS"
+      ],
+      "conclusion": "REJECTED",
+      "classifications": [
+        "CONFIRMED BEHAVIOR"
+      ]
+    }
+  ],
+  "hypothesis_totals": {
+    "REJECTED": 31
+  },
+  "unreferenced_rows": [],
+  "dataset": {
+    "corpus": "C:\\Users\\priye\\Downloads\\SIH Config\\final-dataset",
+    "engine": "07_compliance",
+    "contract_version": "E07",
+    "files": 480,
+    "processed_ok": 479,
+    "errors": 1,
+    "elapsed_s": 44.8,
+    "selection_distribution": {
+      "CIS+NIST": 307,
+      "none": 172
+    },
+    "status_distribution": {
+      "completed": 307,
+      "normalization_failed": 147,
+      "unsupported_selection": 25
+    },
+    "evaluated_control_distribution": {
+      "0": 172,
+      "143": 38,
+      "179": 269
+    },
+    "verdict_totals": {
+      "passed": 2134,
+      "failed": 2669,
+      "review": 48782
+    },
+    "regex_driven_totals": {
+      "pass": 354,
+      "fail": 1,
+      "review": 30693
+    },
+    "mapped_totals": {
+      "pass": 1780,
+      "fail": 2668,
+      "review": 18089
+    },
+    "g_flags": {
+      "label_detection_mismatch": 202
+    },
+    "unsupported_vendor_outcomes": {
+      "unknown": {
+        "files": 106,
+        "evaluated": 0,
+        "passed": 0,
+        "failed": 0,
+        "regex_pass": 0,
+        "regex_fail": 0
+      },
+      "fortinet": {
+        "files": 29,
+        "evaluated": 0,
+        "passed": 0,
+        "failed": 0,
+        "regex_pass": 0,
+        "regex_fail": 0
+      },
+      "paloalto": {
+        "files": 6,
+        "evaluated": 0,
+        "passed": 0,
+        "failed": 0,
+        "regex_pass": 0,
+        "regex_fail": 0
+      }
+    },
+    "detected_vendor_distribution": {
+      "cisco": 277,
+      "unknown": 106,
+      "juniper": 61,
+      "fortinet": 29,
+      "paloalto": 6
+    },
+    "empty_files": 0,
+    "nul_files": 0,
+    "files_with_zero_evaluated": 172,
+    "contract_checks": [
+      {
+        "id": "C1",
+        "name": "no crashes (untyped errors only; typed boundaries exempt)",
+        "probes": 480,
+        "violations": 0,
+        "detail": []
+      },
+      {
+        "id": "C3",
+        "name": "no decisive verdict on unsupported vendors",
+        "probes": 0,
+        "violations": 0,
+        "detail": []
+      },
+      {
+        "id": "C4/C5/C6",
+        "name": "per-file contract violations (attribution, evidence, score)",
+        "probes": 479,
+        "violations": 0,
+        "detail": []
+      },
+      {
+        "id": "C2",
+        "name": "deterministic selection + verdicts across fresh engines",
+        "probes": 40,
+        "violations": 0,
+        "detail": []
+      }
+    ],
+    "contract_violations_total": 0,
+    "contract_verdict": "PASS",
+    "by_label": {
+      "A10": {
+        "files": 3,
+        "errors": 0,
+        "selection": {
+          "CIS+NIST": 1,
+          "none": 2
+        },
+        "detected_vendors": {
+          "cisco": 1,
+          "unknown": 1,
+          "juniper": 1
+        },
+        "g_files": 3
+      },
+      "Arista": {
+        "files": 38,
+        "errors": 0,
+        "selection": {
+          "CIS+NIST": 36,
+          "none": 2
+        },
+        "detected_vendors": {
+          "cisco": 36,
+          "unknown": 1,
+          "juniper": 1
+        },
+        "g_files": 38
+      },
+      "Cisco": {
+        "files": 252,
+        "errors": 1,
+        "selection": {
+          "none": 54,
+          "CIS+NIST": 197,
+          "": 1
+        },
+        "detected_vendors": {
+          "unknown": 29,
+          "cisco": 204,
+          "juniper": 19
+        },
+        "g_files": 48
+      },
+      "F5": {
+        "files": 11,
+        "errors": 0,
+        "selection": {
+          "none": 9,
+          "CIS+NIST": 2
+        },
+        "detected_vendors": {
+          "cisco": 2,
+          "unknown": 7,
+          "juniper": 2
+        },
+        "g_files": 11
+      },
+      "FRR": {
+        "files": 63,
+        "errors": 0,
+        "selection": {
+          "CIS+NIST": 32,
+          "none": 31
+        },
+        "detected_vendors": {
+          "cisco": 32,
+          "juniper": 1,
+          "unknown": 30
+        },
+        "g_files": 63
+      },
+      "Fortinet": {
+        "files": 30,
+        "errors": 0,
+        "selection": {
+          "none": 30
+        },
+        "detected_vendors": {
+          "fortinet": 29,
+          "unknown": 1
+        },
+        "g_files": 1
+      },
+      "Juniper": {
+        "files": 41,
+        "errors": 0,
+        "selection": {
+          "none": 6,
+          "CIS+NIST": 35
+        },
+        "detected_vendors": {
+          "unknown": 6,
+          "juniper": 35
+        },
+        "g_files": 6
+      },
+      "NAPALM": {
+        "files": 4,
+        "errors": 0,
+        "selection": {
+          "CIS+NIST": 4
+        },
+        "detected_vendors": {
+          "cisco": 3,
+          "juniper": 1
+        },
+        "g_files": 0
+      },
+      "PaloAlto": {
+        "files": 38,
+        "errors": 0,
+        "selection": {
+          "none": 38
+        },
+        "detected_vendors": {
+          "unknown": 31,
+          "paloalto": 6,
+          "juniper": 1
+        },
+        "g_files": 32
+      }
+    }
+  },
+  "corpus_contract_checks": {
+    "checks": [
+      {
+        "id": "C1",
+        "name": "no crashes (untyped errors only; typed boundaries exempt)",
+        "probes": 480,
+        "violations": 0,
+        "detail": []
+      },
+      {
+        "id": "C3",
+        "name": "no decisive verdict on unsupported vendors",
+        "probes": 0,
+        "violations": 0,
+        "detail": []
+      },
+      {
+        "id": "C4/C5/C6",
+        "name": "per-file contract violations (attribution, evidence, score)",
+        "probes": 479,
+        "violations": 0,
+        "detail": []
+      },
+      {
+        "id": "C2",
+        "name": "deterministic selection + verdicts across fresh engines",
+        "probes": 40,
+        "violations": 0,
+        "detail": []
+      }
+    ],
+    "violations_total": 0,
+    "verdict": "PASS"
+  },
+  "categories": {
+    "A": "spec structure conformance (section 13.1 / 13.2 control structure)",
+    "B": "functional - control selection (which controls run; section 10.7, 9.1 step 6)",
+    "C": "functional - deterministic evaluation logic (section 13.3 / 13.4)",
+    "D": "functional - evidence chains (section 13.3 step 3, section 12)",
+    "E": "framework attribution + persistence contract (section 12, DDL, 14.3.2)",
+    "F": "drift: legacy engines.compliance vs canonical benchmarks",
+    "G": "SEPARATE RECORD - wrong/unsupported-vendor consequences (methodology rule)",
+    "H": "semantic fidelity invariants (no fabricated verdicts)",
+    "I": "integration with the rest of the pipeline (section 9.1)",
+    "J": "determinism",
+    "K": "performance (measurement only)",
+    "L": "hostile and boundary input",
+    "M": "error handling - typed errors, failed steps, no swallowed faults",
+    "N": "persistence - framework/version/score/result/enum/link contract",
+    "O": "determinism - repeated and fresh-instance runs",
+    "P": "performance - registry load, selection, evaluation, audit",
+    "Q": "security - hostile input, injection safety, no fabricated verdicts",
+    "R": "end-to-end pipeline - request to persistence to reports"
+  }
+}

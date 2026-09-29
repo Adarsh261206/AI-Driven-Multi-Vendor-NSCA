@@ -2,7 +2,6 @@
 
 from __future__ import annotations
 
-import pytest
 
 from app.benchmarks.cisco_ios_xe_controls import (
     BENCHMARK_ID,
@@ -14,11 +13,7 @@ from app.benchmarks.cisco_ios_xe_controls import (
     get_registry,
 )
 from app.benchmarks.models import (
-    AssessmentStatus,
     BenchmarkControl,
-    BenchmarkRegistry,
-    ControlSeverity,
-    ProfileLevel,
 )
 from app.benchmarks.registry import ControlRegistry
 
@@ -254,7 +249,7 @@ class TestControlEvaluation:
         )
         assert result["result"] == "PASS"
 
-    def test_evaluate_no_model_path_returns_review(self):
+    def test_evaluate_123_no_model_path_returns_review(self):
         control = self.registry.get_control("1.2.3")
         assert control is not None
         result = self.registry.evaluate_control(control, {})

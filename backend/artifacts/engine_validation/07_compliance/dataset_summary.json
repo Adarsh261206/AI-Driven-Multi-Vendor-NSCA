@@ -1,0 +1,232 @@
+{
+  "corpus": "C:\\Users\\priye\\Downloads\\SIH Config\\final-dataset",
+  "engine": "07_compliance",
+  "contract_version": "E07",
+  "files": 480,
+  "processed_ok": 479,
+  "errors": 1,
+  "elapsed_s": 44.8,
+  "selection_distribution": {
+    "CIS+NIST": 307,
+    "none": 172
+  },
+  "status_distribution": {
+    "completed": 307,
+    "normalization_failed": 147,
+    "unsupported_selection": 25
+  },
+  "evaluated_control_distribution": {
+    "0": 172,
+    "143": 38,
+    "179": 269
+  },
+  "verdict_totals": {
+    "passed": 2134,
+    "failed": 2669,
+    "review": 48782
+  },
+  "regex_driven_totals": {
+    "pass": 354,
+    "fail": 1,
+    "review": 30693
+  },
+  "mapped_totals": {
+    "pass": 1780,
+    "fail": 2668,
+    "review": 18089
+  },
+  "g_flags": {
+    "label_detection_mismatch": 202
+  },
+  "unsupported_vendor_outcomes": {
+    "unknown": {
+      "files": 106,
+      "evaluated": 0,
+      "passed": 0,
+      "failed": 0,
+      "regex_pass": 0,
+      "regex_fail": 0
+    },
+    "fortinet": {
+      "files": 29,
+      "evaluated": 0,
+      "passed": 0,
+      "failed": 0,
+      "regex_pass": 0,
+      "regex_fail": 0
+    },
+    "paloalto": {
+      "files": 6,
+      "evaluated": 0,
+      "passed": 0,
+      "failed": 0,
+      "regex_pass": 0,
+      "regex_fail": 0
+    }
+  },
+  "detected_vendor_distribution": {
+    "cisco": 277,
+    "unknown": 106,
+    "juniper": 61,
+    "fortinet": 29,
+    "paloalto": 6
+  },
+  "empty_files": 0,
+  "nul_files": 0,
+  "files_with_zero_evaluated": 172,
+  "contract_checks": [
+    {
+      "id": "C1",
+      "name": "no crashes (untyped errors only; typed boundaries exempt)",
+      "probes": 480,
+      "violations": 0,
+      "detail": []
+    },
+    {
+      "id": "C3",
+      "name": "no decisive verdict on unsupported vendors",
+      "probes": 0,
+      "violations": 0,
+      "detail": []
+    },
+    {
+      "id": "C4/C5/C6",
+      "name": "per-file contract violations (attribution, evidence, score)",
+      "probes": 479,
+      "violations": 0,
+      "detail": []
+    },
+    {
+      "id": "C2",
+      "name": "deterministic selection + verdicts across fresh engines",
+      "probes": 40,
+      "violations": 0,
+      "detail": []
+    }
+  ],
+  "contract_violations_total": 0,
+  "contract_verdict": "PASS",
+  "by_label": {
+    "A10": {
+      "files": 3,
+      "errors": 0,
+      "selection": {
+        "CIS+NIST": 1,
+        "none": 2
+      },
+      "detected_vendors": {
+        "cisco": 1,
+        "unknown": 1,
+        "juniper": 1
+      },
+      "g_files": 3
+    },
+    "Arista": {
+      "files": 38,
+      "errors": 0,
+      "selection": {
+        "CIS+NIST": 36,
+        "none": 2
+      },
+      "detected_vendors": {
+        "cisco": 36,
+        "unknown": 1,
+        "juniper": 1
+      },
+      "g_files": 38
+    },
+    "Cisco": {
+      "files": 252,
+      "errors": 1,
+      "selection": {
+        "none": 54,
+        "CIS+NIST": 197,
+        "": 1
+      },
+      "detected_vendors": {
+        "unknown": 29,
+        "cisco": 204,
+        "juniper": 19
+      },
+      "g_files": 48
+    },
+    "F5": {
+      "files": 11,
+      "errors": 0,
+      "selection": {
+        "none": 9,
+        "CIS+NIST": 2
+      },
+      "detected_vendors": {
+        "cisco": 2,
+        "unknown": 7,
+        "juniper": 2
+      },
+      "g_files": 11
+    },
+    "FRR": {
+      "files": 63,
+      "errors": 0,
+      "selection": {
+        "CIS+NIST": 32,
+        "none": 31
+      },
+      "detected_vendors": {
+        "cisco": 32,
+        "juniper": 1,
+        "unknown": 30
+      },
+      "g_files": 63
+    },
+    "Fortinet": {
+      "files": 30,
+      "errors": 0,
+      "selection": {
+        "none": 30
+      },
+      "detected_vendors": {
+        "fortinet": 29,
+        "unknown": 1
+      },
+      "g_files": 1
+    },
+    "Juniper": {
+      "files": 41,
+      "errors": 0,
+      "selection": {
+        "none": 6,
+        "CIS+NIST": 35
+      },
+      "detected_vendors": {
+        "unknown": 6,
+        "juniper": 35
+      },
+      "g_files": 6
+    },
+    "NAPALM": {
+      "files": 4,
+      "errors": 0,
+      "selection": {
+        "CIS+NIST": 4
+      },
+      "detected_vendors": {
+        "cisco": 3,
+        "juniper": 1
+      },
+      "g_files": 0
+    },
+    "PaloAlto": {
+      "files": 38,
+      "errors": 0,
+      "selection": {
+        "none": 38
+      },
+      "detected_vendors": {
+        "unknown": 31,
+        "paloalto": 6,
+        "juniper": 1
+      },
+      "g_files": 32
+    }
+  }
+}

@@ -3,12 +3,17 @@
   "model": "RandomForestRegressor(100 trees, depth 10)",
   "train_size": 1600,
   "test_size": 400,
-  "mse": 5.321455870695269,
-  "r2": 0.9920562404392735,
+  "mse": 6.766207033963761,
+  "r2": 0.9836120179974267,
   "features": [
     "severity_num",
     "vendor_mult",
     "category_mult",
     "confidence"
-  ]
+  ],
+  "scope": "advisory-only formula emulation (never normative)",
+  "label_source": "synthetic: normative deterministic formula + N(0,2) noise",
+  "label_formula": "base*vendor*category*max(conf,0.5)/15.6*100",
+  "confidence_transform": "max(confidence, 0.5) (shared with serving)",
+  "vocabulary": "canonical risk.py maps (shared with serving)"
 }

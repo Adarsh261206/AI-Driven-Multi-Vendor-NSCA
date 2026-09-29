@@ -1,0 +1,481 @@
+relpath,extension,size_bytes,line_count,decode_note,is_valid,error_count,warning_count,info_count,issue_codes,binary_content,empty_content,null_byte,no_substantive,missing_value,invalid_argument,sensitive_data,insecure_config,long_line,mixed_line_endings,unknown_content,mixed_vendor,vendor_hint_issues,zero_issues,validate_ms,e01_ext_result,e01_fixture_class,e01_would_be_accepted
+A10\LoadBalancers\ACOS\lb42.cfg,.cfg,24559,991,,True,0,0,0,,0,0,0,0,0,0,0,0,0,0,0,0,0,True,23.5605,accepted,Known-good,False
+A10\LoadBalancers\ACOS\metadata.yaml,.yaml,1784,40,,True,0,1,0,UNKNOWN_CONTENTx1,0,0,0,0,0,0,0,0,0,0,1,0,0,False,1.5337,"rejected: File extension '.yaml' not allowed. Allowed: ['.txt', '.cfg', '.conf', '.zip']",Unsupported,False
+A10\LoadBalancers\ACOS\README.md,.md,1339,40,,True,0,1,0,UNKNOWN_CONTENTx1,0,0,0,0,0,0,0,0,0,0,1,0,0,False,1.6067,"rejected: File extension '.md' not allowed. Allowed: ['.txt', '.cfg', '.conf', '.zip']",Unsupported,False
+Arista\Switches\EOS\arista_acl,<none>,195,11,,True,0,0,0,,0,0,0,0,0,0,0,0,0,0,0,0,0,True,0.3693,rejected: Invalid filename,Unsupported,False
+Arista\Switches\EOS\arista_bgp,<none>,395,18,,True,0,0,0,,0,0,0,0,0,0,0,0,0,0,0,0,0,True,0.38,rejected: Invalid filename,Unsupported,False
+Arista\Switches\EOS\arista_bgp_asn,<none>,131,9,,True,0,0,0,,0,0,0,0,0,0,0,0,0,0,0,0,0,True,0.2751,rejected: Invalid filename,Unsupported,False
+Arista\Switches\EOS\arista_misc,<none>,858,51,,True,0,0,0,,0,0,0,0,0,0,0,0,0,0,0,0,0,True,0.8252,rejected: Invalid filename,Unsupported,False
+Arista\Switches\EOS\arista_nat,<none>,399,18,,True,0,0,0,,0,0,0,0,0,0,0,0,0,0,0,0,0,True,0.3821,rejected: Invalid filename,Unsupported,False
+Arista\Switches\EOS\arista_ospf,<none>,150,11,,True,0,0,0,,0,0,0,0,0,0,0,0,0,0,0,0,0,True,0.2407,rejected: Invalid filename,Unsupported,False
+Arista\Switches\EOS\DC1-BL1A.cfg,.cfg,8707,293,,True,0,0,0,,0,0,0,0,0,0,0,0,0,0,0,0,0,True,6.2412,accepted,Edge,False
+Arista\Switches\EOS\DC1-BL1B.cfg,.cfg,8707,293,,True,0,0,0,,0,0,0,0,0,0,0,0,0,0,0,0,0,True,8.2933,accepted,Edge,False
+Arista\Switches\EOS\DC1-L2LEAF4A.cfg,.cfg,2103,81,,True,0,0,0,,0,0,0,0,0,0,0,0,0,0,0,0,0,True,1.7243,accepted,Edge,False
+Arista\Switches\EOS\DC1-L2LEAF5A.cfg,.cfg,2628,101,,True,0,0,0,,0,0,0,0,0,0,0,0,0,0,0,0,0,True,1.9594,accepted,Edge,False
+Arista\Switches\EOS\DC1-L2LEAF5B.cfg,.cfg,2628,101,,True,0,0,0,,0,0,0,0,0,0,0,0,0,0,0,0,0,True,2.0579,accepted,Edge,False
+Arista\Switches\EOS\DC1-L2LEAF6A.cfg,.cfg,2857,116,,True,0,0,0,,0,0,0,0,0,0,0,0,0,0,0,0,0,True,5.5517,accepted,Edge,False
+Arista\Switches\EOS\DC1-L2LEAF6B.cfg,.cfg,2857,116,,True,0,0,0,,0,0,0,0,0,0,0,0,0,0,0,0,0,True,2.3016,accepted,Edge,False
+Arista\Switches\EOS\DC1-LEAF1A.cfg,.cfg,7086,248,,True,0,0,0,,0,0,0,0,0,0,0,0,0,0,0,0,0,True,5.0741,accepted,Edge,False
+Arista\Switches\EOS\DC1-LEAF2A.cfg,.cfg,11828,423,,True,0,0,0,,0,0,0,0,0,0,0,0,0,0,0,0,0,True,9.4307,accepted,Edge,False
+Arista\Switches\EOS\DC1-LEAF2B.cfg,.cfg,11830,423,,True,0,0,0,,0,0,0,0,0,0,0,0,0,0,0,0,0,True,10.3656,accepted,Edge,False
+Arista\Switches\EOS\DC1-SPINE1.cfg,.cfg,5343,159,,True,0,0,0,,0,0,0,0,0,0,0,0,0,0,0,0,0,True,3.5482,accepted,Edge,False
+Arista\Switches\EOS\DC1-SPINE2.cfg,.cfg,5346,159,,True,0,0,0,,0,0,0,0,0,0,0,0,0,0,0,0,0,True,4.1915,accepted,Edge,False
+Arista\Switches\EOS\DC1-SVC3A.cfg,.cfg,9502,327,,True,0,0,0,,0,0,0,0,0,0,0,0,0,0,0,0,0,True,8.7801,accepted,Edge,False
+Arista\Switches\EOS\DC1-SVC3B.cfg,.cfg,9502,327,,True,0,0,0,,0,0,0,0,0,0,0,0,0,0,0,0,0,True,8.5253,accepted,Edge,False
+Arista\Switches\EOS\eos_mlag,<none>,581,31,,True,0,0,0,,0,0,0,0,0,0,0,0,0,0,0,0,0,True,1.1386,rejected: Invalid filename,Unsupported,False
+Arista\Switches\EOS\eos_trunk_group,<none>,829,37,,True,0,0,0,,0,0,0,0,0,0,0,0,0,0,0,0,0,True,1.1037,rejected: Invalid filename,Unsupported,False
+Arista\Switches\EVPN-Fabric\DC1-BL1A.cfg,.cfg,8707,293,,True,0,0,0,,0,0,0,0,0,0,0,0,0,0,0,0,0,True,6.3119,accepted,Duplicate,True
+Arista\Switches\EVPN-Fabric\DC1-BL1B.cfg,.cfg,8707,293,,True,0,0,0,,0,0,0,0,0,0,0,0,0,0,0,0,0,True,6.1462,accepted,Duplicate,True
+Arista\Switches\EVPN-Fabric\DC1-L2LEAF4A.cfg,.cfg,2103,81,,True,0,0,0,,0,0,0,0,0,0,0,0,0,0,0,0,0,True,1.5526,accepted,Duplicate,True
+Arista\Switches\EVPN-Fabric\DC1-L2LEAF5A.cfg,.cfg,2628,101,,True,0,0,0,,0,0,0,0,0,0,0,0,0,0,0,0,0,True,1.9282,accepted,Duplicate,True
+Arista\Switches\EVPN-Fabric\DC1-L2LEAF5B.cfg,.cfg,2628,101,,True,0,0,0,,0,0,0,0,0,0,0,0,0,0,0,0,0,True,2.1357,accepted,Duplicate,True
+Arista\Switches\EVPN-Fabric\DC1-L2LEAF6A.cfg,.cfg,2857,116,,True,0,0,0,,0,0,0,0,0,0,0,0,0,0,0,0,0,True,2.4703,accepted,Duplicate,True
+Arista\Switches\EVPN-Fabric\DC1-L2LEAF6B.cfg,.cfg,2857,116,,True,0,0,0,,0,0,0,0,0,0,0,0,0,0,0,0,0,True,3.6867,accepted,Duplicate,True
+Arista\Switches\EVPN-Fabric\DC1-LEAF1A.cfg,.cfg,7086,248,,True,0,0,0,,0,0,0,0,0,0,0,0,0,0,0,0,0,True,5.3987,accepted,Duplicate,True
+Arista\Switches\EVPN-Fabric\DC1-LEAF2A.cfg,.cfg,11828,423,,True,0,0,0,,0,0,0,0,0,0,0,0,0,0,0,0,0,True,10.4141,accepted,Duplicate,True
+Arista\Switches\EVPN-Fabric\DC1-LEAF2B.cfg,.cfg,11830,423,,True,0,0,0,,0,0,0,0,0,0,0,0,0,0,0,0,0,True,8.366,accepted,Duplicate,True
+Arista\Switches\EVPN-Fabric\DC1-SPINE1.cfg,.cfg,5343,159,,True,0,0,0,,0,0,0,0,0,0,0,0,0,0,0,0,0,True,4.7663,accepted,Duplicate,True
+Arista\Switches\EVPN-Fabric\DC1-SPINE2.cfg,.cfg,5346,159,,True,0,0,0,,0,0,0,0,0,0,0,0,0,0,0,0,0,True,3.6556,accepted,Duplicate,True
+Arista\Switches\EVPN-Fabric\DC1-SVC3A.cfg,.cfg,9502,327,,True,0,0,0,,0,0,0,0,0,0,0,0,0,0,0,0,0,True,7.279,accepted,Duplicate,True
+Arista\Switches\EVPN-Fabric\DC1-SVC3B.cfg,.cfg,9502,327,,True,0,0,0,,0,0,0,0,0,0,0,0,0,0,0,0,0,True,8.2981,accepted,Duplicate,True
+Arista\Switches\EVPN-Fabric\metadata.yaml,.yaml,2585,64,,True,0,1,0,UNKNOWN_CONTENTx1,0,0,0,0,0,0,0,0,0,0,1,0,0,False,2.6062,"rejected: File extension '.yaml' not allowed. Allowed: ['.txt', '.cfg', '.conf', '.zip']",Unsupported,False
+Arista\Switches\EVPN-Fabric\README.md,.md,1746,51,,True,0,1,0,UNKNOWN_CONTENTx1,0,0,0,0,0,0,0,0,0,0,1,0,0,False,1.865,"rejected: File extension '.md' not allowed. Allowed: ['.txt', '.cfg', '.conf', '.zip']",Unsupported,False
+Cisco\Firewalls\ASA\asa-recognized.cfg,.cfg,89,3,,True,0,0,0,,0,0,0,0,0,0,0,0,0,0,0,0,0,True,0.1443,accepted,Known-good,False
+Cisco\Firewalls\ASA\asa-unrecognized.cfg,.cfg,176,5,,True,0,0,0,,0,0,0,0,0,0,0,0,0,0,0,0,0,True,0.252,accepted,Known-good,False
+Cisco\Firewalls\ASA\metadata.yaml,.yaml,1401,31,,True,0,1,0,UNKNOWN_CONTENTx1,0,0,0,0,0,0,0,0,0,0,1,0,0,False,1.0931,"rejected: File extension '.yaml' not allowed. Allowed: ['.txt', '.cfg', '.conf', '.zip']",Unsupported,False
+Cisco\Firewalls\ASA\README.md,.md,1037,37,,True,0,1,0,UNKNOWN_CONTENTx1,0,0,0,0,0,0,0,0,0,0,1,0,0,False,1.5035,"rejected: File extension '.md' not allowed. Allowed: ['.txt', '.cfg', '.conf', '.zip']",Unsupported,False
+Cisco\MultiAS-Lab\drift-snapshot\as1border1.cfg,.cfg,3897,190,,True,0,0,0,,0,0,0,0,0,0,0,0,0,0,0,0,0,True,3.6911,accepted,Edge,False
+Cisco\MultiAS-Lab\drift-snapshot\as1border2.cfg,.cfg,4045,198,,True,0,0,0,,0,0,0,0,0,0,0,0,0,0,0,0,0,True,3.2812,accepted,Edge,False
+Cisco\MultiAS-Lab\drift-snapshot\as1core1.cfg,.cfg,1837,125,,True,0,0,0,,0,0,0,0,0,0,0,0,0,0,0,0,0,True,1.8292,accepted,Edge,False
+Cisco\MultiAS-Lab\drift-snapshot\as2border1.cfg,.cfg,4145,198,,True,0,0,0,,0,0,0,0,0,0,0,0,0,0,0,0,0,True,3.5516,accepted,Edge,False
+Cisco\MultiAS-Lab\drift-snapshot\as2border2.cfg,.cfg,4049,195,,True,0,0,0,,0,0,0,0,0,0,0,0,0,0,0,0,0,True,3.2473,accepted,Edge,False
+Cisco\MultiAS-Lab\drift-snapshot\as2core1.cfg,.cfg,2483,147,,True,0,0,0,,0,0,0,0,0,0,0,0,0,0,0,0,0,True,2.2492,accepted,Edge,False
+Cisco\MultiAS-Lab\drift-snapshot\as2core2.cfg,.cfg,2331,144,,True,0,0,0,,0,0,0,0,0,0,0,0,0,0,0,0,0,True,2.2121,accepted,Edge,False
+Cisco\MultiAS-Lab\drift-snapshot\as2dept1.cfg,.cfg,2948,154,,True,0,0,0,,0,0,0,0,0,0,0,0,0,0,0,0,0,True,2.4579,accepted,Edge,False
+Cisco\MultiAS-Lab\drift-snapshot\as2dist1.cfg,.cfg,2926,154,,True,0,0,0,,0,0,0,0,0,0,0,0,0,0,0,0,0,True,2.4874,accepted,Edge,False
+Cisco\MultiAS-Lab\drift-snapshot\as2dist2.cfg,.cfg,2820,151,,True,0,0,0,,0,0,0,0,0,0,0,0,0,0,0,0,0,True,3.3467,accepted,Edge,False
+Cisco\MultiAS-Lab\drift-snapshot\as3border1.cfg,.cfg,3811,188,,True,0,0,0,,0,0,0,0,0,0,0,0,0,0,0,0,0,True,4.061,accepted,Edge,False
+Cisco\MultiAS-Lab\drift-snapshot\as3border2.cfg,.cfg,3479,177,,True,0,0,0,,0,0,0,0,0,0,0,0,0,0,0,0,0,True,3.4362,accepted,Edge,False
+Cisco\MultiAS-Lab\drift-snapshot\as3core1.cfg,.cfg,2072,134,,True,0,0,0,,0,0,0,0,0,0,0,0,0,0,0,0,0,True,2.0715,accepted,Edge,False
+Cisco\MultiAS-Lab\example-bgp\as1border1.cfg,.cfg,3895,190,,True,0,0,0,,0,0,0,0,0,0,0,0,0,0,0,0,0,True,3.4045,accepted,Edge,False
+Cisco\MultiAS-Lab\example-bgp\as1border2.cfg,.cfg,4044,198,,True,0,0,0,,0,0,0,0,0,0,0,0,0,0,0,0,0,True,3.2898,accepted,Edge,False
+Cisco\MultiAS-Lab\example-bgp\as1core1.cfg,.cfg,1836,125,,True,0,0,0,,0,0,0,0,0,0,0,0,0,0,0,0,0,True,1.8285,accepted,Edge,False
+Cisco\MultiAS-Lab\example-bgp\as2border1.cfg,.cfg,4143,198,,True,0,0,0,,0,0,0,0,0,0,0,0,0,0,0,0,0,True,3.5102,accepted,Edge,False
+Cisco\MultiAS-Lab\example-bgp\as2border2.cfg,.cfg,4031,194,,True,0,0,0,,0,0,0,0,0,0,0,0,0,0,0,0,0,True,3.5259,accepted,Edge,False
+Cisco\MultiAS-Lab\example-bgp\as2core1.cfg,.cfg,2461,147,,True,0,0,0,,0,0,0,0,0,0,0,0,0,0,0,0,0,True,2.7262,accepted,Edge,False
+Cisco\MultiAS-Lab\example-bgp\as2core2.cfg,.cfg,2330,144,,True,0,0,0,,0,0,0,0,0,0,0,0,0,0,0,0,0,True,2.2686,accepted,Edge,False
+Cisco\MultiAS-Lab\example-bgp\as2dept1.cfg,.cfg,2935,154,,True,0,0,0,,0,0,0,0,0,0,0,0,0,0,0,0,0,True,3.5514,accepted,Edge,False
+Cisco\MultiAS-Lab\example-bgp\as2dist1.cfg,.cfg,2809,151,,True,0,0,0,,0,0,0,0,0,0,0,0,0,0,0,0,0,True,2.5332,accepted,Edge,False
+Cisco\MultiAS-Lab\example-bgp\as2dist2.cfg,.cfg,2809,151,,True,0,0,0,,0,0,0,0,0,0,0,0,0,0,0,0,0,True,4.1352,accepted,Edge,False
+Cisco\MultiAS-Lab\example-bgp\as3border1.cfg,.cfg,3656,184,,True,0,0,0,,0,0,0,0,0,0,0,0,0,0,0,0,0,True,3.0447,accepted,Edge,False
+Cisco\MultiAS-Lab\example-bgp\as3border2.cfg,.cfg,3478,177,,True,0,0,0,,0,0,0,0,0,0,0,0,0,0,0,0,0,True,3.3039,accepted,Edge,False
+Cisco\MultiAS-Lab\example-bgp\as3core1.cfg,.cfg,2071,134,,True,0,0,0,,0,0,0,0,0,0,0,0,0,0,0,0,0,True,2.0551,accepted,Edge,False
+Cisco\MultiAS-Lab\example-bgp\metadata.yaml,.yaml,1180,30,,True,0,1,0,UNKNOWN_CONTENTx1,0,0,0,0,0,0,0,0,0,0,1,0,0,False,1.1192,"rejected: File extension '.yaml' not allowed. Allowed: ['.txt', '.cfg', '.conf', '.zip']",Unsupported,False
+Cisco\MultiAS-Lab\example-bgp\README.md,.md,659,28,,True,0,1,0,UNKNOWN_CONTENTx1,0,0,0,0,0,0,0,0,0,0,1,0,0,False,0.5842,"rejected: File extension '.md' not allowed. Allowed: ['.txt', '.cfg', '.conf', '.zip']",Unsupported,False
+Cisco\MultiAS-Lab\example-filters\candidate1\firewall.cfg,.cfg,30750,852,,True,0,0,0,,0,0,0,0,0,0,0,0,0,0,0,0,0,True,20.1061,accepted,Edge,False
+Cisco\MultiAS-Lab\example-filters\candidate1\rtr-with-acl.cfg,.cfg,5060,139,,True,0,0,0,,0,0,0,0,0,0,0,0,0,0,0,0,0,True,3.5356,accepted,Edge,False
+Cisco\MultiAS-Lab\example-filters\candidate2\firewall.cfg,.cfg,30750,852,,True,0,0,0,,0,0,0,0,0,0,0,0,0,0,0,0,0,True,20.6957,accepted,Duplicate,True
+Cisco\MultiAS-Lab\example-filters\candidate2\rtr-with-acl.cfg,.cfg,5060,139,,True,0,0,0,,0,0,0,0,0,0,0,0,0,0,0,0,0,True,3.5717,accepted,Edge,False
+Cisco\MultiAS-Lab\example-filters\current\firewall.cfg,.cfg,30966,858,,True,0,0,0,,0,0,0,0,0,0,0,0,0,0,0,0,0,True,19.8862,accepted,Edge,False
+Cisco\MultiAS-Lab\example-filters\current\rtr-with-acl.cfg,.cfg,4954,137,,True,0,0,0,,0,0,0,0,0,0,0,0,0,0,0,0,0,True,3.7569,accepted,Edge,False
+Cisco\MultiAS-Lab\example-filters\metadata.yaml,.yaml,1419,33,,True,0,1,0,UNKNOWN_CONTENTx1,0,0,0,0,0,0,0,0,0,0,1,0,0,False,1.5661,"rejected: File extension '.yaml' not allowed. Allowed: ['.txt', '.cfg', '.conf', '.zip']",Unsupported,False
+Cisco\MultiAS-Lab\example-filters\README.md,.md,1100,37,,True,0,1,0,UNKNOWN_CONTENTx1,0,0,0,0,0,0,0,0,0,0,1,0,0,False,0.8562,"rejected: File extension '.md' not allowed. Allowed: ['.txt', '.cfg', '.conf', '.zip']",Unsupported,False
+Cisco\MultiAS-Lab\example-network\as1border1.cfg,.cfg,3949,192,,True,0,0,0,,0,0,0,0,0,0,0,0,0,0,0,0,0,True,3.4799,accepted,Edge,False
+Cisco\MultiAS-Lab\example-network\as1border2.cfg,.cfg,4044,198,,True,0,0,0,,0,0,0,0,0,0,0,0,0,0,0,0,0,True,3.2413,accepted,Duplicate,True
+Cisco\MultiAS-Lab\example-network\as1core1.cfg,.cfg,1836,125,,True,0,0,0,,0,0,0,0,0,0,0,0,0,0,0,0,0,True,2.0977,accepted,Duplicate,True
+Cisco\MultiAS-Lab\example-network\as2border1.cfg,.cfg,4143,198,,True,0,0,0,,0,0,0,0,0,0,0,0,0,0,0,0,0,True,3.3634,accepted,Duplicate,True
+Cisco\MultiAS-Lab\example-network\as2border2.cfg,.cfg,4030,194,,True,0,0,0,,0,0,0,0,0,0,0,0,0,0,0,0,0,True,3.2342,accepted,Edge,False
+Cisco\MultiAS-Lab\example-network\as2core1.cfg,.cfg,2384,145,,True,0,0,0,,0,0,0,0,0,0,0,0,0,0,0,0,0,True,2.2241,accepted,Edge,False
+Cisco\MultiAS-Lab\example-network\as2core2.cfg,.cfg,2330,144,,True,0,0,0,,0,0,0,0,0,0,0,0,0,0,0,0,0,True,2.1389,accepted,Duplicate,True
+Cisco\MultiAS-Lab\example-network\as2dept1.cfg,.cfg,2935,154,,True,0,0,0,,0,0,0,0,0,0,0,0,0,0,0,0,0,True,2.4922,accepted,Edge,False
+Cisco\MultiAS-Lab\example-network\as2dist1.cfg,.cfg,2760,150,,True,0,0,0,,0,0,0,0,0,0,0,0,0,0,0,0,0,True,2.3585,accepted,Edge,False
+Cisco\MultiAS-Lab\example-network\as2dist2.cfg,.cfg,2760,150,,True,0,0,0,,0,0,0,0,0,0,0,0,0,0,0,0,0,True,2.3653,accepted,Edge,False
+Cisco\MultiAS-Lab\example-network\as3border1.cfg,.cfg,3656,184,,True,0,0,0,,0,0,0,0,0,0,0,0,0,0,0,0,0,True,3.2741,accepted,Duplicate,True
+Cisco\MultiAS-Lab\example-network\as3border2.cfg,.cfg,3478,177,,True,0,0,0,,0,0,0,0,0,0,0,0,0,0,0,0,0,True,2.8613,accepted,Duplicate,True
+Cisco\MultiAS-Lab\example-network\as3core1.cfg,.cfg,2071,134,,True,0,0,0,,0,0,0,0,0,0,0,0,0,0,0,0,0,True,2.0444,accepted,Duplicate,True
+Cisco\MultiAS-Lab\example-network\metadata.yaml,.yaml,2581,57,,True,0,1,0,UNKNOWN_CONTENTx1,0,0,0,0,0,0,0,0,0,0,1,0,0,False,1.9119,"rejected: File extension '.yaml' not allowed. Allowed: ['.txt', '.cfg', '.conf', '.zip']",Unsupported,False
+Cisco\MultiAS-Lab\example-network\README.md,.md,1986,63,,True,0,1,0,UNKNOWN_CONTENTx1,0,0,0,0,0,0,0,0,0,0,1,0,0,False,1.7084,"rejected: File extension '.md' not allowed. Allowed: ['.txt', '.cfg', '.conf', '.zip']",Unsupported,False
+Cisco\MultiAS-Lab\ExampleNetwork\Candidate\as1border1.cfg,.cfg,3706,190,,True,0,0,0,,0,0,0,0,0,0,0,0,0,0,0,0,0,True,2.9347,accepted,Edge,False
+Cisco\MultiAS-Lab\ExampleNetwork\Candidate\as1border2.cfg,.cfg,3847,198,,True,0,0,0,,0,0,0,0,0,0,0,0,0,0,0,0,0,True,3.2035,accepted,Edge,False
+Cisco\MultiAS-Lab\ExampleNetwork\Candidate\as1core1.cfg,.cfg,1712,125,,True,0,0,0,,0,0,0,0,0,0,0,0,0,0,0,0,0,True,1.6927,accepted,Edge,False
+Cisco\MultiAS-Lab\ExampleNetwork\Candidate\as2border1.cfg,.cfg,3947,198,,True,0,0,0,,0,0,0,0,0,0,0,0,0,0,0,0,0,True,3.0602,accepted,Edge,False
+Cisco\MultiAS-Lab\ExampleNetwork\Candidate\as2border2.cfg,.cfg,3837,194,,True,0,0,0,,0,0,0,0,0,0,0,0,0,0,0,0,0,True,3.005,accepted,Edge,False
+Cisco\MultiAS-Lab\ExampleNetwork\Candidate\as2core1.cfg,.cfg,2240,145,,True,0,0,0,,0,0,0,0,0,0,0,0,0,0,0,0,0,True,2.4401,accepted,Edge,False
+Cisco\MultiAS-Lab\ExampleNetwork\Candidate\as2core2.cfg,.cfg,2187,144,,True,0,0,0,,0,0,0,0,0,0,0,0,0,0,0,0,0,True,2.0137,accepted,Edge,False
+Cisco\MultiAS-Lab\ExampleNetwork\Candidate\as2dept1.cfg,.cfg,2875,156,,True,0,0,0,,0,0,0,0,0,0,0,0,0,0,0,0,0,True,2.3193,accepted,Edge,False
+Cisco\MultiAS-Lab\ExampleNetwork\Candidate\as2dist1.cfg,.cfg,2611,150,,True,0,0,0,,0,0,0,0,0,0,0,0,0,0,0,0,0,True,3.3561,accepted,Edge,False
+Cisco\MultiAS-Lab\ExampleNetwork\Candidate\as2dist2.cfg,.cfg,2611,150,,True,0,0,0,,0,0,0,0,0,0,0,0,0,0,0,0,0,True,2.1964,accepted,Edge,False
+Cisco\MultiAS-Lab\ExampleNetwork\Candidate\as3border1.cfg,.cfg,3473,184,,True,0,0,0,,0,0,0,0,0,0,0,0,0,0,0,0,0,True,3.2518,accepted,Edge,False
+Cisco\MultiAS-Lab\ExampleNetwork\Candidate\as3border2.cfg,.cfg,3302,177,,True,0,0,0,,0,0,0,0,0,0,0,0,0,0,0,0,0,True,3.4144,accepted,Edge,False
+Cisco\MultiAS-Lab\ExampleNetwork\Candidate\as3core1.cfg,.cfg,1938,134,,True,0,0,0,,0,0,0,0,0,0,0,0,0,0,0,0,0,True,1.8161,accepted,Edge,False
+Cisco\MultiAS-Lab\ExampleNetwork\Live\as2dept1.cfg,.cfg,2782,154,,True,0,0,0,,0,0,0,0,0,0,0,0,0,0,0,0,0,True,3.3275,accepted,Edge,False
+Cisco\MultiAS-Lab\failure-analysis\hongkong.cfg,.cfg,2376,140,,True,0,0,0,,0,0,0,0,0,0,0,0,0,0,0,0,0,True,2.5889,accepted,Known-good,False
+Cisco\MultiAS-Lab\failure-analysis\houston.cfg,.cfg,2934,154,,True,0,0,0,,0,0,0,0,0,0,0,0,0,0,0,0,0,True,2.641,accepted,Known-good,False
+Cisco\MultiAS-Lab\failure-analysis\london.cfg,.cfg,4226,204,,True,0,0,0,,0,0,0,0,0,0,0,0,0,0,0,0,0,True,4.4447,accepted,Known-good,False
+Cisco\MultiAS-Lab\failure-analysis\losangeles.cfg,.cfg,2762,150,,True,0,0,0,,0,0,0,0,0,0,0,0,0,0,0,0,0,True,3.7118,accepted,Known-good,False
+Cisco\MultiAS-Lab\failure-analysis\metadata.yaml,.yaml,1502,35,,True,0,1,0,UNKNOWN_CONTENTx1,0,0,0,0,0,0,0,0,0,0,1,0,0,False,1.5245,"rejected: File extension '.yaml' not allowed. Allowed: ['.txt', '.cfg', '.conf', '.zip']",Unsupported,False
+Cisco\MultiAS-Lab\failure-analysis\milan.cfg,.cfg,4039,198,,True,0,0,0,,0,0,0,0,0,0,0,0,0,0,0,0,0,True,3.7522,accepted,Known-good,False
+Cisco\MultiAS-Lab\failure-analysis\newyork.cfg,.cfg,4161,199,,True,0,0,0,,0,0,0,0,0,0,0,0,0,0,0,0,0,True,3.7836,accepted,Known-good,False
+Cisco\MultiAS-Lab\failure-analysis\paris.cfg,.cfg,2505,146,,True,0,0,0,,0,0,0,0,0,0,0,0,0,0,0,0,0,True,2.4709,accepted,Known-good,False
+Cisco\MultiAS-Lab\failure-analysis\philadelphia.cfg,.cfg,2388,145,,True,0,0,0,,0,0,0,0,0,0,0,0,0,0,0,0,0,True,2.2197,accepted,Known-good,False
+Cisco\MultiAS-Lab\failure-analysis\README.md,.md,743,28,,True,0,1,0,UNKNOWN_CONTENTx1,0,0,0,0,0,0,0,0,0,0,1,0,0,False,0.6693,"rejected: File extension '.md' not allowed. Allowed: ['.txt', '.cfg', '.conf', '.zip']",Unsupported,False
+Cisco\MultiAS-Lab\failure-analysis\sanfrancisco.cfg,.cfg,2334,144,,True,0,0,0,,0,0,0,0,0,0,0,0,0,0,0,0,0,True,2.7846,accepted,Known-good,False
+Cisco\MultiAS-Lab\failure-analysis\seattle.cfg,.cfg,4057,196,,True,0,0,0,,0,0,0,0,0,0,0,0,0,0,0,0,0,True,3.1736,accepted,Known-good,False
+Cisco\MultiAS-Lab\failure-analysis\singapore.cfg,.cfg,3619,183,,True,0,0,0,,0,0,0,0,0,0,0,0,0,0,0,0,0,True,3.3552,accepted,Known-good,False
+Cisco\MultiAS-Lab\failure-analysis\tokyo.cfg,.cfg,3673,186,,True,0,0,0,,0,0,0,0,0,0,0,0,0,0,0,0,0,True,3.0592,accepted,Known-good,False
+Cisco\MultiAS-Lab\failure-analysis\washingtondc.cfg,.cfg,2764,150,,True,0,0,0,,0,0,0,0,0,0,0,0,0,0,0,0,0,True,2.4162,accepted,Known-good,False
+Cisco\MultiAS-Lab\forwarding-change-validation\base\border1.cfg,.cfg,3046,155,,True,0,0,0,,0,0,0,0,0,0,0,0,0,0,0,0,0,True,3.7225,accepted,Edge,False
+Cisco\MultiAS-Lab\forwarding-change-validation\base\border2.cfg,.cfg,2966,152,,True,0,0,0,,0,0,0,0,0,0,0,0,0,0,0,0,0,True,2.7407,accepted,Edge,False
+Cisco\MultiAS-Lab\forwarding-change-validation\base\core1.cfg,.cfg,2294,143,,True,0,0,0,,0,0,0,0,0,0,0,0,0,0,0,0,0,True,2.5414,accepted,Edge,False
+Cisco\MultiAS-Lab\forwarding-change-validation\base\core2.cfg,.cfg,2417,147,,True,0,0,0,,0,0,0,0,0,0,0,0,0,0,0,0,0,True,2.2343,accepted,Edge,False
+Cisco\MultiAS-Lab\forwarding-change-validation\base\leaf1.cfg,.cfg,3310,163,,True,0,0,0,,0,0,0,0,0,0,0,0,0,0,0,0,0,True,2.7013,accepted,Edge,False
+Cisco\MultiAS-Lab\forwarding-change-validation\base\spine1.cfg,.cfg,2762,150,,True,0,0,0,,0,0,0,0,0,0,0,0,0,0,0,0,0,True,2.3444,accepted,Edge,False
+Cisco\MultiAS-Lab\forwarding-change-validation\base\spine2.cfg,.cfg,2760,150,,True,0,0,0,,0,0,0,0,0,0,0,0,0,0,0,0,0,True,2.8225,accepted,Edge,False
+Cisco\MultiAS-Lab\forwarding-change-validation\change1\border1.cfg,.cfg,3046,155,,True,0,0,0,,0,0,0,0,0,0,0,0,0,0,0,0,0,True,4.5379,accepted,Duplicate,True
+Cisco\MultiAS-Lab\forwarding-change-validation\change1\border2.cfg,.cfg,2966,152,,True,0,0,0,,0,0,0,0,0,0,0,0,0,0,0,0,0,True,2.4242,accepted,Duplicate,True
+Cisco\MultiAS-Lab\forwarding-change-validation\change1\core1.cfg,.cfg,2302,143,,True,0,0,0,,0,0,0,0,0,0,0,0,0,0,0,0,0,True,2.3955,accepted,Edge,False
+Cisco\MultiAS-Lab\forwarding-change-validation\change1\core2.cfg,.cfg,2417,147,,True,0,0,0,,0,0,0,0,0,0,0,0,0,0,0,0,0,True,2.253,accepted,Duplicate,True
+Cisco\MultiAS-Lab\forwarding-change-validation\change1\leaf1.cfg,.cfg,3310,163,,True,0,0,0,,0,0,0,0,0,0,0,0,0,0,0,0,0,True,2.656,accepted,Duplicate,True
+Cisco\MultiAS-Lab\forwarding-change-validation\change1\spine1.cfg,.cfg,2762,150,,True,0,0,0,,0,0,0,0,0,0,0,0,0,0,0,0,0,True,2.6863,accepted,Duplicate,True
+Cisco\MultiAS-Lab\forwarding-change-validation\change1\spine2.cfg,.cfg,2760,150,,True,0,0,0,,0,0,0,0,0,0,0,0,0,0,0,0,0,True,2.3615,accepted,Duplicate,True
+Cisco\MultiAS-Lab\forwarding-change-validation\change2\border1.cfg,.cfg,3090,156,,True,0,0,0,,0,0,0,0,0,0,0,0,0,0,0,0,0,True,3.2332,accepted,Edge,False
+Cisco\MultiAS-Lab\forwarding-change-validation\change2\border2.cfg,.cfg,3010,153,,True,0,0,0,,0,0,0,0,0,0,0,0,0,0,0,0,0,True,2.4552,accepted,Edge,False
+Cisco\MultiAS-Lab\forwarding-change-validation\change2\core1.cfg,.cfg,2294,143,,True,0,0,0,,0,0,0,0,0,0,0,0,0,0,0,0,0,True,2.262,accepted,Duplicate,True
+Cisco\MultiAS-Lab\forwarding-change-validation\change2\core2.cfg,.cfg,2417,147,,True,0,0,0,,0,0,0,0,0,0,0,0,0,0,0,0,0,True,2.3965,accepted,Duplicate,True
+Cisco\MultiAS-Lab\forwarding-change-validation\change2\leaf1.cfg,.cfg,3310,163,,True,0,0,0,,0,0,0,0,0,0,0,0,0,0,0,0,0,True,2.98,accepted,Duplicate,True
+Cisco\MultiAS-Lab\forwarding-change-validation\change2\spine1.cfg,.cfg,2762,150,,True,0,0,0,,0,0,0,0,0,0,0,0,0,0,0,0,0,True,5.2102,accepted,Duplicate,True
+Cisco\MultiAS-Lab\forwarding-change-validation\change2\spine2.cfg,.cfg,2760,150,,True,0,0,0,,0,0,0,0,0,0,0,0,0,0,0,0,0,True,2.5478,accepted,Duplicate,True
+Cisco\MultiAS-Lab\forwarding-change-validation\metadata.yaml,.yaml,1569,38,,True,0,1,0,UNKNOWN_CONTENTx1,0,0,0,0,0,0,0,0,0,0,1,0,0,False,2.1707,"rejected: File extension '.yaml' not allowed. Allowed: ['.txt', '.cfg', '.conf', '.zip']",Unsupported,False
+Cisco\MultiAS-Lab\forwarding-change-validation\README.md,.md,993,40,,True,0,1,0,UNKNOWN_CONTENTx1,0,0,0,0,0,0,0,0,0,0,1,0,0,False,1.1114,"rejected: File extension '.md' not allowed. Allowed: ['.txt', '.cfg', '.conf', '.zip']",Unsupported,False
+Cisco\MultiAS-Lab\hsrp\BR1-running-config.txt,.txt,3587,155,,True,0,0,0,,0,0,0,0,0,0,0,0,0,0,0,0,0,True,3.5959,accepted,Edge,False
+Cisco\MultiAS-Lab\hsrp\BR2-running-config.txt,.txt,3557,153,,True,0,0,0,,0,0,0,0,0,0,0,0,0,0,0,0,0,True,3.1389,accepted,Edge,False
+Cisco\MultiAS-Lab\hsrp\LAN-RTR-running-config.txt,.txt,3587,155,,True,0,0,0,,0,0,0,0,0,0,0,0,0,0,0,0,0,True,2.6458,accepted,Edge,False
+Cisco\MultiAS-Lab\hsrp\metadata.yaml,.yaml,1365,32,,True,0,1,0,UNKNOWN_CONTENTx1,0,0,0,0,0,0,0,0,0,0,1,0,0,False,1.2825,"rejected: File extension '.yaml' not allowed. Allowed: ['.txt', '.cfg', '.conf', '.zip']",Unsupported,False
+Cisco\MultiAS-Lab\hsrp\README.md,.md,949,35,,True,0,1,0,UNKNOWN_CONTENTx1,0,0,0,0,0,0,0,0,0,0,1,0,0,False,0.9424,"rejected: File extension '.md' not allowed. Allowed: ['.txt', '.cfg', '.conf', '.zip']",Unsupported,False
+Cisco\MultiAS-Lab\hsrp\WAN-RTR-running-config.txt,.txt,3589,152,,True,0,0,0,,0,0,0,0,0,0,0,0,0,0,0,0,0,True,3.0157,accepted,Edge,False
+Cisco\MultiAS-Lab\hybrid-cloud\exitgw.cfg,.cfg,9339,354,,True,0,1,0,INSECURE_CONFIGx1,0,0,0,0,0,0,0,1,0,0,0,0,0,False,6.6722,accepted,Known-good,False
+Cisco\MultiAS-Lab\hybrid-cloud\Leaf1.cfg,.cfg,1392,69,,True,0,0,0,,0,0,0,0,0,0,0,0,0,0,0,0,0,True,1.2974,accepted,Known-good,False
+Cisco\MultiAS-Lab\hybrid-cloud\Leaf2.cfg,.cfg,1194,60,,True,0,0,0,,0,0,0,0,0,0,0,0,0,0,0,0,0,True,1.4817,accepted,Known-good,False
+Cisco\MultiAS-Lab\hybrid-cloud\Leaf3.cfg,.cfg,1194,60,,True,0,0,0,,0,0,0,0,0,0,0,0,0,0,0,0,0,True,1.4297,accepted,Known-good,False
+Cisco\MultiAS-Lab\hybrid-cloud\Leaf4.cfg,.cfg,1219,62,,True,0,0,0,,0,0,0,0,0,0,0,0,0,0,0,0,0,True,1.1363,accepted,Known-good,False
+Cisco\MultiAS-Lab\hybrid-cloud\metadata.yaml,.yaml,1419,36,,True,0,1,0,UNKNOWN_CONTENTx1,0,0,0,0,0,0,0,0,0,0,1,0,0,False,1.1756,"rejected: File extension '.yaml' not allowed. Allowed: ['.txt', '.cfg', '.conf', '.zip']",Unsupported,False
+Cisco\MultiAS-Lab\hybrid-cloud\README.md,.md,634,33,,True,0,1,0,UNKNOWN_CONTENTx1,0,0,0,0,0,0,0,0,0,0,1,0,0,False,0.8341,"rejected: File extension '.md' not allowed. Allowed: ['.txt', '.cfg', '.conf', '.zip']",Unsupported,False
+Cisco\MultiAS-Lab\hybrid-cloud\Spine1.cfg,.cfg,1757,84,,True,0,0,0,,0,0,0,0,0,0,0,0,0,0,0,0,0,True,2.1216,accepted,Known-good,False
+Cisco\MultiAS-Lab\hybrid-cloud\Spine2.cfg,.cfg,1757,84,,True,0,0,0,,0,0,0,0,0,0,0,0,0,0,0,0,0,True,1.4481,accepted,Known-good,False
+Cisco\MultiAS-Lab\iptables-firewall\metadata.yaml,.yaml,1618,36,,True,0,1,0,UNKNOWN_CONTENTx1,0,0,0,0,0,0,0,0,0,0,1,0,0,False,1.2059,"rejected: File extension '.yaml' not allowed. Allowed: ['.txt', '.cfg', '.conf', '.zip']",Unsupported,False
+Cisco\MultiAS-Lab\iptables-firewall\r1.cfg,.cfg,251,16,,True,0,0,0,,0,0,0,0,0,0,0,0,0,0,0,0,0,True,0.4141,accepted,Edge,False
+Cisco\MultiAS-Lab\iptables-firewall\r2.cfg,.cfg,251,16,,True,0,0,0,,0,0,0,0,0,0,0,0,0,0,0,0,0,True,0.3939,accepted,Edge,False
+Cisco\MultiAS-Lab\iptables-firewall\r3.cfg,.cfg,251,16,,True,0,0,0,,0,0,0,0,0,0,0,0,0,0,0,0,0,True,0.7053,accepted,Known-good,False
+Cisco\MultiAS-Lab\iptables-firewall\README.md,.md,1075,37,,True,0,1,0,UNKNOWN_CONTENTx1,0,0,0,0,0,0,0,0,0,0,1,0,0,False,1.5293,"rejected: File extension '.md' not allowed. Allowed: ['.txt', '.cfg', '.conf', '.zip']",Unsupported,False
+Cisco\MultiAS-Lab\iptables-firewall\z1-firewall.cfg,.cfg,181,12,,True,0,0,0,,0,0,0,0,0,0,0,0,0,0,0,0,0,True,0.3071,accepted,Known-good,False
+Cisco\MultiAS-Lab\iptables-firewall\z2-firewall.cfg,.cfg,181,12,,True,0,0,0,,0,0,0,0,0,0,0,0,0,0,0,0,0,True,0.3237,accepted,Known-good,False
+Cisco\MultiAS-Lab\lhr-border\lhr-border-02.cfg,.cfg,6139,282,,True,0,1,0,INSECURE_CONFIGx1,0,0,0,0,0,0,0,1,0,0,0,0,0,False,4.6873,accepted,Known-good,False
+Cisco\MultiAS-Lab\lhr-border\metadata.yaml,.yaml,1248,32,,True,0,1,0,UNKNOWN_CONTENTx1,0,0,0,0,0,0,0,0,0,0,1,0,0,False,1.0366,"rejected: File extension '.yaml' not allowed. Allowed: ['.txt', '.cfg', '.conf', '.zip']",Unsupported,False
+Cisco\MultiAS-Lab\lhr-border\README.md,.md,478,23,,True,0,1,0,UNKNOWN_CONTENTx1,0,0,0,0,0,0,0,0,0,0,1,0,0,False,0.4628,"rejected: File extension '.md' not allowed. Allowed: ['.txt', '.cfg', '.conf', '.zip']",Unsupported,False
+Cisco\MultiAS-Lab\mpls-infrastructure\bgp-config.j2,.j2,2261,66,,True,0,0,0,,0,0,0,0,0,0,0,0,0,0,0,0,0,True,1.9147,"rejected: File extension '.j2' not allowed. Allowed: ['.txt', '.cfg', '.conf', '.zip']",Unsupported,False
+Cisco\MultiAS-Lab\mpls-infrastructure\group_vars_all.yml,.yml,181,6,,True,0,2,0,SENSITIVE_DATAx1;UNKNOWN_CONTENTx1,0,0,0,0,0,0,1,0,0,0,1,0,0,False,0.2523,"rejected: File extension '.yml' not allowed. Allowed: ['.txt', '.cfg', '.conf', '.zip']",Unsupported,False
+Cisco\MultiAS-Lab\mpls-infrastructure\hosts.cfg,.cfg,325,16,,True,0,1,0,UNKNOWN_CONTENTx1,0,0,0,0,0,0,0,0,0,0,1,0,0,False,0.6681,accepted,Edge,False
+Cisco\MultiAS-Lab\mpls-infrastructure\list-of-customers.json.j2,.j2,217,9,,True,0,1,0,UNKNOWN_CONTENTx1,0,0,0,0,0,0,0,0,0,0,1,0,0,False,0.3541,"rejected: File extension '.j2' not allowed. Allowed: ['.txt', '.cfg', '.conf', '.zip']",Unsupported,False
+Cisco\MultiAS-Lab\mpls-infrastructure\nodes.j2,.j2,2305,79,,True,0,1,0,UNKNOWN_CONTENTx1,0,0,0,0,0,0,0,0,0,0,1,0,0,False,2.7279,"rejected: File extension '.j2' not allowed. Allowed: ['.txt', '.cfg', '.conf', '.zip']",Unsupported,False
+Cisco\MultiAS-Lab\mpls-infrastructure\ospf-config-from-fabric.j2,.j2,452,18,,True,0,0,0,,0,0,0,0,0,0,0,0,0,0,0,0,0,True,0.5887,"rejected: File extension '.j2' not allowed. Allowed: ['.txt', '.cfg', '.conf', '.zip']",Unsupported,False
+Cisco\MultiAS-Lab\mpls-infrastructure\ospf-config.j2,.j2,523,23,,True,0,0,0,,0,0,0,0,0,0,0,0,0,0,0,0,0,True,0.5503,"rejected: File extension '.j2' not allowed. Allowed: ['.txt', '.cfg', '.conf', '.zip']",Unsupported,False
+Cisco\MultiAS-Lab\mpls-infrastructure\vpnv4-config.j2,.j2,1211,46,,True,0,0,0,,0,0,0,0,0,0,0,0,0,0,0,0,0,True,1.1699,"rejected: File extension '.j2' not allowed. Allowed: ['.txt', '.cfg', '.conf', '.zip']",Unsupported,False
+Cisco\MultiAS-Lab\PublicRepos\cisco-configurations\firewall_ASA1.cfg,.cfg,785,39,,True,0,3,0,SENSITIVE_DATAx3,0,0,0,0,0,0,3,0,0,0,0,0,0,False,1.4202,accepted,Known-good,False
+Cisco\MultiAS-Lab\PublicRepos\cisco-configurations\firewall_ASA2.cfg,.cfg,784,39,,True,0,3,0,SENSITIVE_DATAx3,0,0,0,0,0,0,3,0,0,0,0,0,0,False,0.9306,accepted,Known-good,False
+Cisco\MultiAS-Lab\PublicRepos\cisco-configurations\routers_R1.cfg,.cfg,402,29,,True,0,3,0,SENSITIVE_DATAx3,0,0,0,0,0,0,3,0,0,0,0,0,0,False,0.5347,accepted,Known-good,False
+Cisco\MultiAS-Lab\PublicRepos\cisco-configurations\routers_R2.cfg,.cfg,391,29,,True,0,3,0,SENSITIVE_DATAx3,0,0,0,0,0,0,3,0,0,0,0,0,0,False,0.5733,accepted,Known-good,False
+Cisco\MultiAS-Lab\PublicRepos\cisco-configurations\routers_R3.cfg,.cfg,396,29,,True,0,3,0,SENSITIVE_DATAx3,0,0,0,0,0,0,3,0,0,0,0,0,0,False,0.537,accepted,Known-good,False
+Cisco\MultiAS-Lab\PublicRepos\cisco-configurations\switches_SW1.cfg,.cfg,414,35,,True,0,1,0,SENSITIVE_DATAx1,0,0,0,0,0,0,1,0,0,0,0,0,0,False,0.5884,accepted,Known-good,False
+Cisco\MultiAS-Lab\PublicRepos\cisco-configurations\switches_SW2.cfg,.cfg,413,35,,True,0,1,0,SENSITIVE_DATAx1,0,0,0,0,0,0,1,0,0,0,0,0,0,False,0.6089,accepted,Known-good,False
+Cisco\MultiAS-Lab\PublicRepos\cisco-configurations\templates_basic-cisco-router-config.cfg,.cfg,666,41,,True,0,3,0,SENSITIVE_DATAx3,0,0,0,0,0,0,3,0,0,0,0,0,0,False,0.6189,accepted,Known-good,False
+Cisco\MultiAS-Lab\PublicRepos\network-labs\01-VLAN_configs_SW0.txt,.txt,1525,107,,True,0,0,0,,0,0,0,0,0,0,0,0,0,0,0,0,0,True,1.5627,accepted,Known-good,False
+Cisco\MultiAS-Lab\PublicRepos\network-labs\01-VLAN_configs_SW1.txt,.txt,1423,103,,True,0,0,0,,0,0,0,0,0,0,0,0,0,0,0,0,0,True,1.5395,accepted,Known-good,False
+Cisco\MultiAS-Lab\PublicRepos\network-labs\02-InterVLAN-Routing_configs_R0.txt,.txt,1150,101,,True,0,0,0,,0,0,0,0,0,0,0,0,0,0,0,0,0,True,1.2184,accepted,Known-good,False
+Cisco\MultiAS-Lab\PublicRepos\network-labs\02-InterVLAN-Routing_configs_SW0.txt,.txt,5088,183,,True,0,0,0,,0,0,0,0,0,0,0,0,0,0,0,0,0,True,3.6781,accepted,Known-good,False
+Cisco\MultiAS-Lab\PublicRepos\network-labs\03-STP_PVST-Load-Balancing_configs_SW0.txt,.txt,2711,134,,True,0,0,0,,0,0,0,0,0,0,0,0,0,0,0,0,0,True,2.3652,accepted,Known-good,False
+Cisco\MultiAS-Lab\PublicRepos\network-labs\03-STP_PVST-Load-Balancing_configs_SW1.txt,.txt,2720,134,,True,0,0,0,,0,0,0,0,0,0,0,0,0,0,0,0,0,True,2.9672,accepted,Known-good,False
+Cisco\MultiAS-Lab\PublicRepos\network-labs\03-STP_PVST-Load-Balancing_configs_SW2.txt,.txt,2719,135,,True,0,0,0,,0,0,0,0,0,0,0,0,0,0,0,0,0,True,2.3774,accepted,Known-good,False
+Cisco\MultiAS-Lab\PublicRepos\network-labs\04-EtherChannel_EtherChannel-STP-Troubleshooting_configs_SW0.txt,.txt,2437,159,,True,0,0,0,,0,0,0,0,0,0,0,0,0,0,0,0,0,True,2.8702,accepted,Known-good,False
+Cisco\MultiAS-Lab\PublicRepos\network-labs\04-EtherChannel_EtherChannel-STP-Troubleshooting_configs_SW1.txt,.txt,2468,160,,True,0,0,0,,0,0,0,0,0,0,0,0,0,0,0,0,0,True,2.1238,accepted,Known-good,False
+Cisco\MultiAS-Lab\PublicRepos\network-labs\05-Static-Routing_Multi-Hop-Static-Routing_configs_R0.txt,.txt,1245,99,,True,0,0,0,,0,0,0,0,0,0,0,0,0,0,0,0,0,True,1.9389,accepted,Known-good,False
+Cisco\MultiAS-Lab\PublicRepos\network-labs\05-Static-Routing_Multi-Hop-Static-Routing_configs_R1.txt,.txt,1175,97,,True,0,0,0,,0,0,0,0,0,0,0,0,0,0,0,0,0,True,1.3836,accepted,Known-good,False
+Cisco\MultiAS-Lab\PublicRepos\network-labs\05-Static-Routing_Multi-Hop-Static-Routing_configs_R2.txt,.txt,1225,98,,True,0,0,0,,0,0,0,0,0,0,0,0,0,0,0,0,0,True,1.2251,accepted,Known-good,False
+Cisco\MultiAS-Lab\PublicRepos\network-labs\05-Static-Routing_Multi-Hop-Static-Routing_configs_R3.txt,.txt,1261,100,,True,0,0,0,,0,0,0,0,0,0,0,0,0,0,0,0,0,True,1.736,accepted,Known-good,False
+Cisco\MultiAS-Lab\PublicRepos\network-labs\05-Static-Routing_Multi-Hop-Static-Routing_configs_R4.txt,.txt,1261,100,,True,0,0,0,,0,0,0,0,0,0,0,0,0,0,0,0,0,True,1.236,accepted,Known-good,False
+Cisco\MultiAS-Lab\PublicRepos\network-labs\06-RIP_Multi-Hop-RIPv2-with-Failover_configs_R1.txt,.txt,4942,191,,True,0,0,0,,0,0,0,0,0,0,0,0,0,0,0,0,0,True,5.558,accepted,Known-good,False
+Cisco\MultiAS-Lab\PublicRepos\network-labs\06-RIP_Multi-Hop-RIPv2-with-Failover_configs_R2.txt,.txt,4872,188,,True,0,0,0,,0,0,0,0,0,0,0,0,0,0,0,0,0,True,3.8778,accepted,Known-good,False
+Cisco\MultiAS-Lab\PublicRepos\network-labs\06-RIP_Multi-Hop-RIPv2-with-Failover_configs_R3.txt,.txt,5287,202,,True,0,0,0,,0,0,0,0,0,0,0,0,0,0,0,0,0,True,3.8726,accepted,Known-good,False
+Cisco\MultiAS-Lab\PublicRepos\network-labs\06-RIP_Multi-Hop-RIPv2-with-Failover_configs_R4.txt,.txt,4761,187,,True,0,0,0,,0,0,0,0,0,0,0,0,0,0,0,0,0,True,3.5614,accepted,Known-good,False
+Cisco\MultiAS-Lab\PublicRepos\network-labs\06-RIP_Multi-Hop-RIPv2-with-Failover_configs_R5.txt,.txt,4647,186,,True,0,0,0,,0,0,0,0,0,0,0,0,0,0,0,0,0,True,4.2176,accepted,Known-good,False
+Cisco\MultiAS-Lab\PublicRepos\network-labs\07-EIGRP_Enterprise-EIGRP-Multi-Path-Routing_configs_R1.txt,.txt,7762,243,,True,0,0,0,,0,0,0,0,0,0,0,0,0,0,0,0,0,True,4.5689,accepted,Known-good,False
+Cisco\MultiAS-Lab\PublicRepos\network-labs\07-EIGRP_Enterprise-EIGRP-Multi-Path-Routing_configs_R2.txt,.txt,7277,212,,True,0,0,0,,0,0,0,0,0,0,0,0,0,0,0,0,0,True,4.1313,accepted,Known-good,False
+Cisco\MultiAS-Lab\PublicRepos\network-labs\07-EIGRP_Enterprise-EIGRP-Multi-Path-Routing_configs_R3.txt,.txt,7509,215,,True,0,0,0,,0,0,0,0,0,0,0,0,0,0,0,0,0,True,7.0994,accepted,Known-good,False
+Cisco\MultiAS-Lab\PublicRepos\network-labs\07-EIGRP_Enterprise-EIGRP-Multi-Path-Routing_configs_R4.txt,.txt,7353,214,,True,0,0,0,,0,0,0,0,0,0,0,0,0,0,0,0,0,True,4.1633,accepted,Known-good,False
+Cisco\MultiAS-Lab\PublicRepos\network-labs\07-EIGRP_Enterprise-EIGRP-Multi-Path-Routing_configs_R5.txt,.txt,7299,213,,True,0,0,0,,0,0,0,0,0,0,0,0,0,0,0,0,0,True,4.243,accepted,Known-good,False
+Cisco\MultiAS-Lab\PublicRepos\network-labs\07-EIGRP_Enterprise-EIGRP-Multi-Path-Routing_configs_R6.txt,.txt,6354,196,,True,0,0,0,,0,0,0,0,0,0,0,0,0,0,0,0,0,True,4.7804,accepted,Known-good,False
+Cisco\MultiAS-Lab\PublicRepos\network-labs\07-EIGRP_Enterprise-EIGRP-Multi-Path-Routing_configs_R7.txt,.txt,6095,185,,True,0,0,0,,0,0,0,0,0,0,0,0,0,0,0,0,0,True,5.934,accepted,Known-good,False
+Cisco\MultiAS-Lab\PublicRepos\network-labs\08-OSPF_Enterprise-Multi-Area-OSPF_configs_core-router.txt,.txt,11874,359,,True,0,0,0,,0,0,0,0,0,0,0,0,0,0,0,0,0,True,11.3566,accepted,Known-good,False
+Cisco\MultiAS-Lab\PublicRepos\network-labs\08-OSPF_Enterprise-Multi-Area-OSPF_configs_R10.txt,.txt,9949,305,,True,0,0,0,,0,0,0,0,0,0,0,0,0,0,0,0,0,True,7.0622,accepted,Known-good,False
+Cisco\MultiAS-Lab\PublicRepos\network-labs\08-OSPF_Enterprise-Multi-Area-OSPF_configs_R2.txt,.txt,8308,266,,True,0,0,0,,0,0,0,0,0,0,0,0,0,0,0,0,0,True,7.5918,accepted,Known-good,False
+Cisco\MultiAS-Lab\PublicRepos\network-labs\08-OSPF_Enterprise-Multi-Area-OSPF_configs_R3.txt,.txt,8682,274,,True,0,0,0,,0,0,0,0,0,0,0,0,0,0,0,0,0,True,6.9855,accepted,Known-good,False
+Cisco\MultiAS-Lab\PublicRepos\network-labs\08-OSPF_Enterprise-Multi-Area-OSPF_configs_R4.txt,.txt,11442,335,,True,0,0,0,,0,0,0,0,0,0,0,0,0,0,0,0,0,True,7.9812,accepted,Known-good,False
+Cisco\MultiAS-Lab\PublicRepos\network-labs\08-OSPF_Enterprise-Multi-Area-OSPF_configs_R5.txt,.txt,8110,265,,True,0,0,0,,0,0,0,0,0,0,0,0,0,0,0,0,0,True,8.084,accepted,Known-good,False
+Cisco\MultiAS-Lab\PublicRepos\network-labs\08-OSPF_Enterprise-Multi-Area-OSPF_configs_R6.txt,.txt,8142,265,,True,0,0,0,,0,0,0,0,0,0,0,0,0,0,0,0,0,True,5.9213,accepted,Known-good,False
+Cisco\MultiAS-Lab\PublicRepos\network-labs\08-OSPF_Enterprise-Multi-Area-OSPF_configs_R7.txt,.txt,11514,339,,True,0,0,0,,0,0,0,0,0,0,0,0,0,0,0,0,0,True,9.3261,accepted,Known-good,False
+Cisco\MultiAS-Lab\PublicRepos\network-labs\08-OSPF_Enterprise-Multi-Area-OSPF_configs_R8.txt,.txt,8139,266,,True,0,0,0,,0,0,0,0,0,0,0,0,0,0,0,0,0,True,7.0866,accepted,Known-good,False
+Cisco\MultiAS-Lab\PublicRepos\network-labs\08-OSPF_Enterprise-Multi-Area-OSPF_configs_R9.txt,.txt,8129,265,,True,0,0,0,,0,0,0,0,0,0,0,0,0,0,0,0,0,True,6.48,accepted,Known-good,False
+Cisco\MultiAS-Lab\PublicRepos\network-labs\09-BGP_eBGP-Between-Two-AS_configs_R1.txt,.txt,7017,237,,True,0,0,0,,0,0,0,0,0,0,0,0,0,0,0,0,0,True,5.7722,accepted,Known-good,False
+Cisco\MultiAS-Lab\PublicRepos\network-labs\09-BGP_eBGP-Between-Two-AS_configs_R2.txt,.txt,7251,245,,True,0,0,0,,0,0,0,0,0,0,0,0,0,0,0,0,0,True,6.9944,accepted,Known-good,False
+Cisco\MultiAS-Lab\PublicRepos\network-labs\09-BGP_eBGP-Between-Two-AS_configs_R3.txt,.txt,2465,136,,True,0,0,0,,0,0,0,0,0,0,0,0,0,0,0,0,0,True,3.8317,accepted,Known-good,False
+Cisco\MultiAS-Lab\PublicRepos\network-labs\09-BGP_eBGP-Between-Two-AS_configs_R4.txt,.txt,2090,128,,True,0,0,0,,0,0,0,0,0,0,0,0,0,0,0,0,0,True,2.4752,accepted,Known-good,False
+Cisco\MultiAS-Lab\PublicRepos\network-labs\10-ACL_configs_Finance.txt,.txt,1237,113,,True,0,0,0,,0,0,0,0,0,0,0,0,0,0,0,0,0,True,1.3818,accepted,Known-good,False
+Cisco\MultiAS-Lab\PublicRepos\network-labs\10-ACL_configs_HR.txt,.txt,1040,105,,True,0,1,0,INSECURE_CONFIGx1,0,0,0,0,0,0,0,1,0,0,0,0,0,False,1.908,accepted,Known-good,False
+Cisco\MultiAS-Lab\PublicRepos\network-labs\10-ACL_configs_IT.txt,.txt,1222,113,,True,0,0,0,,0,0,0,0,0,0,0,0,0,0,0,0,0,True,1.3528,accepted,Known-good,False
+Cisco\MultiAS-Lab\PublicRepos\network-labs\10-ACL_configs_R1.txt,.txt,2417,146,,True,0,0,0,,0,0,0,0,0,0,0,0,0,0,0,0,0,True,2.1175,accepted,Known-good,False
+Cisco\MultiAS-Lab\PublicRepos\network-labs\10-ACL_configs_Server.txt,.txt,1404,119,,True,0,2,0,SENSITIVE_DATAx2,0,0,0,0,0,0,2,0,0,0,0,0,0,False,1.9653,accepted,Known-good,False
+Cisco\MultiAS-Lab\PublicRepos\network-labs\11-NAT-PAT_configs_internet.txt,.txt,1285,118,,True,0,1,0,INSECURE_CONFIGx1,0,0,0,0,0,0,0,1,0,0,0,0,0,False,1.4598,accepted,Known-good,False
+Cisco\MultiAS-Lab\PublicRepos\network-labs\11-NAT-PAT_configs_PC1.txt,.txt,1286,118,,True,0,1,0,INSECURE_CONFIGx1,0,0,0,0,0,0,0,1,0,0,0,0,0,False,1.6591,accepted,Known-good,False
+Cisco\MultiAS-Lab\PublicRepos\network-labs\11-NAT-PAT_configs_PC2.txt,.txt,1283,118,,True,0,1,0,INSECURE_CONFIGx1,0,0,0,0,0,0,0,1,0,0,0,0,0,False,2.4587,accepted,Known-good,False
+Cisco\MultiAS-Lab\PublicRepos\network-labs\11-NAT-PAT_configs_Router.txt,.txt,1463,123,,True,0,1,0,INSECURE_CONFIGx1,0,0,0,0,0,0,0,1,0,0,0,0,0,False,2.0794,accepted,Known-good,False
+Cisco\MultiAS-Lab\PublicRepos\network-labs\12-DHCP_config_Router0.txt,.txt,751,82,,True,0,0,0,,0,0,0,0,0,0,0,0,0,0,0,0,0,True,1.061,accepted,Known-good,False
+Cisco\MultiAS-Lab\pybatfish-test-snapshots\basic.cfg,.cfg,3886,190,,True,0,0,0,,0,0,0,0,0,0,0,0,0,0,0,0,0,True,3.9524,accepted,Known-good,False
+Cisco\MultiAS-Lab\pybatfish-test-snapshots\basic2.cfg,.cfg,277,13,,True,0,0,0,,0,0,0,0,0,0,0,0,0,0,0,0,0,True,0.306,accepted,Known-good,False
+Cisco\MultiAS-Lab\pybatfish-test-snapshots\fork-config.cfg,.cfg,36,1,,False,1,0,0,NO_SUBSTANTIVE_CONTENTx1,0,0,0,1,0,0,0,0,0,0,0,0,0,False,0.0336,accepted,Known-good,False
+Cisco\MultiAS-Lab\pybatfish-test-snapshots\h1.cfg,.cfg,21,4,,True,0,0,0,,0,0,0,0,0,0,0,0,0,0,0,0,0,True,0.1886,accepted,Known-good,False
+Cisco\MultiAS-Lab\pybatfish-test-snapshots\h2.cfg,.cfg,21,4,,True,0,0,0,,0,0,0,0,0,0,0,0,0,0,0,0,0,True,0.1567,accepted,Known-good,False
+Cisco\MultiAS-Lab\pybatfish-test-snapshots\metadata.yaml,.yaml,1535,35,,True,0,1,0,UNKNOWN_CONTENTx1,0,0,0,0,0,0,0,0,0,0,1,0,0,False,2.0335,"rejected: File extension '.yaml' not allowed. Allowed: ['.txt', '.cfg', '.conf', '.zip']",Unsupported,False
+Cisco\MultiAS-Lab\pybatfish-test-snapshots\node-asserts-fail.cfg,.cfg,1212,55,,True,0,0,0,,0,0,0,0,0,0,0,0,0,0,0,0,0,True,1.2177,accepted,Known-good,False
+Cisco\MultiAS-Lab\pybatfish-test-snapshots\node.cfg,.cfg,1065,47,,True,0,0,0,,0,0,0,0,0,0,0,0,0,0,0,0,0,True,1.842,accepted,Known-good,False
+Cisco\MultiAS-Lab\pybatfish-test-snapshots\r1.cfg,.cfg,21,4,,True,0,0,0,,0,0,0,0,0,0,0,0,0,0,0,0,0,True,0.3152,accepted,Edge,False
+Cisco\MultiAS-Lab\pybatfish-test-snapshots\r2.cfg,.cfg,21,4,,True,0,0,0,,0,0,0,0,0,0,0,0,0,0,0,0,0,True,0.1168,accepted,Edge,False
+Cisco\MultiAS-Lab\pybatfish-test-snapshots\README.md,.md,1545,44,,True,0,1,0,UNKNOWN_CONTENTx1,0,0,0,0,0,0,0,0,0,0,1,0,0,False,1.8298,"rejected: File extension '.md' not allowed. Allowed: ['.txt', '.cfg', '.conf', '.zip']",Unsupported,False
+Cisco\MultiAS-Lab\pybatfish-test-snapshots\remote_node.cfg,.cfg,885,40,,True,0,0,0,,0,0,0,0,0,0,0,0,0,0,0,0,0,True,1.2707,accepted,Known-good,False
+Cisco\MultiAS-Lab\pybatfish-test-snapshots\tracert\hop1.cfg,.cfg,68,6,,True,0,0,0,,0,0,0,0,0,0,0,0,0,0,0,0,0,True,0.1945,accepted,Known-good,False
+Cisco\MultiAS-Lab\pybatfish-test-snapshots\tracert\hop2.cfg,.cfg,68,6,,True,0,0,0,,0,0,0,0,0,0,0,0,0,0,0,0,0,True,0.2295,accepted,Known-good,False
+Cisco\MultiAS-Lab\route-analysis\border1.cfg,.cfg,3159,166,,True,0,0,0,,0,0,0,0,0,0,0,0,0,0,0,0,0,True,2.9075,accepted,Edge,False
+Cisco\MultiAS-Lab\route-analysis\border2.cfg,.cfg,3179,167,,True,0,0,0,,0,0,0,0,0,0,0,0,0,0,0,0,0,True,3.1534,accepted,Edge,False
+Cisco\MultiAS-Lab\vrrp\BR1-running-config.txt,.txt,3577,154,,True,0,0,0,,0,0,0,0,0,0,0,0,0,0,0,0,0,True,2.997,accepted,Edge,False
+Cisco\MultiAS-Lab\vrrp\BR2-running-config.txt,.txt,3554,153,,True,0,0,0,,0,0,0,0,0,0,0,0,0,0,0,0,0,True,2.6102,accepted,Edge,False
+Cisco\MultiAS-Lab\vrrp\LAN-RTR-running-config.txt,.txt,3587,155,,True,0,0,0,,0,0,0,0,0,0,0,0,0,0,0,0,0,True,3.2049,accepted,Duplicate,True
+Cisco\MultiAS-Lab\vrrp\metadata.yaml,.yaml,1376,32,,True,0,1,0,UNKNOWN_CONTENTx1,0,0,0,0,0,0,0,0,0,0,1,0,0,False,1.3132,"rejected: File extension '.yaml' not allowed. Allowed: ['.txt', '.cfg', '.conf', '.zip']",Unsupported,False
+Cisco\MultiAS-Lab\vrrp\README.md,.md,782,32,,True,0,1,0,UNKNOWN_CONTENTx1,0,0,0,0,0,0,0,0,0,0,1,0,0,False,1.4607,"rejected: File extension '.md' not allowed. Allowed: ['.txt', '.cfg', '.conf', '.zip']",Unsupported,False
+Cisco\MultiAS-Lab\vrrp\WAN-RTR-running-config.txt,.txt,3589,152,,True,0,0,0,,0,0,0,0,0,0,0,0,0,0,0,0,0,True,3.1737,accepted,Duplicate,True
+Cisco\Routers\IOS\c2911-router.conf,.conf,14969,592,,True,0,4,0,INSECURE_CONFIGx2;SENSITIVE_DATAx2,0,0,0,0,0,0,2,2,0,0,0,0,0,False,11.582,accepted,Known-good,False
+Cisco\Routers\IOS\metadata.yaml,.yaml,1761,45,,True,0,1,0,UNKNOWN_CONTENTx1,0,0,0,0,0,0,0,0,0,0,1,0,0,False,1.4625,"rejected: File extension '.yaml' not allowed. Allowed: ['.txt', '.cfg', '.conf', '.zip']",Unsupported,False
+Cisco\Routers\IOS\README.md,.md,1765,44,,True,0,1,0,UNKNOWN_CONTENTx1,0,0,0,0,0,0,0,0,0,0,1,0,0,False,1.1864,"rejected: File extension '.md' not allowed. Allowed: ['.txt', '.cfg', '.conf', '.zip']",Unsupported,False
+Cisco\Routers\IOS-XE\csr1000v-connection-log.txt,.txt,13373,448,,True,0,9,1,INSECURE_CONFIGx1;MIXED_LINE_ENDINGSx1;MIXED_VENDORx1;SENSITIVE_DATAx7,0,0,0,0,0,0,7,1,0,1,0,1,0,False,7.6791,accepted,Known-good,False
+Cisco\Routers\IOS-XE\csr1000v-running-config.txt,.txt,11039,250,,True,0,1,0,UNKNOWN_CONTENTx1,0,0,0,0,0,0,0,0,0,0,1,0,0,False,8.2111,accepted,Known-good,False
+Cisco\Routers\IOS-XE\metadata.yaml,.yaml,1683,42,,True,0,1,0,UNKNOWN_CONTENTx1,0,0,0,0,0,0,0,0,0,0,1,0,0,False,1.4414,"rejected: File extension '.yaml' not allowed. Allowed: ['.txt', '.cfg', '.conf', '.zip']",Unsupported,False
+Cisco\Routers\IOS-XE\README.md,.md,1258,37,,True,0,1,0,UNKNOWN_CONTENTx1,0,0,0,0,0,0,0,0,0,0,1,0,0,False,0.8971,"rejected: File extension '.md' not allowed. Allowed: ['.txt', '.cfg', '.conf', '.zip']",Unsupported,False
+Cisco\Routers\IOS-XR\iosxr-connection-log.txt,.txt,2843,132,,True,0,1,1,MIXED_LINE_ENDINGSx1;SENSITIVE_DATAx1,0,0,0,0,0,0,1,0,0,1,0,0,0,False,2.4772,accepted,Known-good,False
+Cisco\Routers\IOS-XR\iosxr-running-config.txt,.txt,1782,77,,True,0,1,0,UNKNOWN_CONTENTx1,0,0,0,0,0,0,0,0,0,0,1,0,0,False,3.258,accepted,Known-good,False
+Cisco\Routers\IOS-XR\metadata.yaml,.yaml,1326,35,,True,0,1,0,UNKNOWN_CONTENTx1,0,0,0,0,0,0,0,0,0,0,1,0,0,False,1.3482,"rejected: File extension '.yaml' not allowed. Allowed: ['.txt', '.cfg', '.conf', '.zip']",Unsupported,False
+Cisco\Routers\IOS-XR\README.md,.md,906,33,,True,0,1,0,UNKNOWN_CONTENTx1,0,0,0,0,0,0,0,0,0,0,1,0,0,False,0.7977,"rejected: File extension '.md' not allowed. Allowed: ['.txt', '.cfg', '.conf', '.zip']",Unsupported,False
+Cisco\Routers\MPLS\bgp-config.j2,.j2,2261,66,,True,0,0,0,,0,0,0,0,0,0,0,0,0,0,0,0,0,True,1.9637,"rejected: File extension '.j2' not allowed. Allowed: ['.txt', '.cfg', '.conf', '.zip']",Unsupported,False
+Cisco\Routers\MPLS\group_vars_all.yml,.yml,181,6,,True,0,2,0,SENSITIVE_DATAx1;UNKNOWN_CONTENTx1,0,0,0,0,0,0,1,0,0,0,1,0,0,False,0.2471,"rejected: File extension '.yml' not allowed. Allowed: ['.txt', '.cfg', '.conf', '.zip']",Unsupported,False
+Cisco\Routers\MPLS\hosts.cfg,.cfg,325,16,,True,0,1,0,UNKNOWN_CONTENTx1,0,0,0,0,0,0,0,0,0,0,1,0,0,False,0.7101,accepted,Duplicate,True
+Cisco\Routers\MPLS\list-of-customers.json.j2,.j2,217,9,,True,0,1,0,UNKNOWN_CONTENTx1,0,0,0,0,0,0,0,0,0,0,1,0,0,False,0.318,"rejected: File extension '.j2' not allowed. Allowed: ['.txt', '.cfg', '.conf', '.zip']",Unsupported,False
+Cisco\Routers\MPLS\nodes.j2,.j2,2305,79,,True,0,1,0,UNKNOWN_CONTENTx1,0,0,0,0,0,0,0,0,0,0,1,0,0,False,2.2161,"rejected: File extension '.j2' not allowed. Allowed: ['.txt', '.cfg', '.conf', '.zip']",Unsupported,False
+Cisco\Routers\MPLS\ospf-config-from-fabric.j2,.j2,452,18,,True,0,0,0,,0,0,0,0,0,0,0,0,0,0,0,0,0,True,0.5314,"rejected: File extension '.j2' not allowed. Allowed: ['.txt', '.cfg', '.conf', '.zip']",Unsupported,False
+Cisco\Routers\MPLS\ospf-config.j2,.j2,523,23,,True,0,0,0,,0,0,0,0,0,0,0,0,0,0,0,0,0,True,0.6955,"rejected: File extension '.j2' not allowed. Allowed: ['.txt', '.cfg', '.conf', '.zip']",Unsupported,False
+Cisco\Routers\MPLS\vpnv4-config.j2,.j2,1211,46,,True,0,0,0,,0,0,0,0,0,0,0,0,0,0,0,0,0,True,1.1613,"rejected: File extension '.j2' not allowed. Allowed: ['.txt', '.cfg', '.conf', '.zip']",Unsupported,False
+Cisco\Switches\Catalyst\c3560g-L3Switch.conf,.conf,42132,1492,,True,0,3,0,INSECURE_CONFIGx1;SENSITIVE_DATAx2,0,0,0,0,0,0,2,1,0,0,0,0,0,False,33.1191,accepted,Known-good,False
+Cisco\Switches\Catalyst\metadata.yaml,.yaml,2178,61,,True,0,1,0,UNKNOWN_CONTENTx1,0,0,0,0,0,0,0,0,0,0,1,0,0,False,2.5412,"rejected: File extension '.yaml' not allowed. Allowed: ['.txt', '.cfg', '.conf', '.zip']",Unsupported,False
+Cisco\Switches\Catalyst\README.md,.md,1834,48,,True,0,1,0,UNKNOWN_CONTENTx1,0,0,0,0,0,0,0,0,0,0,1,0,0,False,1.3076,"rejected: File extension '.md' not allowed. Allowed: ['.txt', '.cfg', '.conf', '.zip']",Unsupported,False
+Cisco\Switches\Nexus\metadata.yaml,.yaml,1735,47,,True,0,1,0,UNKNOWN_CONTENTx1,0,0,0,0,0,0,0,0,0,0,1,0,0,False,1.599,"rejected: File extension '.yaml' not allowed. Allowed: ['.txt', '.cfg', '.conf', '.zip']",Unsupported,False
+Cisco\Switches\Nexus\nxos-connection-log.txt,.txt,12264,533,,True,0,4,1,MIXED_LINE_ENDINGSx1;MIXED_VENDORx1;SENSITIVE_DATAx3,0,0,0,0,0,0,3,0,0,1,0,1,0,False,9.2348,accepted,Known-good,False
+Cisco\Switches\Nexus\nxos-running-config.txt,.txt,11189,317,,True,0,1,0,UNKNOWN_CONTENTx1,0,0,0,0,0,0,0,0,0,0,1,0,0,False,10.8669,accepted,Known-good,False
+Cisco\Switches\Nexus\README.md,.md,1505,41,,True,0,1,0,UNKNOWN_CONTENTx1,0,0,0,0,0,0,0,0,0,0,1,0,0,False,1.1975,"rejected: File extension '.md' not allowed. Allowed: ['.txt', '.cfg', '.conf', '.zip']",Unsupported,False
+Cisco\Voice\CUCME\c2811-CUCME.conf,.conf,10754,512,,True,0,5,0,INSECURE_CONFIGx2;SENSITIVE_DATAx3,0,0,0,0,0,0,3,2,0,0,0,0,0,False,11.4224,accepted,Known-good,False
+Cisco\Voice\CUCME\metadata.yaml,.yaml,1745,46,,True,0,1,0,UNKNOWN_CONTENTx1,0,0,0,0,0,0,0,0,0,0,1,0,0,False,1.4723,"rejected: File extension '.yaml' not allowed. Allowed: ['.txt', '.cfg', '.conf', '.zip']",Unsupported,False
+Cisco\Voice\CUCME\README.md,.md,1552,42,,True,0,1,0,UNKNOWN_CONTENTx1,0,0,0,0,0,0,0,0,0,0,1,0,0,False,1.3571,"rejected: File extension '.md' not allowed. Allowed: ['.txt', '.cfg', '.conf', '.zip']",Unsupported,False
+Cisco\Wireless\AccessPoint\AP1141N-E-K9.conf,.conf,7678,312,,True,0,4,0,INSECURE_CONFIGx3;SENSITIVE_DATAx1,0,0,0,0,0,0,1,3,0,0,0,0,0,False,5.6053,accepted,Known-good,False
+Cisco\Wireless\AccessPoint\metadata.yaml,.yaml,1693,42,,True,0,1,0,UNKNOWN_CONTENTx1,0,0,0,0,0,0,0,0,0,0,1,0,0,False,1.2865,"rejected: File extension '.yaml' not allowed. Allowed: ['.txt', '.cfg', '.conf', '.zip']",Unsupported,False
+Cisco\Wireless\AccessPoint\README.md,.md,1394,40,,True,0,1,0,UNKNOWN_CONTENTx1,0,0,0,0,0,0,0,0,0,0,1,0,0,False,1.1997,"rejected: File extension '.md' not allowed. Allowed: ['.txt', '.cfg', '.conf', '.zip']",Unsupported,False
+F5\LoadBalancers\BIG-IP\f5_bigip_imish_malformed,<none>,684,25,,True,0,0,0,,0,0,0,0,0,0,0,0,0,0,0,0,0,True,0.9831,rejected: Invalid filename,Unsupported,False
+F5\LoadBalancers\BIG-IP\f5_bigip_structured_cm,<none>,4719,181,,True,0,0,0,,0,0,0,0,0,0,0,0,0,0,0,0,0,True,3.7138,rejected: Invalid filename,Unsupported,False
+F5\LoadBalancers\BIG-IP\f5_bigip_structured_ltm,<none>,7573,292,,True,0,1,0,MIXED_VENDORx1,0,0,0,0,0,0,0,0,0,0,0,1,0,False,6.5569,rejected: Invalid filename,Unsupported,False
+F5\LoadBalancers\BIG-IP\f5_bigip_structured_malformed,<none>,498,33,,True,0,0,0,,0,0,0,0,0,0,0,0,0,0,0,0,0,True,0.7447,rejected: Invalid filename,Unsupported,False
+F5\LoadBalancers\BIG-IP\f5_bigip_structured_net,<none>,1392,82,,True,0,1,0,MIXED_VENDORx1,0,0,0,0,0,0,0,0,0,0,0,1,0,False,1.4516,rejected: Invalid filename,Unsupported,False
+F5\LoadBalancers\BIG-IP\f5_bigip_structured_net_routing_bgp,<none>,1800,71,,True,0,0,0,,0,0,0,0,0,0,0,0,0,0,0,0,0,True,2.2579,rejected: Invalid filename,Unsupported,False
+F5\LoadBalancers\BIG-IP\f5_bigip_structured_net_routing_prefix_list,<none>,776,37,,True,0,0,0,,0,0,0,0,0,0,0,0,0,0,0,0,0,True,0.9226,rejected: Invalid filename,Unsupported,False
+F5\LoadBalancers\BIG-IP\f5_bigip_structured_net_routing_route_map,<none>,947,45,,True,0,0,0,,0,0,0,0,0,0,0,0,0,0,0,0,0,True,1.0792,rejected: Invalid filename,Unsupported,False
+F5\LoadBalancers\BIG-IP\f5_bigip_structured_sys,<none>,2469,112,,True,0,0,0,,0,0,0,0,0,0,0,0,0,0,0,0,0,True,2.5141,rejected: Invalid filename,Unsupported,False
+F5\LoadBalancers\BIG-IP\f5_bigip_structured_sys_ha_group,<none>,305,21,,True,0,0,0,,0,0,0,0,0,0,0,0,0,0,0,0,0,True,0.4531,rejected: Invalid filename,Unsupported,False
+F5\LoadBalancers\BIG-IP\f5_bigip_structured_with_imish,<none>,1737,79,,True,0,0,0,,0,0,0,0,0,0,0,0,0,0,0,0,0,True,1.6318,rejected: Invalid filename,Unsupported,False
+Fortinet\Firewalls\FortiGate\4D-Demo\4D-NGFW_NGFW-Demo-Config_NGFW_Demo.txt,.txt,37746,1331,,True,0,3,0,MIXED_VENDORx1;SENSITIVE_DATAx2,0,0,0,0,0,0,2,0,0,0,0,1,0,False,45.1129,accepted,Edge,False
+Fortinet\Firewalls\FortiGate\4D-Demo\4D-SDWAN_7.6_HA_HighAvailability.txt,.txt,374,19,,True,0,1,0,SENSITIVE_DATAx1,0,0,0,0,0,0,1,0,0,0,0,0,0,False,0.6886,accepted,Known-good,False
+Fortinet\Firewalls\FortiGate\4D-Demo\4D-Switching_LAN_Edge_Demo.txt,.txt,10696,388,,True,0,0,0,,0,0,0,0,0,0,0,0,0,0,0,0,0,True,10.745,accepted,Known-good,False
+Fortinet\Firewalls\FortiGate\4D-Demo\4D-ZTNA_ZTNA-demo-config.txt,.txt,19346,443,,True,0,2,0,MIXED_VENDORx1;SENSITIVE_DATAx1,0,0,0,0,0,0,1,0,0,0,0,1,0,False,13.4493,accepted,Edge,False
+Fortinet\Firewalls\FortiGate\4D-Demo\SD-Branch_7.0_SD-Branch.txt,.txt,18068,662,,True,0,0,0,,0,0,0,0,0,0,0,0,0,0,0,0,0,True,22.2894,accepted,Known-good,False
+Fortinet\Firewalls\FortiGate\4D-NGFW_NGFW-Demo-Config_NGFW_Demo.txt,.txt,37746,1331,,True,0,3,0,MIXED_VENDORx1;SENSITIVE_DATAx2,0,0,0,0,0,0,2,0,0,0,0,1,0,False,46.8929,accepted,Duplicate,True
+Fortinet\Firewalls\FortiGate\4D-ZTNA_ZTNA-demo-config.txt,.txt,19346,443,,True,0,2,0,MIXED_VENDORx1;SENSITIVE_DATAx1,0,0,0,0,0,0,1,0,0,0,0,1,0,False,15.2532,accepted,Duplicate,True
+Fortinet\Firewalls\FortiGate\Audit-Tool\FortinetFirewallConfiguration-Misconfigured.txt,.txt,3163,114,,True,0,1,0,SENSITIVE_DATAx1,0,0,0,0,0,0,1,0,0,0,0,0,0,False,2.6874,accepted,Edge,False
+Fortinet\Firewalls\FortiGate\AzureVPN\fortigate_show_full_configuration.txt,.txt,328775,10685,,True,0,13,0,MIXED_VENDORx1;SENSITIVE_DATAx12,0,0,0,0,0,0,12,0,0,0,0,1,0,False,338.2603,accepted,Known-good,False
+Fortinet\Firewalls\FortiGate\Config-Templates\ipsec-vpn_config.txt,.txt,600,22,,True,0,0,0,,0,0,0,0,0,0,0,0,0,0,0,0,0,True,0.7131,accepted,Known-good,False
+Fortinet\Firewalls\FortiGate\Config-Templates\ssl-vpn_config.txt,.txt,265,11,,True,0,0,0,,0,0,0,0,0,0,0,0,0,0,0,0,0,True,0.3529,accepted,Edge,False
+Fortinet\Firewalls\FortiGate\FortiGateAdminBackups.conf,.conf,2824,51,,True,0,1,0,UNKNOWN_CONTENTx1,0,0,0,0,0,0,0,0,0,0,1,0,0,False,1.2183,accepted,Edge,False
+Fortinet\Firewalls\FortiGate\FortiGateAdminCerts.conf,.conf,837,16,,True,0,1,0,UNKNOWN_CONTENTx1,0,0,0,0,0,0,0,0,0,0,1,0,0,False,0.4052,accepted,Edge,False
+Fortinet\Firewalls\FortiGate\FortiGateAdminDHCP.conf,.conf,1143,42,,True,0,0,0,,0,0,0,0,0,0,0,0,0,0,0,0,0,True,1.1129,accepted,Edge,False
+Fortinet\Firewalls\FortiGate\FortiGateAdminDNS.conf,.conf,5395,189,,True,0,0,0,,0,0,0,0,0,0,0,0,0,0,0,0,0,True,7.1707,accepted,Edge,False
+Fortinet\Firewalls\FortiGate\FortiGateAdminInterfaces.conf,.conf,9131,362,,True,0,0,0,,0,0,0,0,0,0,0,0,0,0,0,0,0,True,9.0591,accepted,Edge,False
+Fortinet\Firewalls\FortiGate\FortiGateAdminSetup.conf,.conf,1457,54,,True,0,0,0,,0,0,0,0,0,0,0,0,0,0,0,0,0,True,1.6102,accepted,Edge,False
+Fortinet\Firewalls\FortiGate\FortinetFirewallConfiguration-Misconfigured.txt,.txt,3163,114,,True,0,1,0,SENSITIVE_DATAx1,0,0,0,0,0,0,1,0,0,0,0,0,0,False,2.8298,accepted,Duplicate,True
+Fortinet\Firewalls\FortiGate\mocked_data_test_get_firewall_policies_normal_show_firewall_policy.txt,.txt,287,12,,True,0,0,0,,0,0,0,0,0,0,0,0,0,0,0,0,0,True,0.487,accepted,Known-good,False
+Fortinet\Firewalls\FortiGate\Snippets\FortiGateAdminBackups.conf,.conf,2824,51,,True,0,1,0,UNKNOWN_CONTENTx1,0,0,0,0,0,0,0,0,0,0,1,0,0,False,1.4984,accepted,Duplicate,True
+Fortinet\Firewalls\FortiGate\Snippets\FortiGateAdminCerts.conf,.conf,837,16,,True,0,1,0,UNKNOWN_CONTENTx1,0,0,0,0,0,0,0,0,0,0,1,0,0,False,0.4891,accepted,Duplicate,True
+Fortinet\Firewalls\FortiGate\Snippets\FortiGateAdminDHCP.conf,.conf,1143,42,,True,0,0,0,,0,0,0,0,0,0,0,0,0,0,0,0,0,True,1.3746,accepted,Duplicate,True
+Fortinet\Firewalls\FortiGate\Snippets\FortiGateAdminDNS.conf,.conf,5395,189,,True,0,0,0,,0,0,0,0,0,0,0,0,0,0,0,0,0,True,4.8148,accepted,Duplicate,True
+Fortinet\Firewalls\FortiGate\Snippets\FortiGateAdminInterfaces.conf,.conf,9131,362,,True,0,0,0,,0,0,0,0,0,0,0,0,0,0,0,0,0,True,9.9142,accepted,Duplicate,True
+Fortinet\Firewalls\FortiGate\Snippets\FortiGateAdminSetup.conf,.conf,1457,54,,True,0,0,0,,0,0,0,0,0,0,0,0,0,0,0,0,0,True,1.0552,accepted,Duplicate,True
+Fortinet\Firewalls\FortiGate\ssl-vpn_config.txt,.txt,265,11,,True,0,0,0,,0,0,0,0,0,0,0,0,0,0,0,0,0,True,0.5486,accepted,Duplicate,True
+Fortinet\Firewalls\FortiGate\STIG_unclass.xsl,.xsl,12243,387,,True,0,1,0,UNKNOWN_CONTENTx1,0,0,0,0,0,0,0,0,0,0,1,0,0,False,35.0373,"rejected: File extension '.xsl' not allowed. Allowed: ['.txt', '.cfg', '.conf', '.zip']",Unsupported,False
+Fortinet\Firewalls\FortiGate\U_FN_FortiGate_Firewall_NDM_STIG_V1R4_Manual-xccdf.xml,.xml,223826,1849,,True,0,6,1,LONG_LINEx1;MIXED_LINE_ENDINGSx1;MIXED_VENDORx1;SENSITIVE_DATAx4,0,0,0,0,0,0,4,0,1,1,0,1,0,False,76.3066,"rejected: File extension '.xml' not allowed. Allowed: ['.txt', '.cfg', '.conf', '.zip']",Unsupported,False
+Fortinet\Firewalls\FortiGate\U_FN_FortiGate_Firewall_STIG_V1R3_Manual-xccdf.xml,.xml,124482,1135,,True,0,1,1,LONG_LINEx1;MIXED_LINE_ENDINGSx1,0,0,0,0,0,0,0,0,1,1,0,0,0,False,47.0906,"rejected: File extension '.xml' not allowed. Allowed: ['.txt', '.cfg', '.conf', '.zip']",Unsupported,False
+Fortinet\Firewalls\FortiGate\UTM-Analyzer\sample_config.conf,.conf,7960,342,,True,0,0,0,,0,0,0,0,0,0,0,0,0,0,0,0,0,True,10.5349,accepted,Known-good,False
+FRR\Routers\SONiC\border01-frr.conf,.conf,2183,65,,True,0,2,0,SENSITIVE_DATAx2,0,0,0,0,0,0,2,0,0,0,0,0,0,False,1.4986,accepted,Known-good,False
+FRR\Routers\SONiC\border02-frr.conf,.conf,2382,67,,True,0,0,0,,0,0,0,0,0,0,0,0,0,0,0,0,0,True,1.5916,accepted,Known-good,False
+FRR\Routers\SONiC\leaf01-frr.conf,.conf,2814,79,,True,0,2,0,SENSITIVE_DATAx2,0,0,0,0,0,0,2,0,0,0,0,0,0,False,1.8358,accepted,Known-good,False
+FRR\Routers\SONiC\leaf02-frr.conf,.conf,3399,89,,True,0,2,0,SENSITIVE_DATAx2,0,0,0,0,0,0,2,0,0,0,0,0,0,False,2.3353,accepted,Known-good,False
+FRR\Routers\SONiC\metadata.yaml,.yaml,2295,49,,True,0,1,0,UNKNOWN_CONTENTx1,0,0,0,0,0,0,0,0,0,0,1,0,0,False,2.9636,"rejected: File extension '.yaml' not allowed. Allowed: ['.txt', '.cfg', '.conf', '.zip']",Unsupported,False
+FRR\Routers\SONiC\README.md,.md,1628,52,,True,0,1,0,UNKNOWN_CONTENTx1,0,0,0,0,0,0,0,0,0,0,1,0,0,False,1.7697,"rejected: File extension '.md' not allowed. Allowed: ['.txt', '.cfg', '.conf', '.zip']",Unsupported,False
+FRR\Routers\SONiC\spine01-frr.conf,.conf,4333,122,,True,0,0,0,,0,0,0,0,0,0,0,0,0,0,0,0,0,True,2.8336,accepted,Known-good,False
+FRR\Routers\SONiC\spine02-frr.conf,.conf,4920,149,,True,0,2,0,SENSITIVE_DATAx2,0,0,0,0,0,0,2,0,0,0,0,0,0,False,3.2493,accepted,Known-good,False
+FRR\Switches\Cumulus\exit01\interfaces.conf,.conf,936,50,,True,0,1,0,UNKNOWN_CONTENTx1,0,0,0,0,0,0,0,0,0,0,1,0,0,False,1.6577,accepted,Edge,False
+FRR\Switches\Cumulus\exit01\ntp.conf,.conf,2618,74,,True,0,1,0,UNKNOWN_CONTENTx1,0,0,0,0,0,0,0,0,0,0,1,0,0,False,1.4781,accepted,Edge,False
+FRR\Switches\Cumulus\exit01\Quagga.conf,.conf,812,37,,True,0,0,0,,0,0,0,0,0,0,0,0,0,0,0,0,0,True,0.8873,accepted,Edge,False
+FRR\Switches\Cumulus\exit02\interfaces.conf,.conf,936,50,,True,0,1,0,UNKNOWN_CONTENTx1,0,0,0,0,0,0,0,0,0,0,1,0,0,False,1.2235,accepted,Edge,False
+FRR\Switches\Cumulus\exit02\ntp.conf,.conf,2618,74,,True,0,1,0,UNKNOWN_CONTENTx1,0,0,0,0,0,0,0,0,0,0,1,0,0,False,1.8347,accepted,Duplicate,True
+FRR\Switches\Cumulus\exit02\Quagga.conf,.conf,812,37,,True,0,0,0,,0,0,0,0,0,0,0,0,0,0,0,0,0,True,0.8317,accepted,Edge,False
+FRR\Switches\Cumulus\leaf01\interfaces.conf,.conf,1368,76,,True,0,1,0,UNKNOWN_CONTENTx1,0,0,0,0,0,0,0,0,0,0,1,0,0,False,1.641,accepted,Edge,False
+FRR\Switches\Cumulus\leaf01\ntp.conf,.conf,2618,74,,True,0,1,0,UNKNOWN_CONTENTx1,0,0,0,0,0,0,0,0,0,0,1,0,0,False,1.7166,accepted,Duplicate,True
+FRR\Switches\Cumulus\leaf01\Quagga.conf,.conf,809,37,,True,0,0,0,,0,0,0,0,0,0,0,0,0,0,0,0,0,True,0.8222,accepted,Edge,False
+FRR\Switches\Cumulus\leaf02\interfaces.conf,.conf,1368,76,,True,0,1,0,UNKNOWN_CONTENTx1,0,0,0,0,0,0,0,0,0,0,1,0,0,False,2.8894,accepted,Edge,False
+FRR\Switches\Cumulus\leaf02\ntp.conf,.conf,2618,74,,True,0,1,0,UNKNOWN_CONTENTx1,0,0,0,0,0,0,0,0,0,0,1,0,0,False,1.4667,accepted,Duplicate,True
+FRR\Switches\Cumulus\leaf02\Quagga.conf,.conf,809,37,,True,0,0,0,,0,0,0,0,0,0,0,0,0,0,0,0,0,True,0.813,accepted,Edge,False
+FRR\Switches\Cumulus\leaf03\interfaces.conf,.conf,1368,76,,True,0,1,0,UNKNOWN_CONTENTx1,0,0,0,0,0,0,0,0,0,0,1,0,0,False,2.1048,accepted,Edge,False
+FRR\Switches\Cumulus\leaf03\ntp.conf,.conf,2618,74,,True,0,1,0,UNKNOWN_CONTENTx1,0,0,0,0,0,0,0,0,0,0,1,0,0,False,1.5837,accepted,Duplicate,True
+FRR\Switches\Cumulus\leaf03\Quagga.conf,.conf,809,37,,True,0,0,0,,0,0,0,0,0,0,0,0,0,0,0,0,0,True,0.819,accepted,Edge,False
+FRR\Switches\Cumulus\leaf04\interfaces.conf,.conf,1368,76,,True,0,1,0,UNKNOWN_CONTENTx1,0,0,0,0,0,0,0,0,0,0,1,0,0,False,2.6946,accepted,Edge,False
+FRR\Switches\Cumulus\leaf04\ntp.conf,.conf,2618,74,,True,0,1,0,UNKNOWN_CONTENTx1,0,0,0,0,0,0,0,0,0,0,1,0,0,False,1.5189,accepted,Duplicate,True
+FRR\Switches\Cumulus\leaf04\Quagga.conf,.conf,809,37,,True,0,0,0,,0,0,0,0,0,0,0,0,0,0,0,0,0,True,1.0164,accepted,Edge,False
+FRR\Switches\Cumulus\Other\cumulus_nclu_routing,<none>,77,5,,True,0,1,0,UNKNOWN_CONTENTx1,0,0,0,0,0,0,0,0,0,0,1,0,0,False,0.1865,rejected: Invalid filename,Unsupported,False
+FRR\Switches\Cumulus\Routers\cumulus_nclu,<none>,4682,116,,True,0,1,0,UNKNOWN_CONTENTx1,0,0,0,0,0,0,0,0,0,0,1,0,0,False,3.0572,rejected: Invalid filename,Unsupported,False
+FRR\Switches\Cumulus\Routers\cumulus_nclu_bgp,<none>,220,9,,True,0,1,0,UNKNOWN_CONTENTx1,0,0,0,0,0,0,0,0,0,0,1,0,0,False,0.4459,rejected: Invalid filename,Unsupported,False
+FRR\Switches\Cumulus\Routers\cumulus_nclu_bgp_no_address_family,<none>,147,7,,True,0,1,0,UNKNOWN_CONTENTx1,0,0,0,0,0,0,0,0,0,0,1,0,0,False,0.2322,rejected: Invalid filename,Unsupported,False
+FRR\Switches\Cumulus\Routers\cumulus_nclu_bgp_no_remote_as,<none>,243,9,,True,0,1,0,UNKNOWN_CONTENTx1,0,0,0,0,0,0,0,0,0,0,1,0,0,False,0.3217,rejected: Invalid filename,Unsupported,False
+FRR\Switches\Cumulus\Routers\cumulus_nclu_bgp_no_router_id,<none>,154,7,,True,0,1,0,UNKNOWN_CONTENTx1,0,0,0,0,0,0,0,0,0,0,1,0,0,False,0.2516,rejected: Invalid filename,Unsupported,False
+FRR\Switches\Cumulus\Routers\cumulus_nclu_bgp_no_router_id_or_loopback_ip,<none>,145,7,,True,0,1,0,UNKNOWN_CONTENTx1,0,0,0,0,0,0,0,0,0,0,1,0,0,False,0.2404,rejected: Invalid filename,Unsupported,False
+FRR\Switches\Cumulus\Routers\cumulus_nclu_stp,<none>,548,18,,True,0,1,0,UNKNOWN_CONTENTx1,0,0,0,0,0,0,0,0,0,0,1,0,0,False,0.5438,rejected: Invalid filename,Unsupported,False
+FRR\Switches\Cumulus\spine01\interfaces.conf,.conf,630,39,,True,0,1,0,UNKNOWN_CONTENTx1,0,0,0,0,0,0,0,0,0,0,1,0,0,False,1.2568,accepted,Edge,False
+FRR\Switches\Cumulus\spine01\ntp.conf,.conf,2618,74,,True,0,1,0,UNKNOWN_CONTENTx1,0,0,0,0,0,0,0,0,0,0,1,0,0,False,1.6288,accepted,Duplicate,True
+FRR\Switches\Cumulus\spine01\Quagga.conf,.conf,1239,56,,True,0,0,0,,0,0,0,0,0,0,0,0,0,0,0,0,0,True,1.1997,accepted,Edge,False
+FRR\Switches\Cumulus\spine02\interfaces.conf,.conf,630,39,,True,0,1,0,UNKNOWN_CONTENTx1,0,0,0,0,0,0,0,0,0,0,1,0,0,False,1.1772,accepted,Edge,False
+FRR\Switches\Cumulus\spine02\ntp.conf,.conf,2618,74,,True,0,1,0,UNKNOWN_CONTENTx1,0,0,0,0,0,0,0,0,0,0,1,0,0,False,1.4106,accepted,Duplicate,True
+FRR\Switches\Cumulus\spine02\Quagga.conf,.conf,1239,56,,True,0,0,0,,0,0,0,0,0,0,0,0,0,0,0,0,0,True,1.2067,accepted,Edge,False
+FRR\Switches\Cumulus\Switches\cumulus_nclu_bond,<none>,192,8,,True,0,1,0,UNKNOWN_CONTENTx1,0,0,0,0,0,0,0,0,0,0,1,0,0,False,0.2685,rejected: Invalid filename,Unsupported,False
+FRR\Switches\Cumulus\Switches\cumulus_nclu_interface,<none>,782,21,,True,0,1,0,UNKNOWN_CONTENTx1,0,0,0,0,0,0,0,0,0,0,1,0,0,False,0.622,rejected: Invalid filename,Unsupported,False
+FRR\Switches\Cumulus\Switches\cumulus_nclu_invalid_bonds,<none>,478,21,,True,0,1,0,UNKNOWN_CONTENTx1,0,0,0,0,0,0,0,0,0,0,1,0,0,False,0.7364,rejected: Invalid filename,Unsupported,False
+FRR\Switches\Cumulus\Switches\cumulus_nclu_invalid_interfaces,<none>,657,23,,True,0,1,0,UNKNOWN_CONTENTx1,0,0,0,0,0,0,0,0,0,0,1,0,0,False,0.8571,rejected: Invalid filename,Unsupported,False
+FRR\Switches\Cumulus\Switches\cumulus_nclu_invalid_vrfs,<none>,407,22,,True,0,1,0,UNKNOWN_CONTENTx1,0,0,0,0,0,0,0,0,0,0,1,0,0,False,0.7574,rejected: Invalid filename,Unsupported,False
+FRR\Switches\Cumulus\Switches\cumulus_nclu_invalid_vxlans,<none>,480,22,,True,0,1,0,UNKNOWN_CONTENTx1,0,0,0,0,0,0,0,0,0,0,1,0,0,False,0.9579,rejected: Invalid filename,Unsupported,False
+FRR\Switches\Cumulus\Switches\interfaces.conf,.conf,936,50,,True,0,1,0,UNKNOWN_CONTENTx1,0,0,0,0,0,0,0,0,0,0,1,0,0,False,1.3378,accepted,Duplicate,True
+FRR\Switches\Cumulus\Switches\interfaces_1.conf,.conf,936,50,,True,0,1,0,UNKNOWN_CONTENTx1,0,0,0,0,0,0,0,0,0,0,1,0,0,False,1.7607,accepted,Duplicate,True
+FRR\Switches\Cumulus\Switches\interfaces_2.conf,.conf,1368,76,,True,0,1,0,UNKNOWN_CONTENTx1,0,0,0,0,0,0,0,0,0,0,1,0,0,False,2.1497,accepted,Duplicate,True
+FRR\Switches\Cumulus\Switches\interfaces_3.conf,.conf,1368,76,,True,0,1,0,UNKNOWN_CONTENTx1,0,0,0,0,0,0,0,0,0,0,1,0,0,False,1.8512,accepted,Duplicate,True
+FRR\Switches\Cumulus\Switches\interfaces_4.conf,.conf,1368,76,,True,0,1,0,UNKNOWN_CONTENTx1,0,0,0,0,0,0,0,0,0,0,1,0,0,False,1.8126,accepted,Duplicate,True
+FRR\Switches\Cumulus\Switches\interfaces_5.conf,.conf,1368,76,,True,0,1,0,UNKNOWN_CONTENTx1,0,0,0,0,0,0,0,0,0,0,1,0,0,False,1.6827,accepted,Duplicate,True
+FRR\Switches\Cumulus\Switches\interfaces_6.conf,.conf,630,39,,True,0,1,0,UNKNOWN_CONTENTx1,0,0,0,0,0,0,0,0,0,0,1,0,0,False,0.7553,accepted,Duplicate,True
+FRR\Switches\Cumulus\Switches\interfaces_7.conf,.conf,630,39,,True,0,1,0,UNKNOWN_CONTENTx1,0,0,0,0,0,0,0,0,0,0,1,0,0,False,0.7217,accepted,Duplicate,True
+FRR\Switches\Cumulus\Switches\ntp.conf,.conf,2618,74,,True,0,1,0,UNKNOWN_CONTENTx1,0,0,0,0,0,0,0,0,0,0,1,0,0,False,1.4032,accepted,Duplicate,True
+FRR\Switches\Cumulus\Switches\Quagga.conf,.conf,812,37,,True,0,0,0,,0,0,0,0,0,0,0,0,0,0,0,0,0,True,0.7808,accepted,Duplicate,True
+FRR\Switches\Cumulus\Switches\Quagga_1.conf,.conf,812,37,,True,0,0,0,,0,0,0,0,0,0,0,0,0,0,0,0,0,True,0.8403,accepted,Duplicate,True
+FRR\Switches\Cumulus\Switches\Quagga_2.conf,.conf,809,37,,True,0,0,0,,0,0,0,0,0,0,0,0,0,0,0,0,0,True,0.8204,accepted,Duplicate,True
+FRR\Switches\Cumulus\Switches\Quagga_3.conf,.conf,809,37,,True,0,0,0,,0,0,0,0,0,0,0,0,0,0,0,0,0,True,1.1232,accepted,Duplicate,True
+FRR\Switches\Cumulus\Switches\Quagga_4.conf,.conf,809,37,,True,0,0,0,,0,0,0,0,0,0,0,0,0,0,0,0,0,True,1.2204,accepted,Duplicate,True
+FRR\Switches\Cumulus\Switches\Quagga_5.conf,.conf,809,37,,True,0,0,0,,0,0,0,0,0,0,0,0,0,0,0,0,0,True,1.2782,accepted,Duplicate,True
+FRR\Switches\Cumulus\Switches\Quagga_6.conf,.conf,1239,56,,True,0,0,0,,0,0,0,0,0,0,0,0,0,0,0,0,0,True,1.6475,accepted,Duplicate,True
+FRR\Switches\Cumulus\Switches\Quagga_7.conf,.conf,1239,56,,True,0,0,0,,0,0,0,0,0,0,0,0,0,0,0,0,0,True,1.2013,accepted,Duplicate,True
+Juniper\Firewalls\SRX\applications,<none>,344,24,,True,0,1,0,MIXED_VENDORx1,0,0,0,0,0,0,0,0,0,0,0,1,0,False,0.4813,rejected: Invalid filename,Unsupported,False
+Juniper\Firewalls\SRX\configs_junos-srx-1.cfg,.cfg,9663,118,,True,0,4,0,SENSITIVE_DATAx4,0,0,0,0,0,0,4,0,0,0,0,0,0,False,4.0791,accepted,Known-good,False
+Juniper\Firewalls\SRX\configs_junos-srx-2.cfg,.cfg,8092,99,,True,0,4,0,SENSITIVE_DATAx4,0,0,0,0,0,0,4,0,0,0,0,0,0,False,3.6469,accepted,Known-good,False
+Juniper\Firewalls\SRX\configs_junos-srx-3.cfg,.cfg,7423,93,,True,0,4,0,SENSITIVE_DATAx4,0,0,0,0,0,0,4,0,0,0,0,0,0,False,3.1867,accepted,Known-good,False
+Juniper\Firewalls\SRX\interfaces,<none>,1172,56,,True,0,1,0,MIXED_VENDORx1,0,0,0,0,0,0,0,0,0,0,0,1,0,False,1.2225,rejected: Invalid filename,Unsupported,False
+Juniper\Firewalls\SRX\juniper-tcpflags,<none>,108,5,,True,0,0,0,,0,0,0,0,0,0,0,0,0,0,0,0,0,True,0.2793,rejected: Invalid filename,Unsupported,False
+Juniper\Firewalls\SRX\juniper_firewall,<none>,3720,59,,True,0,0,0,,0,0,0,0,0,0,0,0,0,0,0,0,0,True,1.7619,rejected: Invalid filename,Unsupported,False
+Juniper\Firewalls\SRX\juniper_syslog,<none>,4696,99,,True,0,0,0,,0,0,0,0,0,0,0,0,0,0,0,0,0,True,3.3021,rejected: Invalid filename,Unsupported,False
+Juniper\Firewalls\SRX\nat,<none>,1496,67,,True,0,1,0,MIXED_VENDORx1,0,0,0,0,0,0,0,0,0,0,0,1,0,False,1.3838,rejected: Invalid filename,Unsupported,False
+Juniper\Firewalls\SRX\policy,<none>,302,22,,True,0,1,0,MIXED_VENDORx1,0,0,0,0,0,0,0,0,0,0,0,1,0,False,0.4675,rejected: Invalid filename,Unsupported,False
+Juniper\Firewalls\SRX\zones,<none>,1300,66,,True,0,1,0,MIXED_VENDORx1,0,0,0,0,0,0,0,0,0,0,0,1,0,False,1.535,rejected: Invalid filename,Unsupported,False
+Juniper\Routers\MX-Series\atla.conf,.conf,266500,8784,,True,0,0,0,,0,0,0,0,0,0,0,0,0,0,0,0,0,True,283.1453,accepted,Edge,False
+Juniper\Routers\MX-Series\chic.conf,.conf,491015,16221,,True,0,0,0,,0,0,0,0,0,0,0,0,0,0,0,0,0,True,537.7493,accepted,Edge,False
+Juniper\Routers\MX-Series\clev.conf,.conf,161368,5576,,True,0,0,0,,0,0,0,0,0,0,0,0,0,0,0,0,0,True,185.3601,accepted,Edge,False
+Juniper\Routers\MX-Series\hous.conf,.conf,258786,8704,,True,0,0,0,,0,0,0,0,0,0,0,0,0,0,0,0,0,True,280.6242,accepted,Edge,False
+Juniper\Routers\MX-Series\kans.conf,.conf,300902,9676,,True,0,0,0,,0,0,0,0,0,0,0,0,0,0,0,0,0,True,323.1372,accepted,Edge,False
+Juniper\Routers\MX-Series\losa.conf,.conf,314510,10282,,True,0,0,0,,0,0,0,0,0,0,0,0,0,0,0,0,0,True,370.9091,accepted,Edge,False
+Juniper\Routers\MX-Series\metadata.yaml,.yaml,2580,63,,True,0,1,0,UNKNOWN_CONTENTx1,0,0,0,0,0,0,0,0,0,0,1,0,0,False,1.9706,"rejected: File extension '.yaml' not allowed. Allowed: ['.txt', '.cfg', '.conf', '.zip']",Unsupported,False
+Juniper\Routers\MX-Series\newy32aoa.conf,.conf,341199,11087,,True,0,0,0,,0,0,0,0,0,0,0,0,0,0,0,0,0,True,356.3527,accepted,Edge,False
+Juniper\Routers\MX-Series\README.md,.md,2069,62,,True,0,1,0,UNKNOWN_CONTENTx1,0,0,0,0,0,0,0,0,0,0,1,0,0,False,1.5772,"rejected: File extension '.md' not allowed. Allowed: ['.txt', '.cfg', '.conf', '.zip']",Unsupported,False
+Juniper\Routers\MX-Series\salt.conf,.conf,213317,6917,,True,0,0,0,,0,0,0,0,0,0,0,0,0,0,0,0,0,True,239.4211,accepted,Edge,False
+Juniper\Routers\MX-Series\seat.conf,.conf,258993,8776,,True,0,0,0,,0,0,0,0,0,0,0,0,0,0,0,0,0,True,277.6507,accepted,Edge,False
+Juniper\Routers\MX-Series\wash.conf,.conf,420934,14175,,True,0,0,0,,0,0,0,0,0,0,0,0,0,0,0,0,0,True,447.1281,accepted,Edge,False
+Juniper\Routers\T-Series\atla.conf,.conf,266500,8784,,True,0,0,0,,0,0,0,0,0,0,0,0,0,0,0,0,0,True,289.6307,accepted,Duplicate,True
+Juniper\Routers\T-Series\chic.conf,.conf,491015,16221,,True,0,0,0,,0,0,0,0,0,0,0,0,0,0,0,0,0,True,570.7462,accepted,Duplicate,True
+Juniper\Routers\T-Series\clev.conf,.conf,161368,5576,,True,0,0,0,,0,0,0,0,0,0,0,0,0,0,0,0,0,True,168.3271,accepted,Duplicate,True
+Juniper\Routers\T-Series\gh-2658-juniper-vrf-import-export.cfg,.cfg,5258,238,,True,0,0,0,,0,0,0,0,0,0,0,0,0,0,0,0,0,True,5.8179,accepted,Known-good,False
+Juniper\Routers\T-Series\hous.conf,.conf,258786,8704,,True,0,0,0,,0,0,0,0,0,0,0,0,0,0,0,0,0,True,279.6077,accepted,Duplicate,True
+Juniper\Routers\T-Series\kans.conf,.conf,300902,9676,,True,0,0,0,,0,0,0,0,0,0,0,0,0,0,0,0,0,True,319.7071,accepted,Duplicate,True
+Juniper\Routers\T-Series\losa.conf,.conf,314510,10282,,True,0,0,0,,0,0,0,0,0,0,0,0,0,0,0,0,0,True,343.3246,accepted,Duplicate,True
+Juniper\Routers\T-Series\newy32aoa.conf,.conf,341199,11087,,True,0,0,0,,0,0,0,0,0,0,0,0,0,0,0,0,0,True,369.211,accepted,Duplicate,True
+Juniper\Routers\T-Series\salt.conf,.conf,213317,6917,,True,0,0,0,,0,0,0,0,0,0,0,0,0,0,0,0,0,True,227.3742,accepted,Duplicate,True
+Juniper\Routers\T-Series\seat.conf,.conf,258993,8776,,True,0,0,0,,0,0,0,0,0,0,0,0,0,0,0,0,0,True,294.738,accepted,Duplicate,True
+Juniper\Routers\T-Series\vrf_import_and_ip_prefix_routes_import.cfg,.cfg,638,30,,True,0,0,0,,0,0,0,0,0,0,0,0,0,0,0,0,0,True,1.1823,accepted,Known-good,False
+Juniper\Routers\T-Series\wash.conf,.conf,420934,14175,,True,0,0,0,,0,0,0,0,0,0,0,0,0,0,0,0,0,True,463.1025,accepted,Duplicate,True
+Juniper\Switches\QFX\juniper_bgp_authentication,<none>,1291,23,,True,0,0,0,,0,0,0,0,0,0,0,0,0,0,0,0,0,True,0.9092,rejected: Invalid filename,Unsupported,False
+Juniper\Switches\QFX\juniper_interfaces,<none>,1445,29,,True,0,0,0,,0,0,0,0,0,0,0,0,0,0,0,0,0,True,0.8747,rejected: Invalid filename,Unsupported,False
+Juniper\Switches\QFX\juniper_passwords,<none>,396,9,,True,0,1,0,SENSITIVE_DATAx1,0,0,0,0,0,0,1,0,0,0,0,0,0,False,0.5665,rejected: Invalid filename,Unsupported,False
+Juniper\Switches\QFX\juniper_policy_statement,<none>,3487,47,,True,0,0,0,,0,0,0,0,0,0,0,0,0,0,0,0,0,True,2.6532,rejected: Invalid filename,Unsupported,False
+Juniper\Switches\QFX\juniper_vlan,<none>,582,15,,True,0,0,0,,0,0,0,0,0,0,0,0,0,0,0,0,0,True,0.4426,rejected: Invalid filename,Unsupported,False
+Juniper\Switches\QFX\junos-snmp-gh-8812,<none>,1440,65,,True,0,2,0,SENSITIVE_DATAx2,0,0,0,0,0,0,2,0,0,0,0,0,0,False,1.6809,rejected: Invalid filename,Unsupported,False
+NAPALM\Cisco-IOS\show_running_config.txt,.txt,1423,151,,True,0,1,0,SENSITIVE_DATAx1,0,0,0,0,0,0,1,0,0,0,0,0,0,False,1.5936,accepted,Known-good,False
+NAPALM\Cisco-IOS\show_startup_config.txt,.txt,1361,148,,True,0,1,0,SENSITIVE_DATAx1,0,0,0,0,0,0,1,0,0,0,0,0,0,False,1.4767,accepted,Known-good,False
+NAPALM\Cisco-IOS-XR\_CLI__Configuration_show_configuration_merge__Configuration___CLI_.txt,.txt,973,49,,True,0,1,0,SENSITIVE_DATAx1,0,0,0,0,0,0,1,0,0,0,0,0,0,False,1.026,accepted,Known-good,False
+NAPALM\Juniper-JunOS\get_config__database_candidate__format_text.xml,.xml,982,47,,True,0,3,0,SENSITIVE_DATAx3,0,0,0,0,0,0,3,0,0,0,0,0,0,False,1.3333,"rejected: File extension '.xml' not allowed. Allowed: ['.txt', '.cfg', '.conf', '.zip']",Unsupported,False
+PaloAlto\Firewalls\PAN-OS\PAN-OS\iron-skillet-panorama\iron_skillet_panorama_mgmt-static.xml,.xml,106215,2824,,True,0,1,0,UNKNOWN_CONTENTx1,0,0,0,0,0,0,0,0,0,0,1,0,0,False,108.6746,"rejected: File extension '.xml' not allowed. Allowed: ['.txt', '.cfg', '.conf', '.zip']",Unsupported,False
+PaloAlto\Firewalls\PAN-OS\PAN-OS\iron-skillet-panorama\iron_skillet_panorama_set-commands.conf,.conf,91789,911,,True,0,0,0,,0,0,0,0,0,0,0,0,0,0,0,0,0,True,44.7599,accepted,Edge,False
+PaloAlto\Firewalls\PAN-OS\PAN-OS\iron-skillet-panos\iron_skillet_panos_cloud-aws.xml,.xml,105114,2591,,True,0,1,0,UNKNOWN_CONTENTx1,0,0,0,0,0,0,0,0,0,0,1,0,0,False,106.3926,"rejected: File extension '.xml' not allowed. Allowed: ['.txt', '.cfg', '.conf', '.zip']",Unsupported,False
+PaloAlto\Firewalls\PAN-OS\PAN-OS\iron-skillet-panos\iron_skillet_panos_mgmt-static.xml,.xml,105013,2590,,True,0,1,0,UNKNOWN_CONTENTx1,0,0,0,0,0,0,0,0,0,0,1,0,0,False,105.3886,"rejected: File extension '.xml' not allowed. Allowed: ['.txt', '.cfg', '.conf', '.zip']",Unsupported,False
+PaloAlto\Firewalls\PAN-OS\PAN-OS\iron-skillet-panos\iron_skillet_panos_set-commands.conf,.conf,73729,824,,True,0,0,0,,0,0,0,0,0,0,0,0,0,0,0,0,0,True,38.9971,accepted,Edge,False
+PaloAlto\Firewalls\PAN-OS\PAN-OS\iron-skillet-panos\metadata.yaml,.yaml,2137,52,,True,0,1,0,UNKNOWN_CONTENTx1,0,0,0,0,0,0,0,0,0,0,1,0,0,False,1.6197,"rejected: File extension '.yaml' not allowed. Allowed: ['.txt', '.cfg', '.conf', '.zip']",Unsupported,False
+PaloAlto\Firewalls\PAN-OS\PAN-OS\iron-skillet-panos\README.md,.md,1925,50,,True,0,1,0,UNKNOWN_CONTENTx1,0,0,0,0,0,0,0,0,0,0,1,0,0,False,1.2654,"rejected: File extension '.md' not allowed. Allowed: ['.txt', '.cfg', '.conf', '.zip']",Unsupported,False
+PaloAlto\Firewalls\PAN-OS\panos_v10.1\iron_skillet_panorama_mgmt-static.xml,.xml,103392,2824,,True,0,1,0,UNKNOWN_CONTENTx1,0,0,0,0,0,0,0,0,0,0,1,0,0,False,101.5464,"rejected: File extension '.xml' not allowed. Allowed: ['.txt', '.cfg', '.conf', '.zip']",Unsupported,False
+PaloAlto\Firewalls\PAN-OS\panos_v10.1\iron_skillet_panorama_set-commands.conf,.conf,90879,911,,True,0,0,0,,0,0,0,0,0,0,0,0,0,0,0,0,0,True,35.5389,accepted,Edge,False
+PaloAlto\Firewalls\PAN-OS\panos_v10.1\iron_skillet_panos_cloud-aws.xml,.xml,102524,2591,,True,0,1,0,UNKNOWN_CONTENTx1,0,0,0,0,0,0,0,0,0,0,1,0,0,False,103.0769,"rejected: File extension '.xml' not allowed. Allowed: ['.txt', '.cfg', '.conf', '.zip']",Unsupported,False
+PaloAlto\Firewalls\PAN-OS\panos_v10.1\iron_skillet_panos_cloud-azure.xml,.xml,102524,2591,,True,0,1,0,UNKNOWN_CONTENTx1,0,0,0,0,0,0,0,0,0,0,1,0,0,False,110.2303,"rejected: File extension '.xml' not allowed. Allowed: ['.txt', '.cfg', '.conf', '.zip']",Unsupported,False
+PaloAlto\Firewalls\PAN-OS\panos_v10.1\iron_skillet_panos_cloud-gcp.xml,.xml,102524,2591,,True,0,1,0,UNKNOWN_CONTENTx1,0,0,0,0,0,0,0,0,0,0,1,0,0,False,99.8387,"rejected: File extension '.xml' not allowed. Allowed: ['.txt', '.cfg', '.conf', '.zip']",Unsupported,False
+PaloAlto\Firewalls\PAN-OS\panos_v10.1\iron_skillet_panos_mgmt-dhcp.xml,.xml,102524,2591,,True,0,1,0,UNKNOWN_CONTENTx1,0,0,0,0,0,0,0,0,0,0,1,0,0,False,100.0779,"rejected: File extension '.xml' not allowed. Allowed: ['.txt', '.cfg', '.conf', '.zip']",Unsupported,False
+PaloAlto\Firewalls\PAN-OS\panos_v10.1\iron_skillet_panos_mgmt-static.xml,.xml,102424,2590,,True,0,1,0,UNKNOWN_CONTENTx1,0,0,0,0,0,0,0,0,0,0,1,0,0,False,98.5288,"rejected: File extension '.xml' not allowed. Allowed: ['.txt', '.cfg', '.conf', '.zip']",Unsupported,False
+PaloAlto\Firewalls\PAN-OS\panos_v10.1\iron_skillet_panos_set-commands.conf,.conf,72906,824,,True,0,0,0,,0,0,0,0,0,0,0,0,0,0,0,0,0,True,31.6228,accepted,Edge,False
+PaloAlto\Firewalls\PAN-OS\sample-cloud-AWS_panorama_iron_skillet_panorama_full.xml,.xml,106928,2840,,True,0,1,0,UNKNOWN_CONTENTx1,0,0,0,0,0,0,0,0,0,0,1,0,0,False,109.046,"rejected: File extension '.xml' not allowed. Allowed: ['.txt', '.cfg', '.conf', '.zip']",Unsupported,False
+PaloAlto\Firewalls\PAN-OS\sample-cloud-AWS_panos_iron_skillet_panos_full.xml,.xml,105114,2591,,True,0,1,0,UNKNOWN_CONTENTx1,0,0,0,0,0,0,0,0,0,0,1,0,0,False,108.3492,"rejected: File extension '.xml' not allowed. Allowed: ['.txt', '.cfg', '.conf', '.zip']",Unsupported,False
+PaloAlto\Firewalls\PAN-OS\sample-cloud-Azure_panorama_iron_skillet_panorama_full.xml,.xml,106928,2840,,True,0,1,0,UNKNOWN_CONTENTx1,0,0,0,0,0,0,0,0,0,0,1,0,0,False,110.497,"rejected: File extension '.xml' not allowed. Allowed: ['.txt', '.cfg', '.conf', '.zip']",Unsupported,False
+PaloAlto\Firewalls\PAN-OS\sample-cloud-Azure_panos_iron_skillet_panos_full.xml,.xml,105114,2591,,True,0,1,0,UNKNOWN_CONTENTx1,0,0,0,0,0,0,0,0,0,0,1,0,0,False,105.2033,"rejected: File extension '.xml' not allowed. Allowed: ['.txt', '.cfg', '.conf', '.zip']",Unsupported,False
+PaloAlto\Firewalls\PAN-OS\sample-cloud-GCP_panorama_iron_skillet_panorama_full.xml,.xml,106928,2840,,True,0,1,0,UNKNOWN_CONTENTx1,0,0,0,0,0,0,0,0,0,0,1,0,0,False,109.4918,"rejected: File extension '.xml' not allowed. Allowed: ['.txt', '.cfg', '.conf', '.zip']",Unsupported,False
+PaloAlto\Firewalls\PAN-OS\sample-cloud-GCP_panos_iron_skillet_panos_full.xml,.xml,105114,2591,,True,0,1,0,UNKNOWN_CONTENTx1,0,0,0,0,0,0,0,0,0,0,1,0,0,False,114.6659,"rejected: File extension '.xml' not allowed. Allowed: ['.txt', '.cfg', '.conf', '.zip']",Unsupported,False
+PaloAlto\Firewalls\PAN-OS\sample-mgmt-dhcp_panorama_iron_skillet_panorama_full.xml,.xml,106346,2826,,True,0,1,0,UNKNOWN_CONTENTx1,0,0,0,0,0,0,0,0,0,0,1,0,0,False,109.8319,"rejected: File extension '.xml' not allowed. Allowed: ['.txt', '.cfg', '.conf', '.zip']",Unsupported,False
+PaloAlto\Firewalls\PAN-OS\sample-mgmt-dhcp_panos_iron_skillet_panos_full.xml,.xml,105114,2591,,True,0,1,0,UNKNOWN_CONTENTx1,0,0,0,0,0,0,0,0,0,0,1,0,0,False,107.7577,"rejected: File extension '.xml' not allowed. Allowed: ['.txt', '.cfg', '.conf', '.zip']",Unsupported,False
+PaloAlto\Firewalls\PAN-OS\sample-mgmt-static_panorama_iron_skillet_panorama_full.xml,.xml,106215,2824,,True,0,1,0,UNKNOWN_CONTENTx1,0,0,0,0,0,0,0,0,0,0,1,0,0,False,109.4693,"rejected: File extension '.xml' not allowed. Allowed: ['.txt', '.cfg', '.conf', '.zip']",Unsupported,False
+PaloAlto\Firewalls\PAN-OS\sample-mgmt-static_panos_iron_skillet_panos_full.xml,.xml,105013,2590,,True,0,1,0,UNKNOWN_CONTENTx1,0,0,0,0,0,0,0,0,0,0,1,0,0,False,110.6407,"rejected: File extension '.xml' not allowed. Allowed: ['.txt', '.cfg', '.conf', '.zip']",Unsupported,False
+PaloAlto\Firewalls\PAN-OS\template_panorama_baseline_baseline.xml,.xml,261,12,,True,0,1,0,UNKNOWN_CONTENTx1,0,0,0,0,0,0,0,0,0,0,1,0,0,False,0.3898,"rejected: File extension '.xml' not allowed. Allowed: ['.txt', '.cfg', '.conf', '.zip']",Unsupported,False
+PaloAlto\Firewalls\PAN-OS\template_panorama_full_iron_skillet_panorama_full.xml,.xml,111143,2952,,True,0,1,0,UNKNOWN_CONTENTx1,0,0,0,0,0,0,0,0,0,0,1,0,0,False,113.5495,"rejected: File extension '.xml' not allowed. Allowed: ['.txt', '.cfg', '.conf', '.zip']",Unsupported,False
+PaloAlto\Firewalls\PAN-OS\template_panos_baseline_baseline.xml,.xml,7761,190,,True,0,1,0,UNKNOWN_CONTENTx1,0,0,0,0,0,0,0,0,0,0,1,0,0,False,8.9421,"rejected: File extension '.xml' not allowed. Allowed: ['.txt', '.cfg', '.conf', '.zip']",Unsupported,False
+PaloAlto\Firewalls\PAN-OS\template_panos_full_iron_skillet_panos_full.xml,.xml,108846,2685,,True,0,1,0,UNKNOWN_CONTENTx1,0,0,0,0,0,0,0,0,0,0,1,0,0,False,113.201,"rejected: File extension '.xml' not allowed. Allowed: ['.txt', '.cfg', '.conf', '.zip']",Unsupported,False
+PaloAlto\Firewalls\Panorama\sample-cloud-AWS_panorama_iron_skillet_panorama_full.xml,.xml,106928,2840,,True,0,1,0,UNKNOWN_CONTENTx1,0,0,0,0,0,0,0,0,0,0,1,0,0,False,111.4639,"rejected: File extension '.xml' not allowed. Allowed: ['.txt', '.cfg', '.conf', '.zip']",Unsupported,False
+PaloAlto\Firewalls\Panorama\sample-cloud-Azure_panorama_iron_skillet_panorama_full.xml,.xml,106928,2840,,True,0,1,0,UNKNOWN_CONTENTx1,0,0,0,0,0,0,0,0,0,0,1,0,0,False,110.2602,"rejected: File extension '.xml' not allowed. Allowed: ['.txt', '.cfg', '.conf', '.zip']",Unsupported,False
+PaloAlto\Firewalls\Panorama\sample-cloud-GCP_panorama_iron_skillet_panorama_full.xml,.xml,106928,2840,,True,0,1,0,UNKNOWN_CONTENTx1,0,0,0,0,0,0,0,0,0,0,1,0,0,False,121.2404,"rejected: File extension '.xml' not allowed. Allowed: ['.txt', '.cfg', '.conf', '.zip']",Unsupported,False
+PaloAlto\Firewalls\Panorama\sample-mgmt-dhcp_panorama_iron_skillet_panorama_full.xml,.xml,106346,2826,,True,0,1,0,UNKNOWN_CONTENTx1,0,0,0,0,0,0,0,0,0,0,1,0,0,False,115.3324,"rejected: File extension '.xml' not allowed. Allowed: ['.txt', '.cfg', '.conf', '.zip']",Unsupported,False
+PaloAlto\Firewalls\Panorama\sample-mgmt-static_panorama_iron_skillet_panorama_full.xml,.xml,106215,2824,,True,0,1,0,UNKNOWN_CONTENTx1,0,0,0,0,0,0,0,0,0,0,1,0,0,False,115.3856,"rejected: File extension '.xml' not allowed. Allowed: ['.txt', '.cfg', '.conf', '.zip']",Unsupported,False
+PaloAlto\Firewalls\Panorama\sample-set-commands_panorama_iron_skillet_panorama_full.conf,.conf,91789,911,,True,0,0,0,,0,0,0,0,0,0,0,0,0,0,0,0,0,True,45.133,accepted,Duplicate,True
+PaloAlto\Firewalls\Panorama\template_panorama_baseline_baseline.xml,.xml,261,12,,True,0,1,0,UNKNOWN_CONTENTx1,0,0,0,0,0,0,0,0,0,0,1,0,0,False,0.7165,"rejected: File extension '.xml' not allowed. Allowed: ['.txt', '.cfg', '.conf', '.zip']",Unsupported,False
+PaloAlto\Firewalls\Panorama\template_panorama_full_iron_skillet_panorama_full.xml,.xml,111143,2952,,True,0,1,0,UNKNOWN_CONTENTx1,0,0,0,0,0,0,0,0,0,0,1,0,0,False,122.4632,"rejected: File extension '.xml' not allowed. Allowed: ['.txt', '.cfg', '.conf', '.zip']",Unsupported,False
+PaloAlto\Firewalls\Panorama\template_panorama_set_commands_iron_skillet_panorama_full.conf,.conf,91946,911,,True,0,0,0,,0,0,0,0,0,0,0,0,0,0,0,0,0,True,46.5237,accepted,Known-good,False

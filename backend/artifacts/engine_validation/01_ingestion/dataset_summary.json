@@ -1,0 +1,143 @@
+{
+  "engine": "01_configuration_ingestion",
+  "dataset_root": "C:\\Users\\priye\\Downloads\\SIH Config\\final-dataset",
+  "files_total": 480,
+  "bytes_total": 11584713,
+  "by_fixture_class": {
+    "Known-good": 127,
+    "Unsupported": 143,
+    "Edge": 129,
+    "Duplicate": 81
+  },
+  "by_extension": {
+    ".cfg": 166,
+    ".yaml": 24,
+    ".md": 24,
+    "<none>": 47,
+    ".txt": 81,
+    ".j2": 12,
+    ".yml": 2,
+    ".conf": 90,
+    ".xsl": 1,
+    ".xml": 33
+  },
+  "extension_accepted": 337,
+  "extension_rejected": 143,
+  "size_accepted": 480,
+  "size_rejected": 0,
+  "eligible_after_extension_and_size": 337,
+  "duplicate_rejected_by_ingest": 81,
+  "would_be_accepted_by_ingest": 256,
+  "encoding_distribution": {
+    "utf-8": 480
+  },
+  "likely_binary_files": 0,
+  "nul_containing_files": 0,
+  "filename_over_255": 0,
+  "traversal_shaped_names": 0,
+  "duplicate_basenames": 277,
+  "duplicate_content_groups": 86,
+  "duplicate_content_files": 184,
+  "empty_files": 0,
+  "max_size_bytes": 491015,
+  "determinism_mismatches": 0,
+  "timing_ms": {
+    "decode_p50": 0.0019,
+    "decode_p95": 0.0185,
+    "decode_p99": 0.0771,
+    "hash_p50": 0.0062,
+    "hash_p95": 0.068,
+    "hash_p99": 0.1703,
+    "decode_mean": 0.0048,
+    "hash_mean": 0.0174
+  },
+  "duplicate_groups_largest": [
+    {
+      "content_hash": "bdd8f75af30f2bf1",
+      "files": 9,
+      "examples": [
+        "FRR\\Switches\\Cumulus\\exit01\\ntp.conf",
+        "FRR\\Switches\\Cumulus\\exit02\\ntp.conf",
+        "FRR\\Switches\\Cumulus\\leaf01\\ntp.conf",
+        "FRR\\Switches\\Cumulus\\leaf02\\ntp.conf"
+      ]
+    },
+    {
+      "content_hash": "257867570d35773e",
+      "files": 3,
+      "examples": [
+        "Cisco\\MultiAS-Lab\\forwarding-change-validation\\base\\core2.cfg",
+        "Cisco\\MultiAS-Lab\\forwarding-change-validation\\change1\\core2.cfg",
+        "Cisco\\MultiAS-Lab\\forwarding-change-validation\\change2\\core2.cfg"
+      ]
+    },
+    {
+      "content_hash": "163635d4530cca47",
+      "files": 3,
+      "examples": [
+        "Cisco\\MultiAS-Lab\\forwarding-change-validation\\base\\leaf1.cfg",
+        "Cisco\\MultiAS-Lab\\forwarding-change-validation\\change1\\leaf1.cfg",
+        "Cisco\\MultiAS-Lab\\forwarding-change-validation\\change2\\leaf1.cfg"
+      ]
+    },
+    {
+      "content_hash": "19b6f0a97f58c256",
+      "files": 3,
+      "examples": [
+        "Cisco\\MultiAS-Lab\\forwarding-change-validation\\base\\spine1.cfg",
+        "Cisco\\MultiAS-Lab\\forwarding-change-validation\\change1\\spine1.cfg",
+        "Cisco\\MultiAS-Lab\\forwarding-change-validation\\change2\\spine1.cfg"
+      ]
+    },
+    {
+      "content_hash": "f57783d1adeb7586",
+      "files": 3,
+      "examples": [
+        "Cisco\\MultiAS-Lab\\forwarding-change-validation\\base\\spine2.cfg",
+        "Cisco\\MultiAS-Lab\\forwarding-change-validation\\change1\\spine2.cfg",
+        "Cisco\\MultiAS-Lab\\forwarding-change-validation\\change2\\spine2.cfg"
+      ]
+    },
+    {
+      "content_hash": "2ece24cb159b14fe",
+      "files": 3,
+      "examples": [
+        "PaloAlto\\Firewalls\\PAN-OS\\PAN-OS\\iron-skillet-panorama\\iron_skillet_panorama_mgmt-static.xml",
+        "PaloAlto\\Firewalls\\PAN-OS\\sample-mgmt-static_panorama_iron_skillet_panorama_full.xml",
+        "PaloAlto\\Firewalls\\Panorama\\sample-mgmt-static_panorama_iron_skillet_panorama_full.xml"
+      ]
+    },
+    {
+      "content_hash": "197e5f3f80a01ec5",
+      "files": 2,
+      "examples": [
+        "Arista\\Switches\\EOS\\DC1-BL1A.cfg",
+        "Arista\\Switches\\EVPN-Fabric\\DC1-BL1A.cfg"
+      ]
+    },
+    {
+      "content_hash": "70d9349e8f0cce8c",
+      "files": 2,
+      "examples": [
+        "Arista\\Switches\\EOS\\DC1-BL1B.cfg",
+        "Arista\\Switches\\EVPN-Fabric\\DC1-BL1B.cfg"
+      ]
+    },
+    {
+      "content_hash": "3f97d20412e6abfe",
+      "files": 2,
+      "examples": [
+        "Arista\\Switches\\EOS\\DC1-L2LEAF4A.cfg",
+        "Arista\\Switches\\EVPN-Fabric\\DC1-L2LEAF4A.cfg"
+      ]
+    },
+    {
+      "content_hash": "997389b6d7492f32",
+      "files": 2,
+      "examples": [
+        "Arista\\Switches\\EOS\\DC1-L2LEAF5A.cfg",
+        "Arista\\Switches\\EVPN-Fabric\\DC1-L2LEAF5A.cfg"
+      ]
+    }
+  ]
+}

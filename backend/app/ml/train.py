@@ -9,9 +9,6 @@ Usage:
   python -m app.ml.train --eval
 """
 
-import os
-import re
-import glob
 import joblib
 from pathlib import Path
 from collections import Counter
@@ -100,7 +97,12 @@ def _generate_synthetic_configs():
     for i in range(12):
         content = f"""hostname SW-CISCO-{i:02d}
 !
+aaa new-model
+aaa authentication login default local
+!
 spanning-tree mode rapid-pvst
+spanning-tree portfast default
+spanning-tree portfast bpduguard default
 vlan {10+i}
  name VLAN_{10+i}
 !
@@ -108,14 +110,42 @@ interface GigabitEthernet0/{i % 48 + 1}
  switchport mode access
  switchport access vlan {10+i}
  spanning-tree portfast
+ spanning-tree bpduguard enable
+ switchport port-security
+ switchport port-security maximum 2
+ storm-control broadcast level 5.00
+ ip dhcp snooping trust
+ ip arp inspection trust
 !
 interface Vlan{10+i}
  ip address 192.168.{10+i}.1 255.255.255.0
+ no ip redirects
+!
+interface Loopback0
+ ip address 10.255.{i}.1 255.255.255.255
 !
 line vty 0 4
  transport input ssh
+ exec-timeout 10 0
+!
+no ip http server
+ip http secure-server
+!
+no cdp run
+!
+logging buffered 64000 informational
+logging trap informational
+logging host 10.0.0.{50+i}
+ntp server 10.0.0.{10+i}
+ntp authenticate
+!
+snmp-server group NETADMIN v3 priv
 !
 enable secret 5 $1$abc
+service password-encryption
+security passwords min-length 14
+!
+end
 """
         synthetic.append({"filename": f"syn_cisco_switch_{i:02d}.cfg", "content": content, "vendor": "cisco", "platform": "ios_xe", "device_type": "switch", "filepath": f"synthetic/cisco_switch_{i}"})
     for i in range(12):
@@ -380,8 +410,8 @@ def train():
         json.dump(meta, f, indent=2)
 
     print(f"\n✓ Models saved to {ARTIFACT_DIR}")
-    print(f"  - vendor_model.joblib")
-    print(f"  - device_type_model.joblib")
+    print("  - vendor_model.joblib")
+    print("  - device_type_model.joblib")
     print(f"  - metadata.json: {meta}")
 
     return vendor_pipe, device_pipe, meta

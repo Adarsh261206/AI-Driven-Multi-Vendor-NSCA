@@ -1,0 +1,278 @@
+{
+  "engine": "03_vendor_detection",
+  "dataset_root": "C:\\Users\\priye\\Downloads\\SIH Config\\final-dataset",
+  "files_total": 480,
+  "bytes_total": 11584713,
+  "utf8_decode_failures": 0,
+  "detection": {
+    "vendor_distribution": {
+      "cisco": 323,
+      "unknown": 73,
+      "juniper": 44,
+      "fortinet": 29,
+      "paloalto": 11
+    },
+    "platform_distribution": {
+      "ios_xe": 239,
+      "ios": 81,
+      "unknown": 73,
+      "junos": 44,
+      "fortios": 29,
+      "panos": 11,
+      "asa": 2,
+      "nx-os": 1
+    },
+    "device_type_distribution": {
+      "router": 257,
+      "unknown": 143,
+      "switch": 54,
+      "firewall": 26
+    },
+    "detection_method_distribution": {
+      "pattern": 276,
+      "keyword": 75,
+      "command_syntax": 54,
+      "banner": 40,
+      "config_structure": 35
+    },
+    "path_distribution": {
+      "regex": 204,
+      "ml": 276
+    },
+    "confidence": {
+      "p50": 0.6912,
+      "p95": 0.95,
+      "p99": 0.95,
+      "min": 0.0,
+      "max": 0.95,
+      "zero_count": 73,
+      "mean": 0.6241
+    },
+    "files_with_hostname": 292,
+    "files_with_firmware": 219,
+    "files_with_no_evidence": 73,
+    "unknown_vendor_files": 73
+  },
+  "path_comparison": {
+    "files_vendor_or_platform_differs": 242,
+    "regex_vendor_distribution": {
+      "cisco": 315,
+      "unknown": 75,
+      "juniper": 50,
+      "fortinet": 29,
+      "paloalto": 11
+    }
+  },
+  "truncation": {
+    "files_diverged_at_6000_chars": 17,
+    "trunc_unknown_files": 76,
+    "full_unknown_files": 73
+  },
+  "directory_label_comparison": {
+    "note": "directory-derived label is NOT authoritative ground truth; ML/model quality is deferred to the ML evaluation phase. Reported as disagreement counts only.",
+    "labelled_files": 361,
+    "disagreements": 43,
+    "per_label_counts": {
+      "cisco": {
+        "cisco": 242,
+        "unknown": 8,
+        "juniper": 2
+      },
+      "fortinet": {
+        "fortinet": 29,
+        "unknown": 1
+      },
+      "juniper": {
+        "juniper": 36,
+        "cisco": 5
+      },
+      "paloalto": {
+        "unknown": 27,
+        "paloalto": 11
+      }
+    },
+    "unsupported_vendor_files": 119,
+    "unsupported_files_labelled_as_supported_vendor": 82,
+    "unsupported_files_labelled_unknown": 37,
+    "examples_labelled_unsupported_but_supported": [
+      {
+        "relpath": "A10\\LoadBalancers\\ACOS\\lb42.cfg",
+        "vendor": "cisco",
+        "confidence": 0.95,
+        "path": "regex"
+      },
+      {
+        "relpath": "Arista\\Switches\\EOS\\arista_misc",
+        "vendor": "cisco",
+        "confidence": 0.95,
+        "path": "regex"
+      },
+      {
+        "relpath": "Arista\\Switches\\EOS\\DC1-LEAF1A.cfg",
+        "vendor": "cisco",
+        "confidence": 0.95,
+        "path": "regex"
+      },
+      {
+        "relpath": "Arista\\Switches\\EOS\\DC1-LEAF2A.cfg",
+        "vendor": "cisco",
+        "confidence": 0.95,
+        "path": "regex"
+      },
+      {
+        "relpath": "Arista\\Switches\\EOS\\DC1-LEAF2B.cfg",
+        "vendor": "cisco",
+        "confidence": 0.95,
+        "path": "regex"
+      },
+      {
+        "relpath": "Arista\\Switches\\EOS\\DC1-SVC3A.cfg",
+        "vendor": "cisco",
+        "confidence": 0.95,
+        "path": "regex"
+      },
+      {
+        "relpath": "Arista\\Switches\\EOS\\DC1-SVC3B.cfg",
+        "vendor": "cisco",
+        "confidence": 0.95,
+        "path": "regex"
+      },
+      {
+        "relpath": "Arista\\Switches\\EVPN-Fabric\\DC1-LEAF1A.cfg",
+        "vendor": "cisco",
+        "confidence": 0.95,
+        "path": "regex"
+      },
+      {
+        "relpath": "Arista\\Switches\\EVPN-Fabric\\DC1-LEAF2A.cfg",
+        "vendor": "cisco",
+        "confidence": 0.95,
+        "path": "regex"
+      },
+      {
+        "relpath": "Arista\\Switches\\EVPN-Fabric\\DC1-LEAF2B.cfg",
+        "vendor": "cisco",
+        "confidence": 0.95,
+        "path": "regex"
+      },
+      {
+        "relpath": "Arista\\Switches\\EVPN-Fabric\\DC1-SVC3A.cfg",
+        "vendor": "cisco",
+        "confidence": 0.95,
+        "path": "regex"
+      },
+      {
+        "relpath": "Arista\\Switches\\EVPN-Fabric\\DC1-SVC3B.cfg",
+        "vendor": "cisco",
+        "confidence": 0.95,
+        "path": "regex"
+      },
+      {
+        "relpath": "FRR\\Routers\\SONiC\\spine02-frr.conf",
+        "vendor": "cisco",
+        "confidence": 0.95,
+        "path": "regex"
+      },
+      {
+        "relpath": "A10\\LoadBalancers\\ACOS\\README.md",
+        "vendor": "juniper",
+        "confidence": 0.94,
+        "path": "regex"
+      },
+      {
+        "relpath": "FRR\\Routers\\SONiC\\leaf02-frr.conf",
+        "vendor": "cisco",
+        "confidence": 0.94,
+        "path": "regex"
+      }
+    ]
+  },
+  "determinism": {
+    "mismatches": 0
+  },
+  "timing_ms": {
+    "deployed_path_p50": 4.5705,
+    "deployed_path_p95": 150.2791,
+    "deployed_path_p99": 585.5868,
+    "deployed_path_mean": 32.8491,
+    "regex_path_p50": 3.3402,
+    "regex_path_p95": 104.4542,
+    "regex_path_p99": 331.5757,
+    "regex_path_mean": 22.9632
+  },
+  "cross_engine_join": {
+    "e01_ingestible": 256,
+    "e01_ingestible_and_e02_valid": 256,
+    "e01_ingestible_unknown_vendor": 9,
+    "e01_ingestible_low_confidence_lt_0_6": 25,
+    "e01_ingestible_vendor_distribution": {
+      "cisco": 210,
+      "fortinet": 17,
+      "juniper": 15,
+      "unknown": 9,
+      "paloalto": 5
+    }
+  },
+  "top_evidence_files": [
+    {
+      "relpath": "Juniper\\Firewalls\\SRX\\configs_junos-srx-1.cfg",
+      "vendor": "juniper",
+      "evidence": 11,
+      "confidence": 0.647
+    },
+    {
+      "relpath": "Fortinet\\Firewalls\\FortiGate\\4D-Demo\\4D-Switching_LAN_Edge_Demo.txt",
+      "vendor": "fortinet",
+      "evidence": 10,
+      "confidence": 0.8109
+    },
+    {
+      "relpath": "Fortinet\\Firewalls\\FortiGate\\U_FN_FortiGate_Firewall_NDM_STIG_V1R4_Manual-xccdf.xml",
+      "vendor": "fortinet",
+      "evidence": 10,
+      "confidence": 0.95
+    },
+    {
+      "relpath": "Fortinet\\Firewalls\\FortiGate\\U_FN_FortiGate_Firewall_STIG_V1R3_Manual-xccdf.xml",
+      "vendor": "fortinet",
+      "evidence": 10,
+      "confidence": 0.95
+    },
+    {
+      "relpath": "PaloAlto\\Firewalls\\PAN-OS\\PAN-OS\\iron-skillet-panos\\metadata.yaml",
+      "vendor": "paloalto",
+      "evidence": 10,
+      "confidence": 0.95
+    },
+    {
+      "relpath": "PaloAlto\\Firewalls\\PAN-OS\\PAN-OS\\iron-skillet-panos\\README.md",
+      "vendor": "paloalto",
+      "evidence": 10,
+      "confidence": 0.95
+    },
+    {
+      "relpath": "Fortinet\\Firewalls\\FortiGate\\4D-Demo\\4D-ZTNA_ZTNA-demo-config.txt",
+      "vendor": "fortinet",
+      "evidence": 9,
+      "confidence": 0.95
+    },
+    {
+      "relpath": "Fortinet\\Firewalls\\FortiGate\\4D-ZTNA_ZTNA-demo-config.txt",
+      "vendor": "fortinet",
+      "evidence": 9,
+      "confidence": 0.95
+    },
+    {
+      "relpath": "Fortinet\\Firewalls\\FortiGate\\AzureVPN\\fortigate_show_full_configuration.txt",
+      "vendor": "fortinet",
+      "evidence": 9,
+      "confidence": 0.6238
+    },
+    {
+      "relpath": "Juniper\\Firewalls\\SRX\\configs_junos-srx-2.cfg",
+      "vendor": "juniper",
+      "evidence": 9,
+      "confidence": 0.6415
+    }
+  ]
+}

@@ -1,0 +1,421 @@
+{
+  "engine": "01_configuration_ingestion",
+  "scope": "backend/app/engines/ingestion.py only",
+  "pytest": {
+    "tests_collected": 71,
+    "evidence_rows": 71,
+    "status_counts": {
+      "PASS": 52,
+      "PARTIAL": 13,
+      "FAIL": 5,
+      "NOT APPLICABLE": 1
+    },
+    "classification_counts": {
+      "CONFIRMED BEHAVIOR": 60,
+      "DESIGN LIMITATION": 6,
+      "MISSING": 4,
+      "NOT APPLICABLE": 1
+    },
+    "category_counts": {
+      "A": 2,
+      "B": 2,
+      "C": 13,
+      "D": 21,
+      "E": 9,
+      "F": 12,
+      "G": 2,
+      "H": 1,
+      "I": 4,
+      "J": 2,
+      "K": 3
+    },
+    "category_status": {
+      "A": {
+        "PASS": 2
+      },
+      "B": {
+        "PASS": 2
+      },
+      "C": {
+        "PASS": 13
+      },
+      "D": {
+        "PASS": 19,
+        "FAIL": 1,
+        "PARTIAL": 1
+      },
+      "E": {
+        "PASS": 6,
+        "FAIL": 2,
+        "NOT APPLICABLE": 1
+      },
+      "F": {
+        "PARTIAL": 11,
+        "PASS": 1
+      },
+      "G": {
+        "PASS": 2
+      },
+      "H": {
+        "PASS": 1
+      },
+      "I": {
+        "PASS": 3,
+        "FAIL": 1
+      },
+      "J": {
+        "PASS": 2
+      },
+      "K": {
+        "PASS": 1,
+        "FAIL": 1,
+        "PARTIAL": 1
+      }
+    }
+  },
+  "hypotheses": [
+    {
+      "id": "H1",
+      "statement": "FileDecodeError is unreachable because latin-1 always succeeds",
+      "evidence_tests": [
+        "V01-24",
+        "V01-12"
+      ],
+      "observed_statuses": [
+        "FAIL",
+        "PASS"
+      ],
+      "conclusion": "CONFIRMED",
+      "classifications": [
+        "CONFIRMED BEHAVIOR",
+        "MISSING"
+      ]
+    },
+    {
+      "id": "H2",
+      "statement": ".zip is allow-listed but archives are never extracted",
+      "evidence_tests": [
+        "V01-15",
+        "V01-16"
+      ],
+      "observed_statuses": [
+        "PARTIAL",
+        "PARTIAL"
+      ],
+      "conclusion": "CONFIRMED",
+      "classifications": [
+        "DESIGN LIMITATION"
+      ]
+    },
+    {
+      "id": "H3",
+      "statement": "no binary/magic-byte detection before persistence",
+      "evidence_tests": [
+        "V01-34",
+        "V01-08"
+      ],
+      "observed_statuses": [
+        "FAIL",
+        "PASS"
+      ],
+      "conclusion": "CONFIRMED",
+      "classifications": [
+        "CONFIRMED BEHAVIOR",
+        "DESIGN LIMITATION"
+      ]
+    },
+    {
+      "id": "H4",
+      "statement": "path-traversal shaped filenames are accepted and stored verbatim",
+      "evidence_tests": [
+        "V01-17-ebbf6e",
+        "V01-17-2d6025",
+        "V01-17-a6439f",
+        "V01-17-e08b60",
+        "V01-17-5ef730",
+        "V01-35"
+      ],
+      "observed_statuses": [
+        "PARTIAL",
+        "PARTIAL",
+        "PARTIAL",
+        "PARTIAL",
+        "PARTIAL",
+        "PARTIAL"
+      ],
+      "conclusion": "CONFIRMED",
+      "classifications": [
+        "CONFIRMED BEHAVIOR"
+      ]
+    },
+    {
+      "id": "H5",
+      "statement": "filename longer than String(255) raises an untyped database error",
+      "evidence_tests": [
+        "V01-30"
+      ],
+      "observed_statuses": [
+        "FAIL"
+      ],
+      "conclusion": "CONFIRMED",
+      "classifications": [
+        "MISSING"
+      ]
+    },
+    {
+      "id": "H6",
+      "statement": "upload endpoint duplicates engine logic and returns instead of raising",
+      "evidence_tests": [
+        "V01-37"
+      ],
+      "observed_statuses": [
+        "FAIL"
+      ],
+      "conclusion": "CONFIRMED",
+      "classifications": [
+        "DESIGN LIMITATION"
+      ]
+    },
+    {
+      "id": "H7",
+      "statement": "upload endpoint decodes with a different fallback chain (no cp-1252)",
+      "evidence_tests": [
+        "V01-37"
+      ],
+      "observed_statuses": [
+        "FAIL"
+      ],
+      "conclusion": "CONFIRMED",
+      "classifications": [
+        "DESIGN LIMITATION"
+      ]
+    },
+    {
+      "id": "H8",
+      "statement": "upload endpoint handles extensionless filenames differently",
+      "evidence_tests": [
+        "V01-37"
+      ],
+      "observed_statuses": [
+        "FAIL"
+      ],
+      "conclusion": "CONFIRMED",
+      "classifications": [
+        "DESIGN LIMITATION"
+      ]
+    },
+    {
+      "id": "H9",
+      "statement": "upload endpoint buffers the whole body before the size check",
+      "evidence_tests": [
+        "V01-37"
+      ],
+      "observed_statuses": [
+        "FAIL"
+      ],
+      "conclusion": "CONFIRMED",
+      "classifications": [
+        "DESIGN LIMITATION"
+      ]
+    },
+    {
+      "id": "H10",
+      "statement": "NUL bytes in content fail at the database as an untyped driver error",
+      "evidence_tests": [
+        "V01-40"
+      ],
+      "observed_statuses": [
+        "FAIL"
+      ],
+      "conclusion": "CONFIRMED",
+      "classifications": [
+        "MISSING"
+      ]
+    },
+    {
+      "id": "H11",
+      "statement": "IngestionEngine is imported by nothing (orphaned module)",
+      "evidence_tests": [
+        "V01-37"
+      ],
+      "observed_statuses": [
+        "FAIL"
+      ],
+      "conclusion": "CONFIRMED",
+      "classifications": [
+        "DESIGN LIMITATION"
+      ]
+    },
+    {
+      "id": "H12",
+      "statement": "zero-byte configurations are accepted with line_count=0",
+      "evidence_tests": [
+        "V01-31"
+      ],
+      "observed_statuses": [
+        "PARTIAL"
+      ],
+      "conclusion": "CONFIRMED",
+      "classifications": [
+        "DESIGN LIMITATION"
+      ]
+    }
+  ],
+  "dataset": {
+    "engine": "01_configuration_ingestion",
+    "dataset_root": "C:\\Users\\priye\\Downloads\\SIH Config\\final-dataset",
+    "files_total": 480,
+    "bytes_total": 11584713,
+    "by_fixture_class": {
+      "Known-good": 127,
+      "Unsupported": 143,
+      "Edge": 129,
+      "Duplicate": 81
+    },
+    "by_extension": {
+      ".cfg": 166,
+      ".yaml": 24,
+      ".md": 24,
+      "<none>": 47,
+      ".txt": 81,
+      ".j2": 12,
+      ".yml": 2,
+      ".conf": 90,
+      ".xsl": 1,
+      ".xml": 33
+    },
+    "extension_accepted": 337,
+    "extension_rejected": 143,
+    "size_accepted": 480,
+    "size_rejected": 0,
+    "eligible_after_extension_and_size": 337,
+    "duplicate_rejected_by_ingest": 81,
+    "would_be_accepted_by_ingest": 256,
+    "encoding_distribution": {
+      "utf-8": 480
+    },
+    "likely_binary_files": 0,
+    "nul_containing_files": 0,
+    "filename_over_255": 0,
+    "traversal_shaped_names": 0,
+    "duplicate_basenames": 277,
+    "duplicate_content_groups": 86,
+    "duplicate_content_files": 184,
+    "empty_files": 0,
+    "max_size_bytes": 491015,
+    "determinism_mismatches": 0,
+    "timing_ms": {
+      "decode_p50": 0.0019,
+      "decode_p95": 0.0185,
+      "decode_p99": 0.0771,
+      "hash_p50": 0.0062,
+      "hash_p95": 0.068,
+      "hash_p99": 0.1703,
+      "decode_mean": 0.0048,
+      "hash_mean": 0.0174
+    },
+    "duplicate_groups_largest": [
+      {
+        "content_hash": "bdd8f75af30f2bf1",
+        "files": 9,
+        "examples": [
+          "FRR\\Switches\\Cumulus\\exit01\\ntp.conf",
+          "FRR\\Switches\\Cumulus\\exit02\\ntp.conf",
+          "FRR\\Switches\\Cumulus\\leaf01\\ntp.conf",
+          "FRR\\Switches\\Cumulus\\leaf02\\ntp.conf"
+        ]
+      },
+      {
+        "content_hash": "257867570d35773e",
+        "files": 3,
+        "examples": [
+          "Cisco\\MultiAS-Lab\\forwarding-change-validation\\base\\core2.cfg",
+          "Cisco\\MultiAS-Lab\\forwarding-change-validation\\change1\\core2.cfg",
+          "Cisco\\MultiAS-Lab\\forwarding-change-validation\\change2\\core2.cfg"
+        ]
+      },
+      {
+        "content_hash": "163635d4530cca47",
+        "files": 3,
+        "examples": [
+          "Cisco\\MultiAS-Lab\\forwarding-change-validation\\base\\leaf1.cfg",
+          "Cisco\\MultiAS-Lab\\forwarding-change-validation\\change1\\leaf1.cfg",
+          "Cisco\\MultiAS-Lab\\forwarding-change-validation\\change2\\leaf1.cfg"
+        ]
+      },
+      {
+        "content_hash": "19b6f0a97f58c256",
+        "files": 3,
+        "examples": [
+          "Cisco\\MultiAS-Lab\\forwarding-change-validation\\base\\spine1.cfg",
+          "Cisco\\MultiAS-Lab\\forwarding-change-validation\\change1\\spine1.cfg",
+          "Cisco\\MultiAS-Lab\\forwarding-change-validation\\change2\\spine1.cfg"
+        ]
+      },
+      {
+        "content_hash": "f57783d1adeb7586",
+        "files": 3,
+        "examples": [
+          "Cisco\\MultiAS-Lab\\forwarding-change-validation\\base\\spine2.cfg",
+          "Cisco\\MultiAS-Lab\\forwarding-change-validation\\change1\\spine2.cfg",
+          "Cisco\\MultiAS-Lab\\forwarding-change-validation\\change2\\spine2.cfg"
+        ]
+      },
+      {
+        "content_hash": "2ece24cb159b14fe",
+        "files": 3,
+        "examples": [
+          "PaloAlto\\Firewalls\\PAN-OS\\PAN-OS\\iron-skillet-panorama\\iron_skillet_panorama_mgmt-static.xml",
+          "PaloAlto\\Firewalls\\PAN-OS\\sample-mgmt-static_panorama_iron_skillet_panorama_full.xml",
+          "PaloAlto\\Firewalls\\Panorama\\sample-mgmt-static_panorama_iron_skillet_panorama_full.xml"
+        ]
+      },
+      {
+        "content_hash": "197e5f3f80a01ec5",
+        "files": 2,
+        "examples": [
+          "Arista\\Switches\\EOS\\DC1-BL1A.cfg",
+          "Arista\\Switches\\EVPN-Fabric\\DC1-BL1A.cfg"
+        ]
+      },
+      {
+        "content_hash": "70d9349e8f0cce8c",
+        "files": 2,
+        "examples": [
+          "Arista\\Switches\\EOS\\DC1-BL1B.cfg",
+          "Arista\\Switches\\EVPN-Fabric\\DC1-BL1B.cfg"
+        ]
+      },
+      {
+        "content_hash": "3f97d20412e6abfe",
+        "files": 2,
+        "examples": [
+          "Arista\\Switches\\EOS\\DC1-L2LEAF4A.cfg",
+          "Arista\\Switches\\EVPN-Fabric\\DC1-L2LEAF4A.cfg"
+        ]
+      },
+      {
+        "content_hash": "997389b6d7492f32",
+        "files": 2,
+        "examples": [
+          "Arista\\Switches\\EOS\\DC1-L2LEAF5A.cfg",
+          "Arista\\Switches\\EVPN-Fabric\\DC1-L2LEAF5A.cfg"
+        ]
+      }
+    ]
+  },
+  "categories": {
+    "A": "functional/positive",
+    "B": "functional/positive (ingest + contract)",
+    "C": "negative",
+    "D": "boundary",
+    "E": "malformed input",
+    "F": "security",
+    "G": "reliability",
+    "H": "determinism",
+    "I": "error handling",
+    "J": "performance",
+    "K": "integration contract"
+  },
+  "not_verifiable": []
+}

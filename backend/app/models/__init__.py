@@ -1,8 +1,8 @@
 from __future__ import annotations
 
-from sqlalchemy import Column, String, Boolean, DateTime, ForeignKey, Text, Integer, Float
+from sqlalchemy import Column, String, Boolean, DateTime, ForeignKey, Text, Integer, Float, Index, Numeric, UniqueConstraint
 from sqlalchemy.dialects.postgresql import UUID, JSONB
-from sqlalchemy.orm import relationship
+from sqlalchemy.orm import relationship, validates
 from datetime import datetime
 from uuid import uuid4
 import enum
@@ -67,6 +67,7 @@ class AuditAction(str, enum.Enum):
     # AI interactions
     AI_HYPOTHESIS_REQUESTED = "ai_hypothesis_requested"
     AI_HYPOTHESIS_RECEIVED = "ai_hypothesis_received"
+    MAPPING_CREATED = "mapping_created"
     MAPPING_CONFIRMED = "mapping_confirmed"
     MAPPING_REJECTED = "mapping_rejected"
     MAPPING_UPDATED = "mapping_updated"
@@ -87,10 +88,45 @@ class User(Base):
     created_at = Column(DateTime, nullable=False, default=datetime.utcnow)
     updated_at = Column(DateTime, nullable=False, default=datetime.utcnow, onupdate=datetime.utcnow)
 
+    organization_id = Column(UUID(as_uuid=True), ForeignKey("organizations.id", ondelete="SET NULL"), nullable=True)
+
     # Relationships
     devices = relationship("Device", back_populates="user", cascade="all, delete-orphan")
     audits = relationship("Audit", back_populates="user", cascade="all, delete-orphan")
-    training_mappings = relationship("TrainingMapping", back_populates="created_by", cascade="all, delete-orphan")
+    organization = relationship("Organization", back_populates="users")
+
+
+class Organization(Base):
+    __tablename__ = "organizations"
+
+    id = Column(UUID(as_uuid=True), primary_key=True, default=uuid4)
+    name = Column(String(255), nullable=False, unique=True)
+    baseline_status = Column(String(50), nullable=False, default="NOT_CONFIGURED")
+    active_baseline_id = Column(UUID(as_uuid=True), nullable=True)
+    created_at = Column(DateTime, nullable=False, default=datetime.utcnow)
+    updated_at = Column(DateTime, nullable=False, default=datetime.utcnow, onupdate=datetime.utcnow)
+
+    # Relationships
+    baselines = relationship("CompanyBaseline", back_populates="organization", cascade="all, delete-orphan")
+    users = relationship("User", back_populates="organization", cascade="all, delete-orphan")
+
+
+class CompanyBaseline(Base):
+    __tablename__ = "company_baselines"
+
+    id = Column(UUID(as_uuid=True), primary_key=True, default=uuid4)
+    organization_id = Column(UUID(as_uuid=True), ForeignKey("organizations.id", ondelete="CASCADE"), nullable=False)
+    name = Column(String(255), nullable=False)
+    framework = Column(String(50), nullable=False, default="CIS")
+    benchmark = Column(String(255), nullable=False, default="CIS Cisco IOS XE 17.x")
+    status = Column(String(50), nullable=False, default="NOT_CONFIGURED")
+    controls = Column(JSONB, nullable=False, default=[])
+    created_by = Column(String(100), nullable=False)
+    created_at = Column(DateTime, nullable=False, default=datetime.utcnow)
+    activated_at = Column(DateTime, nullable=True)
+
+    # Relationships
+    organization = relationship("Organization", back_populates="baselines")
 
 
 class Device(Base):
@@ -118,7 +154,7 @@ class Configuration(Base):
     id = Column(UUID(as_uuid=True), primary_key=True, default=uuid4)
     device_id = Column(UUID(as_uuid=True), ForeignKey("devices.id", ondelete="SET NULL"), nullable=True)
     filename = Column(String(255), nullable=False)
-    content_hash = Column(String(64), nullable=False, index=True)
+    content_hash = Column(String(64), nullable=False)
     raw_content = Column(Text, nullable=False)
     content_type = Column(String(50), nullable=False)
     size_bytes = Column(Integer, nullable=False)
@@ -132,6 +168,13 @@ class Configuration(Base):
     audit_configurations = relationship("AuditConfiguration", back_populates="configuration", cascade="all, delete-orphan")
     vendor_identifications = relationship("VendorIdentification", back_populates="configuration", cascade="all, delete-orphan")
     parsed_configurations = relationship("ParsedConfiguration", back_populates="configuration", cascade="all, delete-orphan")
+
+    # content_hash is the canonical duplicate key: the UNIQUE index is
+    # the authoritative race guard for duplicate detection (E01 N5),
+    # mirrored by migration 004.
+    __table_args__ = (
+        Index("uq_configurations_content_hash", "content_hash", unique=True),
+    )
 
 
 class Audit(Base):
@@ -270,6 +313,10 @@ class Finding(Base):
     id = Column(UUID(as_uuid=True), primary_key=True, default=uuid4)
     audit_id = Column(UUID(as_uuid=True), ForeignKey("audits.id", ondelete="CASCADE"), nullable=False)
     compliance_result_id = Column(UUID(as_uuid=True), ForeignKey("compliance_results.id", ondelete="CASCADE"), nullable=True)
+    # E08 F1: the finding-to-control link is part of the §12 contract, so
+    # it is stored on the row (indexed) — never derived per request.
+    # Nullable for rows that predate the contract; always set for new rows.
+    control_id = Column(String(100), nullable=True, index=True)
     title = Column(String(255), nullable=False)
     description = Column(Text, nullable=False)
     severity = Column(String(20), nullable=False)
@@ -280,12 +327,49 @@ class Finding(Base):
     affected_device = Column(String(255), nullable=True)
     affected_vendor = Column(String(50), nullable=True)
     affected_platform = Column(String(50), nullable=True)
+    # E09 F1: the 10.9 risk output survives on the row (nullable so
+    # historical records pre-dating the contract stay valid; always set
+    # for new rows by the canonical pipeline).
+    risk_score = Column(Float, nullable=True)
+    priority = Column(String(10), nullable=True)
+    risk_method = Column(String(32), nullable=True)
+    risk_model_version = Column(String(64), nullable=True)
     created_at = Column(DateTime, nullable=False, default=datetime.utcnow)
     updated_at = Column(DateTime, nullable=False, default=datetime.utcnow, onupdate=datetime.utcnow)
 
     # Relationships
     audit = relationship("Audit", back_populates="findings")
     compliance_result = relationship("ComplianceResult", back_populates="findings")
+
+    # E08 F9: length + NUL validation before any DB write, so oversized or
+    # hostile strings raise a typed ValueError instead of a raw asyncpg
+    # DataError (or silently corrupting storage that rejects NUL bytes).
+    _STRING_LIMITS = {
+        "control_id": 100,
+        "title": 255,
+        "severity": 20,
+        "status": 50,
+        "affected_device": 255,
+        "affected_vendor": 50,
+        "affected_platform": 50,
+    }
+
+    @validates("control_id", "title", "severity", "status",
+               "affected_device", "affected_vendor", "affected_platform")
+    def _validate_text_field(self, key, value):
+        if value is None:
+            return value
+        if not isinstance(value, str):
+            raise ValueError(f"Finding.{key} must be str, "
+                             f"got {type(value).__name__}")
+        if "\x00" in value:
+            raise ValueError(f"Finding.{key} must not contain NUL bytes")
+        limit = self._STRING_LIMITS[key]
+        if len(value) > limit:
+            raise ValueError(
+                f"Finding.{key} exceeds {limit} characters "
+                f"(got {len(value)})")
+        return value
 
 
 class TrainingMapping(Base):
@@ -296,17 +380,23 @@ class TrainingMapping(Base):
     platform = Column(String(50), nullable=False)
     raw_syntax = Column(Text, nullable=False)
     semantic_meaning = Column(Text, nullable=False)
-    universal_model_path = Column(String(255), nullable=True)
-    confidence = Column(Float, nullable=False)
+    universal_model_path = Column(String(255), nullable=False)
+    confidence = Column(Numeric(5, 2), nullable=False)
     admin_confirmed = Column(Boolean, default=False)
     admin_notes = Column(Text, nullable=True)
     version = Column(Integer, nullable=False, default=1)
-    created_by_id = Column(UUID(as_uuid=True), ForeignKey("users.id", ondelete="CASCADE"), nullable=False)
+    # Spec 15.1: actor identity as VARCHAR(100), not a user FK. Mappings
+    # survive user deletion (audit history); no join is required to read them.
+    created_by = Column(String(100), nullable=False)
     created_at = Column(DateTime, nullable=False, default=datetime.utcnow)
     updated_at = Column(DateTime, nullable=False, default=datetime.utcnow, onupdate=datetime.utcnow)
 
+    __table_args__ = (
+        UniqueConstraint("vendor", "platform", "raw_syntax", "version",
+                         name="uq_semantic_mappings_identity_version"),
+    )
+
     # Relationships
-    created_by = relationship("User", back_populates="training_mappings")
     versions = relationship("MappingVersion", back_populates="mapping", cascade="all, delete-orphan")
 
 
@@ -318,8 +408,11 @@ class MappingVersion(Base):
     version = Column(Integer, nullable=False)
     raw_syntax = Column(Text, nullable=False)
     semantic_meaning = Column(Text, nullable=False)
-    universal_model_path = Column(String(255), nullable=True)
-    changed_by_id = Column(UUID(as_uuid=True), ForeignKey("users.id", ondelete="CASCADE"), nullable=False)
+    universal_model_path = Column(String(255), nullable=False)
+    # Confidence estimate held at this version (F11 quality axis
+    # "AI confidence at creation"; NULL when unrecorded).
+    confidence = Column(Numeric(5, 2), nullable=True)
+    changed_by = Column(String(100), nullable=False)
     changed_at = Column(DateTime, nullable=False, default=datetime.utcnow)
     change_reason = Column(Text, nullable=True)
 

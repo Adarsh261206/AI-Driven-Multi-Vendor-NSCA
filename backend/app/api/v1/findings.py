@@ -1,7 +1,7 @@
-from fastapi import APIRouter, HTTPException, Query, status, Depends
+from fastapi import APIRouter, HTTPException, Query, Depends
 from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy import select, func
-from typing import List, Optional
+from sqlalchemy import select
+from typing import Optional
 from uuid import UUID
 
 from app.database import get_db
@@ -19,48 +19,22 @@ async def list_audit_findings(
     per_page: int = Query(20, gt=0, le=100),
     severity: Optional[str] = None,
     finding_status: Optional[FindingStatus] = None,
+    vendor: Optional[str] = None,
+    platform: Optional[str] = None,
+    control_id: Optional[str] = None,
     db: AsyncSession = Depends(get_db),
     current_user: User = Depends(get_current_user),
 ):
-    """List findings for an audit"""
-    # Verify audit exists and belongs to user
-    audit_result = await db.execute(
-        select(Audit).where(
-            Audit.id == audit_id,
-            Audit.user_id == current_user.id,
-        )
+    """List findings for an audit (canonical query service, E08 F4)."""
+    from app.repositories.findings import FindingQueryService
+
+    items, total = await FindingQueryService(db).list_for_audit(
+        audit_id=audit_id, user_id=current_user.id, page=page,
+        per_page=per_page, severity=severity, status=finding_status,
+        vendor=vendor, platform=platform, control_id=control_id,
     )
-    audit = audit_result.scalar_one_or_none()
-    
-    if not audit:
-        raise HTTPException(status_code=404, detail="Audit not found")
-    
-    # Build query
-    query = select(Finding).where(Finding.audit_id == audit_id)
-    count_query = select(func.count(Finding.id)).where(Finding.audit_id == audit_id)
-    
-    if severity:
-        query = query.where(Finding.severity == severity)
-        count_query = count_query.where(Finding.severity == severity)
-    
-    if finding_status:
-        query = query.where(Finding.status == finding_status.value)
-        count_query = count_query.where(Finding.status == finding_status.value)
-    
-    # Get total count
-    total_result = await db.execute(count_query)
-    total = total_result.scalar()
-    
-    # Apply pagination
-    offset = (page - 1) * per_page
-    query = query.offset(offset).limit(per_page).order_by(Finding.created_at.desc())
-    
-    # Execute query
-    result = await db.execute(query)
-    findings = result.scalars().all()
-    
     return FindingListResponse(
-        items=[_to_finding_response(finding) for finding in findings],
+        items=[_to_finding_response(finding) for finding in items],
         meta=PaginationMeta(
             page=page,
             per_page=per_page,
@@ -115,15 +89,19 @@ async def update_finding_status(
     db: AsyncSession = Depends(get_db),
     current_user: User = Depends(get_current_user),
 ):
-    """Update finding status"""
+    """Update finding status (E08 F6: every accepted transition — including
+    an explicit no-op — records audit history with actor, previous/new
+    status, timestamp and notes; notes are never silently dropped)."""
+    from app.repositories.audit_trail import AuditTrailRepository
+
     result = await db.execute(
         select(Finding).where(Finding.id == finding_id)
     )
     finding = result.scalar_one_or_none()
-    
+
     if not finding:
         raise HTTPException(status_code=404, detail="Finding not found")
-    
+
     # Verify user has access to the audit
     audit_result = await db.execute(
         select(Audit).where(
@@ -132,14 +110,40 @@ async def update_finding_status(
         )
     )
     audit = audit_result.scalar_one_or_none()
-    
+
     if not audit:
         raise HTTPException(status_code=404, detail="Finding not found")
-    
-    # Update status
-    finding.status = update.status.value
-    
+
+    previous_status = finding.status
+    new_status = update.status.value
+    notes = update.notes or ""
+    trail = AuditTrailRepository(db)
+    if previous_status == new_status:
+        # Explicit no-op (project convention): state is unchanged, but the
+        # request — actor, timestamp and especially notes — is preserved in
+        # history instead of vanishing.
+        await trail.log_finding_update(
+            finding_id=str(finding.id),
+            audit_id=str(finding.audit_id),
+            old_status=previous_status,
+            new_status=new_status,
+            user_id=str(current_user.id),
+            notes=notes,
+            no_op=True,
+        )
+    else:
+        # Update status
+        finding.status = new_status
+        await trail.log_finding_update(
+            finding_id=str(finding.id),
+            audit_id=str(finding.audit_id),
+            old_status=previous_status,
+            new_status=new_status,
+            user_id=str(current_user.id),
+            notes=notes,
+        )
+
     await db.flush()
     await db.refresh(finding)
-    
+
     return _to_finding_response(finding)

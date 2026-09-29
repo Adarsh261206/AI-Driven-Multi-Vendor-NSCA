@@ -1,0 +1,5 @@
+source,label,p50_ms,p95_ms,max_ms,note
+sweep,480 dataset files through the full executor (validation -> detection -> parsing -> normalization -> evaluation -> finding generation),558.3,742.3,3431.0,total 213.9s; per-finding ML inference (one sklearn predict per finding) dominates
+V08-81,53 evaluations -> 14 findings,,,,133.0 ms (9.50 ms/finding) for 14 findings
+V08-82,"1,000 then 4,000 evaluations (50 distinct controls cycled)",,,,"1,000: 9370 ms (9.37 ms/finding, 1000 findings); 4,000: 37057 ms (9.26 ms/finding, 4000 findings) - linear, but ~5 ms per finding dominated by one single-sample sklearn predict per finding (findings.py:103 calculate_risk_score; 10,000 findings measured at ~92 s)"
+V08-83,executor.execute(secure.txt),,,,"153 ms, status=completed, findings=14"

@@ -11,12 +11,6 @@ from app.config import settings
 from app.database import Base
 
 # Import all models to ensure they are registered with SQLAlchemy
-from app.models import (
-    User, Device, Configuration, Audit, AuditConfiguration,
-    VendorIdentification, ParsedConfiguration, SemanticInterpretation,
-    NormalizedConfiguration, ComplianceResult, Finding,
-    TrainingMapping, MappingVersion, AuditTrail
-)
 
 # this is the Alembic Config object
 config = context.config

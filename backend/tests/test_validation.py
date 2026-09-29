@@ -2,8 +2,7 @@
 Unit Tests for Validation Engine
 """
 
-import pytest
-from app.engines.validation import ConfigurationValidator, ValidationSeverity
+from app.engines.validation import ConfigurationValidator
 
 
 class TestConfigurationValidator:
@@ -21,9 +20,13 @@ interface GigabitEthernet0/0
         assert result.error_count == 0
     
     def test_empty_config_warning(self):
+        # E02 FIX (F4): EMPTY_CONTENT is now an error so the executor gate
+        # (`if not validation.is_valid`) actually stops empty configurations.
         config = ""
         result = self.validator.validate(config)
-        assert result.warning_count > 0
+        assert result.is_valid is False
+        assert result.error_count > 0
+        assert [i.code for i in result.issues] == ["EMPTY_CONTENT"]
     
     def test_binary_content_detected(self):
         config = "hostname Router1\x00extra"
@@ -54,8 +57,13 @@ interface GigabitEthernet0/0
     def test_skip_comments(self):
         config = "! This is a comment\npassword secret123"
         result = self.validator.validate(config, check_sensitive=True)
-        # Comments should not trigger sensitive data warnings
-        assert result.warning_count == 0
+        # E02 FIX (F11/F7): the comment line is stripped, so the credential
+        # warning can only come from line 2 - and never from line 1.
+        sensitive_lines = [
+            i.line_number for i in result.issues if i.code == "SENSITIVE_DATA"
+        ]
+        assert sensitive_lines == [2]
+        assert not any(i.line_number == 1 for i in result.issues)
     
     def test_skip_disabled_checks(self):
         config = "enable secret MyPassword123"
@@ -69,11 +77,18 @@ interface GigabitEthernet0/0
         assert result.error_count == 1
     
     def test_result_add_warning(self):
+        # E02 FIX (F6): validate("test") now emits one UNKNOWN_CONTENT
+        # warning of its own before the manual add_warning call.
         result = self.validator.validate("test")
         result.add_warning("TEST_WARNING", "Test warning message")
-        assert result.warning_count == 1
-    
+        assert result.warning_count == 2
+        assert len(result.warnings) == 2
+
     def test_result_add_info(self):
+        # E02 FIX (F6/F13): validate("test") contributes the
+        # UNKNOWN_CONTENT warning, so issues = warning + manual info.
         result = self.validator.validate("test")
         result.add_info("TEST_INFO", "Test info message")
-        assert len(result.issues) == 1
+        assert len(result.issues) == 2
+        assert result.info_count == 1
+        assert len(result.info) == 1

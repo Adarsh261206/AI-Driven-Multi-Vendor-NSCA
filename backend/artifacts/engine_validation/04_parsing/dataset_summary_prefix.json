@@ -1,0 +1,376 @@
+{
+  "engine": "04_parsing",
+  "dataset_root": "C:\\Users\\priye\\Downloads\\SIH Config\\final-dataset",
+  "files_total": 480,
+  "bytes_total": 11282991,
+  "supported_label_files": 323,
+  "label_counts": {
+    "cisco": 252,
+    "juniper": 41,
+    "fortinet": 30,
+    "arista": 38,
+    "a10": 3,
+    "f5": 11,
+    "frr": 63,
+    "napalm": 4,
+    "paloalto": 38
+  },
+  "label_parser_totals": {
+    "cisco": {
+      "files": 252,
+      "nodes": 25216,
+      "err": 0,
+      "warn": 0,
+      "unk": 0,
+      "value_like_keys": 868,
+      "struct_keys": 369,
+      "quoted_keys": 559,
+      "unrep_lines": 0,
+      "files_with_err": 0,
+      "files_with_warn": 0,
+      "files_with_unk": 0,
+      "files_with_unrep": 0,
+      "files_with_value_like_keys": 40,
+      "files_to_dict_exc": 0,
+      "files_nondeterministic": 0
+    },
+    "juniper": {
+      "files": 41,
+      "nodes": 160244,
+      "err": 0,
+      "warn": 0,
+      "unk": 0,
+      "value_like_keys": 39941,
+      "struct_keys": 0,
+      "quoted_keys": 63,
+      "unrep_lines": 0,
+      "files_with_err": 0,
+      "files_with_warn": 0,
+      "files_with_unk": 0,
+      "files_with_unrep": 0,
+      "files_with_value_like_keys": 32,
+      "files_to_dict_exc": 0,
+      "files_nondeterministic": 0
+    },
+    "fortinet": {
+      "files": 30,
+      "nodes": 13595,
+      "err": 1,
+      "warn": 5,
+      "unk": 2685,
+      "value_like_keys": 0,
+      "struct_keys": 0,
+      "quoted_keys": 0,
+      "unrep_lines": 0,
+      "files_with_err": 1,
+      "files_with_warn": 5,
+      "files_with_unk": 18,
+      "files_with_unrep": 0,
+      "files_with_value_like_keys": 0,
+      "files_to_dict_exc": 0,
+      "files_nondeterministic": 0
+    }
+  },
+  "cisco_negation_lines": 1376,
+  "cisco_files_with_banner": 17,
+  "cisco_section_nesting": {
+    "files": 178,
+    "sections_total": 2997,
+    "sections_nested": 1216,
+    "files_with_nested_sections": 132,
+    "by_type": {
+      "router": 190,
+      "nested": 464,
+      "acl": 502,
+      "interface": 56,
+      "line": 2,
+      "crypto": 2
+    },
+    "examples": []
+  },
+  "cisco_section_nesting_all_cisco_files": {
+    "files": 252,
+    "sections_total": 3457,
+    "sections_nested": 1495,
+    "files_with_nested_sections": 159,
+    "by_type": {
+      "router": 228,
+      "nested": 547,
+      "acl": 656,
+      "interface": 60,
+      "line": 2,
+      "crypto": 2
+    },
+    "examples": [
+      {
+        "file": "Cisco\\MultiAS-Lab\\drift-snapshot\\as1border1.cfg",
+        "key": "router",
+        "value": "ospf 1",
+        "path": [
+          "interface:GigabitEthernet1/0"
+        ],
+        "line_number": 70
+      },
+      {
+        "file": "Cisco\\MultiAS-Lab\\drift-snapshot\\as1border2.cfg",
+        "key": "router",
+        "value": "ospf 1",
+        "path": [
+          "interface:GigabitEthernet2/0"
+        ],
+        "line_number": 77
+      },
+      {
+        "file": "Cisco\\MultiAS-Lab\\drift-snapshot\\as1core1.cfg",
+        "key": "router",
+        "value": "ospf 1",
+        "path": [
+          "interface:GigabitEthernet1/0"
+        ],
+        "line_number": 73
+      },
+      {
+        "file": "Cisco\\MultiAS-Lab\\drift-snapshot\\as2border1.cfg",
+        "key": "router",
+        "value": "ospf 1",
+        "path": [
+          "interface:GigabitEthernet2/0"
+        ],
+        "line_number": 81
+      },
+      {
+        "file": "Cisco\\MultiAS-Lab\\drift-snapshot\\as2border2.cfg",
+        "key": "router",
+        "value": "ospf 1",
+        "path": [
+          "interface:GigabitEthernet2/0"
+        ],
+        "line_number": 79
+      },
+      {
+        "file": "Cisco\\MultiAS-Lab\\drift-snapshot\\as2core1.cfg",
+        "key": "router",
+        "value": "ospf 1",
+        "path": [
+          "interface:GigabitEthernet3/0"
+        ],
+        "line_number": 85
+      },
+      {
+        "file": "Cisco\\MultiAS-Lab\\drift-snapshot\\as2core2.cfg",
+        "key": "router",
+        "value": "ospf 1",
+        "path": [
+          "interface:GigabitEthernet3/0"
+        ],
+        "line_number": 84
+      },
+      {
+        "file": "Cisco\\MultiAS-Lab\\drift-snapshot\\as2dept1.cfg",
+        "key": "router",
+        "value": "bgp 65001",
+        "path": [
+          "interface:GigabitEthernet3/0"
+        ],
+        "line_number": 80
+      },
+      {
+        "file": "Cisco\\MultiAS-Lab\\drift-snapshot\\as2dist1.cfg",
+        "key": "router",
+        "value": "ospf 1",
+        "path": [
+          "interface:GigabitEthernet2/0"
+        ],
+        "line_number": 74
+      },
+      {
+        "file": "Cisco\\MultiAS-Lab\\drift-snapshot\\as2dist2.cfg",
+        "key": "router",
+        "value": "ospf 1",
+        "path": [
+          "interface:GigabitEthernet2/0"
+        ],
+        "line_number": 74
+      },
+      {
+        "file": "Cisco\\MultiAS-Lab\\drift-snapshot\\as3border1.cfg",
+        "key": "router",
+        "value": "ospf 1",
+        "path": [
+          "interface:GigabitEthernet1/0"
+        ],
+        "line_number": 73
+      },
+      {
+        "file": "Cisco\\MultiAS-Lab\\drift-snapshot\\as3border2.cfg",
+        "key": "router",
+        "value": "ospf 1",
+        "path": [
+          "interface:GigabitEthernet1/0"
+        ],
+        "line_number": 73
+      }
+    ]
+  },
+  "ingestible_supported_totals": {
+    "cisco": {
+      "files": 178,
+      "nodes": 20727,
+      "err": 0,
+      "warn": 0,
+      "unk": 0,
+      "unrep_lines": 0,
+      "files_with_err": 0,
+      "files_with_warn": 0,
+      "files_with_unk": 0,
+      "negation_lines": 1220,
+      "files_with_banner": 14
+    },
+    "juniper": {
+      "files": 15,
+      "nodes": 80231,
+      "err": 0,
+      "warn": 0,
+      "unk": 0,
+      "unrep_lines": 0,
+      "files_with_err": 0,
+      "files_with_warn": 0,
+      "files_with_unk": 0,
+      "negation_lines": 0,
+      "files_with_banner": 0
+    },
+    "fortinet": {
+      "files": 17,
+      "nodes": 11892,
+      "err": 1,
+      "warn": 3,
+      "unk": 452,
+      "unrep_lines": 0,
+      "files_with_err": 1,
+      "files_with_warn": 3,
+      "files_with_unk": 9,
+      "negation_lines": 0,
+      "files_with_banner": 0
+    }
+  },
+  "ingestible_unsupported_files": 46,
+  "ingestible_unsupported_chain_parser": {
+    "cisco": 46,
+    "juniper": 0,
+    "fortinet": 0
+  },
+  "juniper_files_set_style": 11,
+  "juniper_files_braces": 28,
+  "max_parse_depth": 18,
+  "cross_vendor": {
+    "cisco": {
+      "n": 71,
+      "silent": 71,
+      "empty": 0
+    },
+    "juniper": {
+      "n": 281,
+      "silent": 281,
+      "empty": 0
+    },
+    "fortinet": {
+      "n": 293,
+      "silent": 19,
+      "empty": 212
+    }
+  },
+  "cross_vendor_ingestible": {
+    "cisco": {
+      "n": 32,
+      "silent": 32,
+      "empty": 0
+    },
+    "juniper": {
+      "n": 195,
+      "silent": 195,
+      "empty": 0
+    },
+    "fortinet": {
+      "n": 193,
+      "silent": 5,
+      "empty": 136
+    }
+  },
+  "detected_vendor_chain": {
+    "match": 315,
+    "mismatch": 8,
+    "unsupported": 0,
+    "det_unsupported_or_unknown": 9
+  },
+  "detected_vendor_mismatch_examples": [
+    [
+      "Cisco\\Switches\\Catalyst\\README.md",
+      "juniper",
+      "juniper",
+      "cisco"
+    ],
+    [
+      "Cisco\\Switches\\Nexus\\README.md",
+      "juniper",
+      "juniper",
+      "cisco"
+    ],
+    [
+      "Fortinet\\Firewalls\\FortiGate\\STIG_unclass.xsl",
+      "unknown",
+      "cisco",
+      "fortinet"
+    ],
+    [
+      "Juniper\\Firewalls\\SRX\\applications",
+      "cisco",
+      "cisco",
+      "juniper"
+    ],
+    [
+      "Juniper\\Firewalls\\SRX\\interfaces",
+      "cisco",
+      "cisco",
+      "juniper"
+    ],
+    [
+      "Juniper\\Firewalls\\SRX\\nat",
+      "cisco",
+      "cisco",
+      "juniper"
+    ],
+    [
+      "Juniper\\Firewalls\\SRX\\policy",
+      "cisco",
+      "cisco",
+      "juniper"
+    ],
+    [
+      "Juniper\\Firewalls\\SRX\\zones",
+      "cisco",
+      "cisco",
+      "juniper"
+    ]
+  ],
+  "timing_ms": {
+    "cisco": {
+      "n": 252,
+      "p50": 0.446,
+      "p95": 1.233,
+      "max": 6.128
+    },
+    "juniper": {
+      "n": 41,
+      "p50": 4.757,
+      "p95": 64.601,
+      "max": 107.095
+    },
+    "fortinet": {
+      "n": 30,
+      "p50": 0.196,
+      "p95": 1.552,
+      "max": 14.698
+    }
+  },
+  "elapsed_s": 8.9
+}

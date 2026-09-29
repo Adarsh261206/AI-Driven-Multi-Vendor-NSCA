@@ -1,0 +1,87 @@
+{
+  "migration": "007_finding_severity_control_link",
+  "database": "engine_validation_test (throwaway)",
+  "executed": [
+    "wipe",
+    "upgrade 001->006",
+    "insert legacy rows",
+    "upgrade 006->007",
+    "downgrade 007->006",
+    "upgrade 006->007",
+    "restore metadata schema"
+  ],
+  "checks": [
+    {
+      "check": "throwaway database wiped (tables + alembic_version)",
+      "ok": true,
+      "detail": "DROP SCHEMA public CASCADE / CREATE SCHEMA public"
+    },
+    {
+      "check": "upgrade -> 006 (pre-E08 head)",
+      "ok": true,
+      "detail": "alembic 001..006 applied"
+    },
+    {
+      "check": "alembic head is 006 before the E08 migration",
+      "ok": true,
+      "detail": "[('006',)]"
+    },
+    {
+      "check": "legacy lowercase rows inserted at 006",
+      "ok": true,
+      "detail": "[('medium',)]"
+    },
+    {
+      "check": "alembic head is 007 after the E08 migration",
+      "ok": true,
+      "detail": "[('007',)]"
+    },
+    {
+      "check": "007 uppercases findings.severity in place",
+      "ok": true,
+      "detail": "[('MEDIUM', '1.1.1')]"
+    },
+    {
+      "check": "007 uppercases compliance_results.severity in place",
+      "ok": true,
+      "detail": "[('HIGH',)]"
+    },
+    {
+      "check": "007 backfills findings.control_id from the linked row",
+      "ok": true,
+      "detail": "[('MEDIUM', '1.1.1')]"
+    },
+    {
+      "check": "007 creates ix_findings_control_id",
+      "ok": true,
+      "detail": "[('ix_findings_control_id',)]"
+    },
+    {
+      "check": "no lowercase severities remain on either table",
+      "ok": true,
+      "detail": "[(0,), (0,)]"
+    },
+    {
+      "check": "downgrade -> 006 drops findings.control_id",
+      "ok": true,
+      "detail": "[]"
+    },
+    {
+      "check": "downgrade -> 006 restores lowercase (documented reversal)",
+      "ok": true,
+      "detail": "[('medium',)]"
+    },
+    {
+      "check": "round trip 007 -> 006 -> 007 returns to head",
+      "ok": true,
+      "detail": "[('007',)]"
+    },
+    {
+      "check": "throwaway schema restored from model metadata for the pytest suites",
+      "ok": true,
+      "detail": "scripts.engine_validation.dbutil.create_schema"
+    }
+  ],
+  "violations_total": 0,
+  "verdict": "PASS"
+}

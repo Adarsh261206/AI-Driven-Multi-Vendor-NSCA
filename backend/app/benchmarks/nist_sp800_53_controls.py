@@ -1257,13 +1257,20 @@ def get_all_controls() -> list[BenchmarkControl]:
 
 
 def get_registry() -> BenchmarkRegistry:
-    """Build and return the complete NIST SP 800-53 Rev. 5 benchmark registry."""
+    """Build and return the complete NIST SP 800-53 Rev. 5 benchmark registry.
+
+    Authoritative attribution (F3): every control in this module is DEFINED
+    by NIST; framework/version/rule-confidence are stamped here.
+    """
+    from app.benchmarks.selection import assign_control_metadata
+
+    controls = [assign_control_metadata(c, "NIST") for c in get_all_controls()]
     registry = BenchmarkRegistry(
         benchmark_id=BENCHMARK_ID,
         benchmark_name=BENCHMARK_NAME,
         benchmark_version=BENCHMARK_VERSION,
         vendor=VENDOR,
         platform=PLATFORM,
-        controls=get_all_controls(),
+        controls=controls,
     )
     return registry

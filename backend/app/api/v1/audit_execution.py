@@ -7,30 +7,31 @@ Endpoints for running compliance audits and retrieving results.
 from fastapi import APIRouter, HTTPException, Query, status, Depends, BackgroundTasks
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select, func
-from typing import List, Optional
+from typing import Any, Optional
 from uuid import UUID, uuid4
 from datetime import datetime
 
 from app.database import get_db
 from app.models import (
-    User, Audit, AuditConfiguration, Configuration, 
+    User, Audit, AuditConfiguration, Configuration,
     VendorIdentification, ParsedConfiguration, SemanticInterpretation,
     NormalizedConfiguration, ComplianceResult, Finding, AuditAction,
-    AuditStatus, FindingStatus, Severity,
+    AuditStatus, FindingStatus, Organization, CompanyBaseline
 )
 from app.schemas import (
-    AuditCreate, AuditResponse, AuditStatusResponse, AuditListResponse,
-    FindingResponse, FindingListResponse, PaginationMeta, APIResponse,
+    AuditCreate, AuditResponse, FindingResponse, FindingListResponse, PaginationMeta,
 )
 from app.security.auth import get_current_user
+from app.benchmarks.selection import overall_score
 from app.engines.compliance.executor import AuditExecutor
+from app.engines.universal_model import UniversalSecurityModel
 from app.repositories.audit_trail import AuditTrailRepository
 
 router = APIRouter()
 
 # Live pipeline tracking — in-memory per audit, for real-time frontend polling (not fake, real backend progress)
-import asyncio as _asyncio
-import time as _time
+import asyncio as _asyncio  # noqa: E402
+import time as _time  # noqa: E402
 
 audit_live_steps: dict[str, list[dict]] = {}
 audit_live_logs: dict[str, list[dict]] = {}
@@ -41,8 +42,8 @@ PIPELINE_STEPS_DEF = [
     {"id": "detect", "label": "Detect Vendor & Device", "desc": "ML model: vendor, platform, switch/router/firewall"},
     {"id": "parse", "label": "Parse Configuration", "desc": "Building syntax tree from raw config"},
     {"id": "normalize", "label": "Normalize to Common Model", "desc": "Mapping to Universal Security Model (28 paths)"},
-    {"id": "evaluate", "label": "Evaluate Compliance", "desc": "CIS (53) + NIST (126) = 179 controls"},
-    {"id": "findings", "label": "Generate Findings", "desc": "ML risk scoring (RandomForest)"},
+    {"id": "evaluate", "label": "Evaluate Compliance", "desc": "Framework controls per file"},
+    {"id": "findings", "label": "Generate Findings", "desc": "Risk scoring"},
     {"id": "report", "label": "Generate Report", "desc": "PDF with per-device breakdown"},
 ]
 
@@ -89,10 +90,37 @@ def _current_progress(audit_id: str) -> int:
     steps = audit_live_steps.get(audit_id, [])
     if not steps:
         return 0
-    completed = sum(1 for s in steps if s["status"] == "completed")
-    running = sum(1 for s in steps if s["status"] == "running")
+    completed = sum(1 for s in steps if s.get("status") == "completed")
+    running = sum(1 for s in steps if s.get("status") == "running")
     # 0-100 based on completed + partial running
     return int((completed / len(steps) * 100) + (running * (100 / len(steps) * 0.5)))
+
+
+def build_compliance_result(audit_id, normalized_configuration_id,
+                            framework: str, eval_result) -> "ComplianceResult":
+    """Map one canonical ControlEvaluation onto its persistence row (F11).
+
+    Framework/version/result/confidence/severity come from the evaluation's
+    own metadata — the writer adds nothing inferred. This is the single
+    place run_audit_pipeline builds compliance rows, so persistence cannot
+    drift from evaluation.
+    """
+    return ComplianceResult(
+        audit_id=audit_id,
+        normalized_configuration_id=normalized_configuration_id,
+        framework=eval_result.framework or framework,
+        framework_version=eval_result.framework_version or None,
+        control_id=eval_result.control_id,
+        control_name=eval_result.control_title,
+        control_description=eval_result.control_description,
+        result=eval_result.result.value,
+        confidence=eval_result.confidence,
+        severity=eval_result.severity.value,
+        evidence=(eval_result.evidence.to_dict()
+                  if hasattr(eval_result.evidence, "to_dict") else {}),
+        remediation=(eval_result.remediation
+                     if isinstance(eval_result.remediation, dict) else {}),
+    )
 
 
 
@@ -134,7 +162,7 @@ async def run_audit_pipeline(
                     _cr0 = await db.execute(select(Configuration).where(Configuration.id == UUID(_cid)))
                     _cfg0 = _cr0.scalar_one_or_none()
                     if _cfg0:
-                        _ident0 = _vd0.detect(_cfg0.raw_content[:6000])
+                        _ident0 = _vd0.detect(_cfg0.raw_content)
                         _fd0 = {
                             "filename": _cfg0.filename,
                             "vendor": _ident0.vendor,
@@ -175,7 +203,7 @@ async def run_audit_pipeline(
                     _cr = await db.execute(select(Configuration).where(Configuration.id == UUID(_cid)))
                     _cfg = _cr.scalar_one_or_none()
                     if _cfg:
-                        _ident = _vd.detect(_cfg.raw_content[:4000])
+                        _ident = _vd.detect(_cfg.raw_content)
                         _update_step(audit_id, 1, "running", 60, f"Detected: {_ident.vendor}/{_ident.platform} { _ident.device_type } host={_ident.hostname or '—'} conf={_ident.confidence:.2f}")
                         await _asyncio.sleep(0.3)
                         break
@@ -197,7 +225,7 @@ async def run_audit_pipeline(
             await _asyncio.sleep(0.2)
 
             # Step 4 — Evaluate (real work happens here, per config)
-            _update_step(audit_id, 4, "running", 10, f"Evaluating 179 controls per file (CIS 53 + NIST 126) × {len(config_ids)} file(s)...")
+            _update_step(audit_id, 4, "running", 10, f"Evaluating controls per file (framework={framework}) × {len(config_ids)} file(s)...")
 
             for config_id in config_ids:
                 # Get configuration
@@ -212,7 +240,7 @@ async def run_audit_pipeline(
                 try:
                     from app.engines.detection import VendorDetector as _VD2
                     _vd_tmp = _VD2()
-                    _ident_tmp = _vd_tmp.detect(config.raw_content[:6000])
+                    _ident_tmp = _vd_tmp.detect(config.raw_content)
                     _fd_tmp = {
                         "filename": config.filename,
                         "vendor": _ident_tmp.vendor,
@@ -304,11 +332,17 @@ async def run_audit_pipeline(
                 db.add(vendor_id)
                 
                 # 2. Parsed Configuration
+                # E04 F1: persist the full nested parse tree (every section,
+                # with negation/line numbers/raw text), not roots only.
+                # E04 F2: persist the parser's actual diagnostics.
                 parse_tree = {}
+                persisted_errors: list = []
+                persisted_warnings: list = []
+                persisted_unknown: list = []
                 if result.parse_result:
                     parse_tree = {
                         "sections": [
-                            {"key": s.key, "value": s.value, "children": len(s.children)}
+                            s.to_dict()
                             for s in result.parse_result.parse_tree
                         ],
                         "unknown_sections": [
@@ -316,62 +350,112 @@ async def run_audit_pipeline(
                             for u in result.parse_result.unknown_sections
                         ],
                     }
-                
+                    persisted_errors = [
+                        {"line_number": e.line_number, "message": e.message,
+                         "raw_text": e.raw_text}
+                        for e in result.parse_result.parse_errors
+                    ]
+                    persisted_warnings = [
+                        {"line_number": w.line_number, "message": w.message,
+                         "raw_text": w.raw_text}
+                        for w in result.parse_result.parse_warnings
+                    ]
+                    persisted_unknown = [
+                        {"path": u.path, "raw_text": u.raw_text[:200]}
+                        for u in result.parse_result.unknown_sections
+                    ]
+
                 parsed_config = ParsedConfiguration(
                     configuration_id=config.id,
                     vendor=result.vendor,
                     platform=result.platform,
                     parse_tree=parse_tree,
-                    parse_errors=[],
-                    parse_warnings=[],
-                    unknown_sections=[
-                        {"path": u.path, "raw_text": u.raw_text[:200]}
-                        for u in (result.parse_result.unknown_sections if result.parse_result else [])
-                    ],
+                    parse_errors=persisted_errors,
+                    parse_warnings=persisted_warnings,
+                    unknown_sections=persisted_unknown,
                 )
                 db.add(parsed_config)
                 await db.flush()
                 
                 # 3. Semantic Interpretation
+                # E05 F4 (§10.5): persist the actual interpretation built
+                # from the parse tree — sections, unknowns, and (honestly
+                # empty) confidence scores. No fake semantic content.
+                semi = getattr(result, "semantic_interpretation", None) or {}
+                semi_sections = semi.get("sections") if isinstance(semi, dict) else None
+                if not semi_sections and result.parse_result:
+                    try:
+                        semi_sections = [
+                            s.to_dict() for s in result.parse_result.parse_tree
+                        ]
+                    except Exception:
+                        semi_sections = []
+                semi_unknown = semi.get("unknown") if isinstance(semi, dict) else None
+                if semi_unknown is None and result.parse_result:
+                    try:
+                        semi_unknown = [
+                            u.to_dict()
+                            for u in result.parse_result.unknown_sections
+                        ]
+                    except Exception:
+                        semi_unknown = []
                 semantic_interp = SemanticInterpretation(
                     parsed_configuration_id=parsed_config.id,
-                    semantic_sections=[],
+                    semantic_sections=semi_sections or [],
                     confidence_scores={},
-                    unknown_meanings=[],
+                    unknown_meanings=semi_unknown or [],
                 )
                 db.add(semantic_interp)
                 await db.flush()
-                
+
                 # 4. Normalized Configuration
+                # E05 F5: persist the actual normalization result produced
+                # for this audit (values, unmapped concepts, model version).
+                norm_result = getattr(result, "normalization_result", None)
+                norm_mappings = []
+                norm_unmapped: list = []
+                norm_version = UniversalSecurityModel.VERSION
+                if norm_result is not None:
+                    try:
+                        norm_mappings = [
+                            m.to_dict() for m in (
+                                norm_result.mappings or [])
+                        ]
+                    except Exception:
+                        norm_mappings = []
+                    try:
+                        norm_unmapped = list(
+                            norm_result.unmapped_concepts or [])
+                    except Exception:
+                        norm_unmapped = []
+                    try:
+                        norm_version = (
+                            norm_result.universal_model_version
+                            or UniversalSecurityModel.VERSION)
+                    except Exception:
+                        norm_version = UniversalSecurityModel.VERSION
                 normalized_config = NormalizedConfiguration(
                     semantic_interpretation_id=semantic_interp.id,
-                    universal_model_version="1.0",
-                    normalized_values=[],
-                    unmapped_concepts=[],
+                    universal_model_version=norm_version,
+                    normalized_values=norm_mappings,
+                    unmapped_concepts=norm_unmapped,
                 )
                 db.add(normalized_config)
                 await db.flush()
                 
-                # 5. Compliance Results - store and build lookup (dual-baseline: per-control framework)
+                # 5. Compliance Results - store and build lookup (F3/F5/F11).
+                # Framework attribution comes from the control's own metadata
+                # attached by the canonical path — never inferred from the
+                # control-id shape or the requested framework. The score uses
+                # the single canonical overall_score formula.
                 compliance_results_by_control = {}
                 if result.compliance_evaluation:
                     for eval_result in result.compliance_evaluation.evaluations:
-                        # Auto framework from control_id: NIST uses AC-2/SC-7, CIS uses 1.1.1/2.1.1
-                        cid = eval_result.control_id
-                        is_nist = bool(cid and '-' in cid and cid[0].isalpha())
-                        eval_framework = "NIST" if is_nist else framework
-                        compliance_result = ComplianceResult(
+                        compliance_result = build_compliance_result(
                             audit_id=UUID(audit_id),
                             normalized_configuration_id=normalized_config.id,
-                            framework=eval_framework,
-                            control_id=eval_result.control_id,
-                            control_name=eval_result.control_title,
-                            control_description=eval_result.control_description,
-                            result=eval_result.result.value,
-                            confidence=eval_result.confidence,
-                            severity=eval_result.severity.value,
-                            evidence=eval_result.evidence.to_dict() if hasattr(eval_result.evidence, 'to_dict') else {},
-                            remediation=eval_result.remediation if isinstance(eval_result.remediation, dict) else {},
+                            framework=framework,
+                            eval_result=eval_result,
                         )
                         db.add(compliance_result)
                         await db.flush()
@@ -386,12 +470,17 @@ async def run_audit_pipeline(
                         else:
                             review += 1
                 
-                # 6. Findings - linked to compliance results
+                # 6. Findings - linked to compliance results (E08 F1: the
+                # row carries control_id + compliance_result_id so the API
+                # can identify exactly which control produced the finding).
                 for finding in result.findings:
                     linked_result_id = compliance_results_by_control.get(finding.control_id)
+                    finding.compliance_result_id = str(linked_result_id) \
+                        if linked_result_id else finding.compliance_result_id
                     db_finding = Finding(
                         audit_id=UUID(audit_id),
                         compliance_result_id=linked_result_id,
+                        control_id=finding.control_id,
                         title=finding.title,
                         description=finding.description,
                         severity=finding.severity.value,
@@ -402,9 +491,55 @@ async def run_audit_pipeline(
                         affected_device=finding.affected_device,
                         affected_vendor=finding.affected_vendor,
                         affected_platform=finding.affected_platform,
+                        risk_score=finding.risk_score,
+                        priority=finding.priority,
+                        risk_method=finding.risk_method,
+                        risk_model_version=finding.risk_model_version,
                     )
                     db.add(db_finding)
                     all_findings.append(db_finding)
+                
+                # Resolve the organization's active Company Baseline once per
+                # audit. The org is derived from the authenticated user's
+                # server-side identity (never client-supplied). The resolved
+                # baseline is logged to the audit trail; company-scope metrics
+                # are projected over the stored CIS results at report time —
+                # the baseline never modifies CIS evaluation itself.
+                try:
+                    org_result = await db.execute(
+                        select(Organization).where(
+                            Organization.id == user_id
+                        )
+                    )
+                    org = org_result.scalar_one_or_none()
+                    baseline_info: Optional[dict] = None
+                    if org and org.baseline_status == "ACTIVE":
+                        bl_result = await db.execute(
+                            select(CompanyBaseline).where(
+                                CompanyBaseline.organization_id == org.id,
+                                CompanyBaseline.status == "ACTIVE",
+                            )
+                        )
+                        active_baseline = bl_result.scalar_one_or_none()
+                        if active_baseline:
+                            baseline_info = {
+                                "baseline_id": str(active_baseline.id),
+                                "baseline_name": active_baseline.name,
+                                "framework": active_baseline.framework,
+                                "benchmark": active_baseline.benchmark,
+                                "in_scope_control_count": (
+                                    len(active_baseline.controls)
+                                    if active_baseline.controls else 0
+                                ),
+                            }
+                    db.add(AuditAction(
+                        audit_id=UUID(audit_id),
+                        action="BASELINE_RESOLVED",
+                        details=baseline_info or {"has_baseline": False},
+                    ))
+                except Exception:
+                    # Baseline resolution must never break the audit itself.
+                    pass
                 
                 # Update audit-configuration association
                 audit_config_result = await db.execute(
@@ -418,6 +553,7 @@ async def run_audit_pipeline(
                     audit_config.vendor_identification = {
                         "vendor": result.vendor,
                         "platform": result.platform,
+                        "os_family": getattr(result, "os_family", "") or result.platform,
                         "confidence": result.detection_confidence,
                         "detection_method": det_method,
                         "detection_evidence": det_evidence,
@@ -431,19 +567,20 @@ async def run_audit_pipeline(
             # Complete remaining steps with realistic timing — so frontend feels real, not fake instant
             _update_step(audit_id, 4, "completed", 100, f"Evaluation complete — {total_controls} controls checked, {passed} pass, {failed} fail, {review} review")
             await _asyncio.sleep(0.4)
-            _update_step(audit_id, 5, "running", 40, f"Generating {len(all_findings)} findings with ML risk scoring (RandomForest)...")
+            _update_step(audit_id, 5, "running", 40, f"Generating {len(all_findings)} findings with risk scoring...")
             await _asyncio.sleep(0.7)
             _update_step(audit_id, 5, "completed", 100, f"Findings generated — {len(all_findings)} findings, risk scored")
             await _asyncio.sleep(0.3)
             _update_step(audit_id, 6, "running", 50, "Generating PDF report — per-device breakdown, ConfigShield header...")
             await _asyncio.sleep(0.9)
             _update_step(audit_id, 6, "completed", 100, "Report ready — PDF built")
-            audit_live_logs.setdefault(audit_id, []).append({"ts": _time.time(), "step": "done", "level": "info", "msg": f"Audit completed — score { (passed/total_controls*100) if total_controls else 0:.1f}%"})
+            audit_live_logs.setdefault(audit_id, []).append({"ts": _time.time(), "step": "done", "level": "info", "msg": f"Audit completed — score {overall_score(passed, total_controls):.1f}%"})
 
-            # Update audit summary
+            # Update audit summary (F5: the single canonical overall_score —
+            # passed over ALL evaluated controls, REVIEW counts as non-pass).
             audit.status = AuditStatus.COMPLETED.value
             audit.completed_at = datetime.utcnow()
-            audit.overall_score = (passed / total_controls * 100) if total_controls > 0 else 0
+            audit.overall_score = overall_score(passed, total_controls)
             audit.findings_count = len(all_findings)
             audit.critical_findings = sum(1 for f in all_findings if f.severity and f.severity.upper() == "CRITICAL")
             audit.high_findings = sum(1 for f in all_findings if f.severity and f.severity.upper() == "HIGH")
@@ -461,7 +598,22 @@ async def run_audit_pipeline(
                 overall_score=audit.overall_score,
                 user_id=user_id,
             )
-            
+            # E12: completion closes the lifecycle history opened at
+            # execute time (AUDIT_STARTED).
+            await audit_trail.log_audit_event(
+                action=AuditAction.AUDIT_COMPLETED,
+                audit_id=audit_id,
+                user_id=user_id,
+                details={
+                    "total_controls": total_controls,
+                    "passed": passed,
+                    "failed": failed,
+                    "review": review,
+                    "overall_score": audit.overall_score,
+                    "findings": len(all_findings),
+                },
+            )
+
             await db.commit()
             
         except Exception as e:
@@ -481,6 +633,20 @@ async def run_audit_pipeline(
             if audit:
                 audit.status = AuditStatus.FAILED.value
                 audit.completed_at = datetime.utcnow()
+                # E12: failure closes the lifecycle history too. Best
+                # effort by design: a trail write must never mask the
+                # original pipeline error this handler exists to record.
+                try:
+                    fail_trail = AuditTrailRepository(db)
+                    await fail_trail.log_audit_event(
+                        action=AuditAction.AUDIT_FAILED,
+                        audit_id=audit_id,
+                        user_id=user_id,
+                        details={"error": str(e)[:500]},
+                    )
+                    await db.flush()
+                except Exception:
+                    pass
                 await db.commit()
             
             raise
@@ -537,7 +703,22 @@ async def execute_audit(
     
     await db.flush()
     await db.refresh(new_audit)
-    
+
+    # E12: execution start is a lifecycle event (completion/failure are
+    # recorded inside run_audit_pipeline).
+    trail = AuditTrailRepository(db)
+    await trail.log_audit_event(
+        action=AuditAction.AUDIT_STARTED,
+        audit_id=str(new_audit.id),
+        user_id=str(current_user.id),
+        details={
+            "name": new_audit.name,
+            "framework": audit.framework or "CIS",
+            "configuration_count": len(audit.configuration_ids),
+        },
+    )
+    await db.flush()
+
     # Start audit pipeline in background
     background_tasks.add_task(
         run_audit_pipeline,
@@ -577,7 +758,7 @@ async def get_audit_execution_status(
             progress = 100
             # Ensure all steps marked completed if audit completed but steps pending
             for s in steps:
-                if s["status"] in ("pending", "running"):
+                if s.get("status") in ("pending", "running"):
                     s["status"] = "completed"
                     s["progress"] = 100
         elif audit.status == "failed":
@@ -613,6 +794,7 @@ async def get_audit_execution_status(
                     "filename": cfg.filename,
                     "vendor": vi.get("vendor", "unknown"),
                     "platform": vi.get("platform", "unknown"),
+                    "os_family": vi.get("os_family") or vi.get("platform", "unknown"),
                     "device_type": vi.get("device_type", "unknown"),
                     "hostname": vi.get("hostname"),
                     "firmware_version": vi.get("firmware_version"),
@@ -621,17 +803,32 @@ async def get_audit_execution_status(
                 })
         except Exception:
             pass
+    # Normalize: every entry carries the canonical os_family even if the
+    # writer predates it (live in-memory entries from any pipeline stage).
+    # Canonical form (ios → ios_xe) via the single alias map — the same
+    # identity every downstream consumer uses.
+    try:
+        from app.benchmarks.selection import normalize_platform as _norm_plat
+    except Exception:
+        _norm_plat = None
+    for fd in file_details:
+        if not fd.get("os_family"):
+            plat = fd.get("platform", "unknown")
+            try:
+                fd["os_family"] = _norm_plat(fd.get("vendor", ""), plat) if _norm_plat else plat
+            except Exception:
+                fd["os_family"] = plat
 
     # Current step label for frontend
     current_step = None
     for s in steps:
-        if s["status"] == "running":
-            current_step = s["id"]
+        if s.get("status") == "running":
+            current_step = s.get("id")
             break
     if not current_step:
         for s in reversed(steps):
-            if s["status"] == "completed":
-                current_step = s["id"]
+            if s.get("status") == "completed":
+                current_step = s.get("id")
                 break
 
     return {
@@ -660,49 +857,23 @@ async def get_audit_findings(
     page: int = Query(1, gt=0),
     per_page: int = Query(20, gt=0, le=100),
     severity: Optional[str] = None,
-    status_filter: Optional[str] = None,
+    status_filter: Optional[FindingStatus] = None,
+    vendor: Optional[str] = None,
+    platform: Optional[str] = None,
+    control_id: Optional[str] = None,
     db: AsyncSession = Depends(get_db),
     current_user: User = Depends(get_current_user),
 ):
-    """Get findings for an audit"""
-    # Verify audit exists and user has access
-    audit_result = await db.execute(
-        select(Audit).where(
-            Audit.id == audit_id,
-            Audit.user_id == current_user.id,
-        )
+    """Get findings for an audit (canonical query service, E08 F4)."""
+    from app.repositories.findings import FindingQueryService
+
+    items, total = await FindingQueryService(db).list_for_audit(
+        audit_id=audit_id, user_id=current_user.id, page=page,
+        per_page=per_page, severity=severity, status=status_filter,
+        vendor=vendor, platform=platform, control_id=control_id,
     )
-    audit = audit_result.scalar_one_or_none()
-    
-    if not audit:
-        raise HTTPException(status_code=404, detail="Audit not found")
-    
-    # Build query
-    query = select(Finding).where(Finding.audit_id == audit_id)
-    count_query = select(func.count(Finding.id)).where(Finding.audit_id == audit_id)
-    
-    if severity:
-        query = query.where(Finding.severity == severity)
-        count_query = count_query.where(Finding.severity == severity)
-    
-    if status_filter:
-        query = query.where(Finding.status == status_filter)
-        count_query = count_query.where(Finding.status == status_filter)
-    
-    # Get total count
-    total_result = await db.execute(count_query)
-    total = total_result.scalar()
-    
-    # Apply pagination
-    offset = (page - 1) * per_page
-    query = query.offset(offset).limit(per_page).order_by(Finding.severity)
-    
-    # Execute query
-    result = await db.execute(query)
-    findings = result.scalars().all()
-    
     return FindingListResponse(
-        items=[_to_finding_response(f) for f in findings],
+        items=[_to_finding_response(f) for f in items],
         meta=PaginationMeta(
             page=page,
             per_page=per_page,
@@ -757,7 +928,57 @@ async def get_audit_summary(
         .group_by(Finding.status)
     )
     status_counts = {row[0]: row[1] for row in findings_by_status.all()}
-    
+
+    # E09 F1: risk aggregates from the persisted 10.9 output (same values
+    # the findings endpoints serve — one source of truth).
+    risk_rows = await db.execute(
+        select(Finding.risk_score, Finding.priority).where(
+            Finding.audit_id == audit_id,
+            Finding.risk_score.is_not(None),
+        )
+    )
+    risk_scores = [row[0] for row in risk_rows.all()]
+    risk_stats = {
+        "findings_scored": len(risk_scores),
+        "risk_max": max(risk_scores) if risk_scores else None,
+        "risk_mean": (
+            round(sum(risk_scores) / len(risk_scores), 1)
+            if risk_scores else None),
+    }
+    priority_rows = await db.execute(
+        select(Finding.priority, func.count(Finding.id))
+        .where(Finding.audit_id == audit_id)
+        .group_by(Finding.priority)
+    )
+    priority_counts = {row[0]: row[1] for row in priority_rows.all()}
+
+    # Per-framework compliance counts from stored rows (never recomputed).
+    compliance_rows = await db.execute(
+        select(ComplianceResult.framework, ComplianceResult.result, func.count(ComplianceResult.id))
+        .where(ComplianceResult.audit_id == audit_id)
+        .group_by(ComplianceResult.framework, ComplianceResult.result)
+    )
+    per_framework = {}
+    for framework, result, count in compliance_rows.all():
+        fw = framework or "CIS"
+        slot = per_framework.setdefault(
+            fw, {"controls": 0, "pass": 0, "fail": 0, "review": 0})
+        slot["controls"] += count
+        rv = (result or "").upper()
+        if rv == "PASS":
+            slot["pass"] += count
+        elif rv == "FAIL":
+            slot["fail"] += count
+        else:
+            slot["review"] += count
+
+    # Company Baseline projection — scope is derived from the org's active
+    # baseline; verdicts come from the stored CIS results. OUT_OF_SCOPE
+    # controls never enter PASS/FAIL/REVIEW or the company denominator.
+    company_baseline = await _compute_company_baseline_projection(
+        db, audit_id, getattr(current_user, "organization_id", None)
+    )
+
     return {
         "audit_id": str(audit.id),
         "status": audit.status,
@@ -765,6 +986,99 @@ async def get_audit_summary(
         "findings_count": audit.findings_count,
         "findings_by_severity": severity_counts,
         "findings_by_status": status_counts,
+        "risk": risk_stats,
+        "findings_by_priority": priority_counts,
+        "compliance": per_framework,
+        "company_baseline": company_baseline,
         "started_at": audit.started_at.isoformat() if audit.started_at else None,
         "completed_at": audit.completed_at.isoformat() if audit.completed_at else None,
+    }
+
+
+async def _compute_company_baseline_projection(
+    db, audit_id: UUID, org_id: Optional[str]
+) -> dict[str, Any]:
+    """Project the org's active baseline over this audit's stored results.
+
+    Returns the company baseline block for the audit summary: in-scope
+    metrics computed ONLY from baseline-selected controls, plus the
+    control-by-control comparison (company vs Full CIS). Never modifies
+    stored CIS verdicts, evidence, or findings.
+    """
+    empty = {
+        "configured": False,
+        "has_baseline": False,
+        "in_scope_count": 0,
+        "passed": 0,
+        "failed": 0,
+        "review": 0,
+        "out_of_scope": 0,
+        "score": None,
+        "control_ids": [],
+    }
+    if not org_id:
+        return empty
+    org_result = await db.execute(
+        select(Organization).where(Organization.id == org_id)
+    )
+    org = org_result.scalar_one_or_none()
+    if not org or org.baseline_status != "ACTIVE":
+        return empty
+    bl_result = await db.execute(
+        select(CompanyBaseline).where(
+            CompanyBaseline.organization_id == org.id,
+            CompanyBaseline.status == "ACTIVE",
+        )
+    )
+    active_baseline = bl_result.scalar_one_or_none()
+    if not active_baseline or not active_baseline.controls:
+        return empty
+    controls_data = active_baseline.controls
+    if isinstance(controls_data, str):
+        in_scope = [c.strip() for c in controls_data.split(",") if c.strip()]
+    else:
+        in_scope = [str(c) for c in controls_data]
+
+    cr_rows = await db.execute(
+        select(ComplianceResult.control_id, ComplianceResult.result)
+        .where(ComplianceResult.audit_id == audit_id)
+    )
+    result_lookup = {
+        cid: (res or "").upper() for cid, res in cr_rows.all()
+    }
+    passed = failed = review = 0
+    for ctrl_id in in_scope:
+        r = result_lookup.get(ctrl_id, "REVIEW")
+        if r == "PASS":
+            passed += 1
+        elif r == "FAIL":
+            failed += 1
+        else:
+            review += 1
+    decisive = passed + failed
+    comparison = []
+    for ctrl_id in sorted(set(result_lookup.keys()) | set(in_scope)):
+        cis_result = result_lookup.get(ctrl_id, "REVIEW")
+        comparison.append({
+            "control_id": ctrl_id,
+            "company_result": (
+                cis_result if ctrl_id in in_scope else "OUT_OF_SCOPE"
+            ),
+            "full_cis_result": cis_result,
+            "in_scope": ctrl_id in in_scope,
+        })
+    return {
+        "configured": True,
+        "has_baseline": True,
+        "name": active_baseline.name,
+        "framework": active_baseline.framework,
+        "benchmark": active_baseline.benchmark,
+        "in_scope_count": len(in_scope),
+        "passed": passed,
+        "failed": failed,
+        "review": review,
+        "out_of_scope": max(0, len(result_lookup) - len(in_scope)),
+        "score": round(passed / decisive * 100, 1) if decisive > 0 else 0.0,
+        "control_ids": in_scope,
+        "comparison": comparison,
     }

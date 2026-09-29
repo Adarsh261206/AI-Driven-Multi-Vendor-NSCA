@@ -278,8 +278,14 @@ def get_all_controls() -> list[BenchmarkControl]:
 
 
 def get_registry() -> BenchmarkRegistry:
-    """Build the benchmark registry for CIS Juniper OS v2.1.0."""
-    controls = get_all_controls()
+    """Build the benchmark registry for CIS Juniper OS v2.1.0.
+
+    Authoritative attribution (F3): every control in this module is DEFINED
+    by CIS; framework/version/rule-confidence are stamped here.
+    """
+    from app.benchmarks.selection import assign_control_metadata
+
+    controls = [assign_control_metadata(c, "CIS") for c in get_all_controls()]
     return BenchmarkRegistry(
         benchmark_id=BENCHMARK_ID,
         benchmark_name=BENCHMARK_NAME,

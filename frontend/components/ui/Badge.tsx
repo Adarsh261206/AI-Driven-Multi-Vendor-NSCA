@@ -51,6 +51,8 @@ export function ResultBadge({ result, className }: { result?: string | null; cla
     PASS: { label: 'Pass', cls: 'badge-pass' },
     FAIL: { label: 'Fail', cls: 'badge-fail' },
     REVIEW: { label: 'Review', cls: 'badge-review' },
+    OUT_OF_SCOPE: { label: 'Out of Scope', cls: 'badge-out-of-scope' },
+    NOT_APPLICABLE: { label: 'Not Applicable', cls: 'badge-out-of-scope' },
   };
   const key = (result ?? '').toUpperCase();
   const m = map[key] ?? { label: result ?? '—', cls: 'badge-info' };

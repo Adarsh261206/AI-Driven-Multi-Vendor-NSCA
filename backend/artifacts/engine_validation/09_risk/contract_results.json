@@ -1,0 +1,55 @@
+{
+  "checks": [
+    {
+      "id": "C1",
+      "name": "no untyped errors (per-file exceptions recorded only)",
+      "probes": 480,
+      "violations": 0,
+      "detail": []
+    },
+    {
+      "id": "C2",
+      "name": "every risk score a float in [0, 100]",
+      "probes": 14221,
+      "violations": 0,
+      "detail": []
+    },
+    {
+      "id": "C3",
+      "name": "every priority valid and consistent with its score",
+      "probes": 14221,
+      "violations": 0,
+      "detail": []
+    },
+    {
+      "id": "C4",
+      "name": "every finding scored by the normative method",
+      "probes": 14221,
+      "violations": 0,
+      "detail": []
+    },
+    {
+      "id": "C5",
+      "name": "boundary runs carry zero findings",
+      "probes": 480,
+      "violations": 0,
+      "detail": []
+    },
+    {
+      "id": "C6",
+      "name": "unsupported vendors zero decisive findings",
+      "probes": 480,
+      "violations": 0,
+      "detail": []
+    },
+    {
+      "id": "C7",
+      "name": "deterministic risk outcomes across runs",
+      "probes": 30,
+      "violations": 0,
+      "detail": []
+    }
+  ],
+  "violations_total": 0,
+  "verdict": "PASS"
+}

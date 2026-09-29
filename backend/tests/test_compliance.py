@@ -4,13 +4,11 @@ Unit Tests for Compliance Engine
 Tests PASS, FAIL, REVIEW, missing value, unknown value, wrong vendor, malformed data.
 """
 
-import pytest
 from app.engines.compliance.loader import ControlLoader
 from app.engines.compliance.engine import RuleEngine
 from app.engines.compliance.evidence import EvidenceChainBuilder
 from app.engines.compliance.findings import FindingGenerator, SeverityCalculator
 from app.engines.compliance.models import (
-    Control, ControlRule, RuleType, RuleTarget, ExpectedValue, Operator,
     Severity, ComplianceResultType,
 )
 
@@ -248,9 +246,9 @@ class TestEvidenceChain:
             platform="ios",
         )
         
-        assert chain.result == "pass"
-        assert chain.actual_value == False
-        assert chain.expected_value == False
+        assert chain.result == "PASS"
+        assert not chain.actual_value
+        assert not chain.expected_value
         assert chain.control_id == "CIS-Cisco-IOS-1.1"
     
     def test_build_fail_chain(self):
@@ -266,8 +264,8 @@ class TestEvidenceChain:
             platform="ios",
         )
         
-        assert chain.result == "fail"
-        assert chain.actual_value == True
+        assert chain.result == "FAIL"
+        assert chain.actual_value
     
     def test_build_review_chain(self):
         control = self.loader.get_control("CIS-Cisco-IOS-1.1")
@@ -281,7 +279,7 @@ class TestEvidenceChain:
             platform="ios",
         )
         
-        assert chain.result == "review"
+        assert chain.result == "REVIEW"
     
     def test_chain_to_dict(self):
         control = self.loader.get_control("CIS-Cisco-IOS-1.1")

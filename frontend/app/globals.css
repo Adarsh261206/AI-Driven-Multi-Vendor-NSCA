@@ -156,6 +156,12 @@ body {
     @apply badge bg-surface-100 text-ink-400 border border-surface-200;
   }
 
+  /* OUT_OF_SCOPE — neutral, distinct from PASS/FAIL/REVIEW. Never green,
+     never red: scope exclusion is not a verdict. */
+  .badge-out-of-scope {
+    @apply badge bg-slate-100 text-slate-500 border border-slate-300;
+  }
+
   /* Tables — Odoo-like: clean header, generous rows, subtle hover */
   .table-wrapper {
     @apply overflow-hidden rounded-xl border border-surface-200 bg-white shadow-odoo;

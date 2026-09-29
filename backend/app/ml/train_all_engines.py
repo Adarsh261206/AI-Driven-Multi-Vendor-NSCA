@@ -183,9 +183,9 @@ def train_semantic():
 
     # Augment
     aug_texts, aug_labels = [], []
-    for t, l in zip(texts, labels):
+    for t, lab in zip(texts, labels):
         aug_texts.extend([t, t.upper(), t + " ", t.replace(" ", "  ")])
-        aug_labels.extend([l, l, l, l])
+        aug_labels.extend([lab, lab, lab, lab])
     texts, labels = aug_texts, aug_labels
 
     print(f"Dataset: {len(texts)} samples, classes: {Counter(labels)}")
@@ -231,39 +231,37 @@ def train_risk():
     import numpy as np
     import random
 
-    # Generate synthetic training data based on current SeverityCalculator logic
-    # plus variations for ML to learn nuanced scoring
-
-    SEVERITY_SCORES = {"CRITICAL": 10.0, "HIGH": 7.5, "MEDIUM": 5.0, "LOW": 2.5}
-    VENDOR_IMPACT = {"cisco": 1.2, "juniper": 1.1, "fortinet": 1.1, "paloalto": 1.2, "unknown": 1.0}
-    CATEGORY_IMPACT = {
-        "AAA": 1.3, "SSH": 1.2, "authentication": 1.3, "Access Control": 1.2,
-        "SNMP": 1.1, "Logging": 1.0, "NTP": 1.0, "Services": 1.1,
-        "Password Rules": 1.2, "Access Rules": 1.2, "Audit and Accountability": 1.2,
-        "Configuration Management": 1.1, "System and Communications Protection": 1.2,
-    }
+    # E09 F6: training shares the canonical serving vocabulary and feature
+    # semantics exactly (same severity/vendor/category mappings, same
+    # confidence transform, same feature order) via build_risk_features.
+    # Labels remain SYNTHETIC (normative formula + noise) — the model is a
+    # formula emulator for advisory use only; meta.scope says so explicitly.
+    from app.engines.compliance.risk import (
+        CATEGORY_IMPACT,
+        RISK_FEATURES,
+        SEVERITY_BASE,
+        VENDOR_IMPACT,
+        build_risk_features,
+        deterministic_score,
+    )
 
     random.seed(42)
     np.random.seed(42)
 
     data_rows = []
     for _ in range(2000):
-        sev = random.choice(list(SEVERITY_SCORES.keys()))
+        sev = random.choice(list(SEVERITY_BASE.keys()))
         vendor = random.choice(list(VENDOR_IMPACT.keys()))
         category = random.choice(list(CATEGORY_IMPACT.keys()))
         confidence = random.uniform(0.5, 1.0)
 
-        base = SEVERITY_SCORES[sev]
-        v_mult = VENDOR_IMPACT.get(vendor, 1.0)
-        c_mult = CATEGORY_IMPACT.get(category, 1.0)
-        conf_factor = 0.8 + (confidence * 0.4)
-        risk = base * v_mult * c_mult * conf_factor / 15.6 * 100
-        risk = max(0, min(100, risk))
+        sev_num, v_mult, c_mult, conf = build_risk_features(
+            sev, vendor, category, confidence)
+        risk = deterministic_score(sev, vendor, category, confidence)
         risk_noisy = risk + random.gauss(0, 2)
         risk_noisy = max(0, min(100, risk_noisy))
 
-        sev_map = {"CRITICAL": 3, "HIGH": 2, "MEDIUM": 1, "LOW": 0}
-        data_rows.append([sev_map[sev], v_mult, c_mult, confidence, risk_noisy])
+        data_rows.append([sev_num, v_mult, c_mult, conf, risk_noisy])
 
     arr = np.array(data_rows)
     X = arr[:, :4]  # severity_num, vendor_mult, category_mult, confidence
@@ -277,7 +275,7 @@ def train_risk():
     mse = mean_squared_error(y_test, y_pred)
     r2 = r2_score(y_test, y_pred)
     print(f"MSE: {mse:.2f}, R2: {r2:.3f}")
-    feat_names = ["severity_num", "vendor_mult", "category_mult", "confidence"]
+    feat_names = list(RISK_FEATURES)
     print(f"Feature importances: {dict(zip(feat_names, model.feature_importances_))}")
 
     joblib.dump(model, ARTIFACT_DIR / "risk_model.joblib")
@@ -290,6 +288,15 @@ def train_risk():
         "mse": mse,
         "r2": r2,
         "features": feat_names,
+        # E09 F6 honesty labeling: this model emulates the normative
+        # deterministic formula on synthetic labels. r2/mse measure
+        # formula-emulation fit on a synthetic holdout — never real-world
+        # risk-prediction accuracy. The model is advisory-only.
+        "scope": "advisory-only formula emulation (never normative)",
+        "label_source": "synthetic: normative deterministic formula + N(0,2) noise",
+        "label_formula": "base*vendor*category*max(conf,0.5)/15.6*100",
+        "confidence_transform": "max(confidence, 0.5) (shared with serving)",
+        "vocabulary": "canonical risk.py maps (shared with serving)",
     }
     with open(ARTIFACT_DIR / "risk_meta.json", "w") as f:
         json.dump(meta, f, indent=2)

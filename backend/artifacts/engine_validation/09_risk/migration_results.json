@@ -1,0 +1,73 @@
+{
+  "migration": "008_finding_risk_columns",
+  "database": "engine_validation_test (throwaway)",
+  "executed": [
+    "wipe",
+    "upgrade 001->007",
+    "insert legacy row",
+    "upgrade 007->008",
+    "insert/read risk row",
+    "downgrade 008->007",
+    "upgrade 007->008",
+    "restore metadata schema"
+  ],
+  "checks": [
+    {
+      "check": "throwaway database wiped (tables + alembic_version)",
+      "ok": true,
+      "detail": "DROP SCHEMA public CASCADE / CREATE SCHEMA public"
+    },
+    {
+      "check": "upgrade -> 007 (pre-E09 head)",
+      "ok": true,
+      "detail": "alembic 001..007 applied"
+    },
+    {
+      "check": "alembic head is 007 before the E09 migration",
+      "ok": true,
+      "detail": "[('007',)]"
+    },
+    {
+      "check": "007 findings table has no risk columns",
+      "ok": true,
+      "detail": "['affected_device', 'affected_platform', 'affected_vendor', 'audit_id', 'compliance_result_id', 'confidence', 'control_id', 'created_at', 'description', 'evidence', 'id', 'remediation', 'severity', 'status', 'title', 'updated_at']"
+    },
+    {
+      "check": "alembic head is 008 after the E09 migration",
+      "ok": true,
+      "detail": "[('008',)]"
+    },
+    {
+      "check": "008 adds the four risk columns",
+      "ok": true,
+      "detail": "['affected_device', 'affected_platform', 'affected_vendor', 'audit_id', 'compliance_result_id', 'confidence', 'control_id', 'created_at', 'description', 'evidence', 'id', 'priority', 'remediation', 'risk_method', 'risk_model_version', 'risk_score', 'severity', 'status', 'title', 'updated_at']"
+    },
+    {
+      "check": "legacy row survives with NULL risk fields (safe defaults)",
+      "ok": true,
+      "detail": "[(None, None, None, None)]"
+    },
+    {
+      "check": "risk row round-trips through the migrated schema",
+      "ok": true,
+      "detail": "[(48.1, 'P3', 'deterministic', 'v1')]"
+    },
+    {
+      "check": "downgrade -> 007 drops the four risk columns",
+      "ok": true,
+      "detail": "['affected_device', 'affected_platform', 'affected_vendor', 'audit_id', 'compliance_result_id', 'confidence', 'control_id', 'created_at', 'description', 'evidence', 'id', 'remediation', 'severity', 'status', 'title', 'updated_at']"
+    },
+    {
+      "check": "round trip 008 -> 007 -> 008 returns to head",
+      "ok": true,
+      "detail": "[('008',)]"
+    },
+    {
+      "check": "throwaway schema restored from model metadata for the pytest suites",
+      "ok": true,
+      "detail": "scripts.engine_validation.dbutil.create_schema"
+    }
+  ],
+  "violations_total": 0,
+  "verdict": "PASS"
+}

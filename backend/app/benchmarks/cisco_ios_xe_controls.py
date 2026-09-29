@@ -12,6 +12,7 @@ from app.benchmarks.models import (
     AssessmentStatus,
     BenchmarkControl,
     BenchmarkRegistry,
+    ControlScope,
     ControlSeverity,
     ProfileLevel,
 )
@@ -41,6 +42,8 @@ def _c(
     references: list[str] | None = None,
     source_location: str = "",
     profile_level: ProfileLevel = ProfileLevel.LEVEL_1,
+    scope: ControlScope = ControlScope.UNKNOWN,
+    violation_regex: str = "",
 ) -> BenchmarkControl:
     return BenchmarkControl(
         benchmark_id=BENCHMARK_ID,
@@ -65,6 +68,8 @@ def _c(
         references=references or [],
         source_document=SOURCE_DOC,
         source_location=source_location,
+        scope=scope,
+        violation_regex=violation_regex,
     )
 
 
@@ -122,9 +127,9 @@ def get_all_controls() -> list[BenchmarkControl]:
         _c("1.1.5", "Set Login Authentication for IP HTTP", "AAA",
            "Enforces authentication for the HTTP/HTTPS server using AAA.",
            AssessmentStatus.AUTOMATED, ControlSeverity.HIGH,
-           "management.https.enabled", "equals", True,
+           "management.http.authentication", "is_set", True,
            audit_command="show running-config | include ip http authentication",
-           audit_regex=r"ip\s+http\s+authentication",
+           audit_regex=r"ip\s+http\s+authentication\s+\S+",
            remediation_command="ip http authentication aaa",
            source_location="Page 26"),
 
@@ -188,7 +193,8 @@ def get_all_controls() -> list[BenchmarkControl]:
            audit_command="show running-config | section vty",
            audit_regex=r"transport\s+input\s+ssh",
            remediation_command="line vty 0 15\n transport input ssh",
-           source_location="Page 41"),
+           source_location="Page 41",
+           scope=ControlScope.LINE_VTY),
 
         _c("1.2.3", "Set No Exec for Line AUX 0", "Access Rules",
            "Restricts auxiliary port to outgoing connections only.",
@@ -202,7 +208,7 @@ def get_all_controls() -> list[BenchmarkControl]:
         _c("1.2.5", "Set Access-Class for Line VTY", "Access Rules",
            "Restricts VTY connections using an access list.",
            AssessmentStatus.AUTOMATED, ControlSeverity.HIGH,
-           "access_control.acl_applied", "equals", True,
+           "access_control.vty_access_class_applied", "equals", True,
            audit_command="show running-config | section vty",
            audit_regex=r"access-class",
            remediation_command="line vty 0 15\n access-class <acl> in",
@@ -215,7 +221,8 @@ def get_all_controls() -> list[BenchmarkControl]:
            audit_command="show running-config all | section line aux 0",
            audit_regex=r"exec-timeout\s+(\d+)\s+(\d+)",
            remediation_command="line aux 0\n exec-timeout 10 0",
-           source_location="Page 49"),
+           source_location="Page 49",
+           scope=ControlScope.LINE_AUX),
 
         _c("1.2.7", "Set Exec-Timeout for Line Console 0", "Access Rules",
            "Sets idle session timeout to 10 minutes or less on console port.",
@@ -224,7 +231,8 @@ def get_all_controls() -> list[BenchmarkControl]:
            audit_command="show running-config all | section line con 0",
            audit_regex=r"exec-timeout\s+(\d+)\s+(\d+)",
            remediation_command="line con 0\n exec-timeout 10 0",
-           source_location="Page 51"),
+           source_location="Page 51",
+           scope=ControlScope.LINE_CONSOLE),
 
         _c("1.2.8", "Set Exec-Timeout for Line VTY", "Access Rules",
            "Sets idle session timeout to 10 minutes or less on all VTY lines.",
@@ -233,7 +241,8 @@ def get_all_controls() -> list[BenchmarkControl]:
            audit_command="show running-config all | section line vty",
            audit_regex=r"exec-timeout\s+(\d+)\s+(\d+)",
            remediation_command="line vty 0 15\n exec-timeout 10 0",
-           source_location="Page 53"),
+           source_location="Page 53",
+           scope=ControlScope.LINE_VTY),
 
         # Section 1.3 - Password Rules
         _c("1.3.1", "Set Minimum Password Length", "Password Rules",
@@ -270,6 +279,7 @@ def get_all_controls() -> list[BenchmarkControl]:
            None, "equals", None,
            audit_command="show running-config | include snmp-server community",
            audit_regex=r"snmp-server\s+community",
+           violation_regex=r"snmp-server\s+community\s+\S+\s+RW\b",
            source_location="Page 77"),
 
         _c("1.5.3", "Set SNMPv3 Message Integrity", "SNMP",
@@ -393,7 +403,8 @@ def get_all_controls() -> list[BenchmarkControl]:
            audit_command="show running-config | include no ip http server",
            audit_regex=r"no\s+ip\s+http\s+server",
            remediation_command="no ip http server",
-           source_location="Page 110"),
+           source_location="Page 110",
+           scope=ControlScope.GLOBAL),
 
         _c("2.1.11", "Disable CDP", "Services",
            "Disables CDP globally to prevent device discovery.",
@@ -402,7 +413,8 @@ def get_all_controls() -> list[BenchmarkControl]:
            audit_command="show running-config | include no cdp run",
            audit_regex=r"no\s+cdp\s+run",
            remediation_command="no cdp run",
-           source_location="Page 112"),
+           source_location="Page 112",
+           scope=ControlScope.GLOBAL),
 
         _c("2.1.12", "Disable LLDP", "Services",
            "Disables LLDP globally to prevent device discovery.",
@@ -411,7 +423,8 @@ def get_all_controls() -> list[BenchmarkControl]:
            audit_command="show running-config | include no lldp run",
            audit_regex=r"no\s+lldp\s+run",
            remediation_command="no lldp run",
-           source_location="Page 114"),
+           source_location="Page 114",
+           scope=ControlScope.GLOBAL),
 
         _c("2.1.13", "Set IP Redirects Disabled", "Services",
            "Disables ICMP redirect messages to harden IP processing.",
@@ -420,7 +433,8 @@ def get_all_controls() -> list[BenchmarkControl]:
            audit_command="show running-config | include no ip redirects",
            audit_regex=r"no\s+ip\s+redirects",
            remediation_command="no ip redirects",
-           source_location="Page 116"),
+           source_location="Page 116",
+           scope=ControlScope.INTERFACE),
 
         _c("2.1.14", "Set IP Unreachables Disabled", "Services",
            "Disables ICMP unreachables to harden IP processing.",
@@ -429,7 +443,8 @@ def get_all_controls() -> list[BenchmarkControl]:
            audit_command="show running-config | include no ip unreachables",
            audit_regex=r"no\s+ip\s+unreachables",
            remediation_command="no ip unreachables",
-           source_location="Page 118"),
+           source_location="Page 118",
+           scope=ControlScope.INTERFACE),
 
         _c("2.1.15", "Set IP Proxy ARP Disabled", "Services",
            "Disables proxy ARP to harden IP processing.",
@@ -438,7 +453,8 @@ def get_all_controls() -> list[BenchmarkControl]:
            audit_command="show running-config | include no ip proxy-arp",
            audit_regex=r"no\s+ip\s+proxy-arp",
            remediation_command="no ip proxy-arp",
-           source_location="Page 120"),
+           source_location="Page 120",
+           scope=ControlScope.INTERFACE),
 
         _c("2.1.16", "Set IP Source Route Disabled", "Services",
            "Disables source-routed packets to harden IP processing.",
@@ -447,13 +463,14 @@ def get_all_controls() -> list[BenchmarkControl]:
            audit_command="show running-config | include no ip source-route",
            audit_regex=r"no\s+ip\s+source-route",
            remediation_command="no ip source-route",
-           source_location="Page 122"),
+           source_location="Page 122",
+           scope=ControlScope.GLOBAL),
 
         # Section 2.2 - Logging Rules
         _c("2.2.1", "Set Logging Buffered Informational", "Logging",
            "Configures syslog buffer to capture informational-level messages.",
            AssessmentStatus.AUTOMATED, ControlSeverity.LOW,
-           "monitoring.syslog.severity_level", "equals", 6,
+           "monitoring.syslog.buffered_level", "equals", 6,
            audit_command="show running-config | include logging buffered",
            audit_regex=r"logging\s+buffered",
            remediation_command="logging buffered informational",
@@ -471,7 +488,7 @@ def get_all_controls() -> list[BenchmarkControl]:
         _c("2.2.3", "Set Logging Source Interface", "Logging",
            "Specifies a source interface for syslog messages.",
            AssessmentStatus.AUTOMATED, ControlSeverity.MEDIUM,
-           "monitoring.syslog.enabled", "is_set", True,
+           "monitoring.syslog.source_interface", "is_set", True,
            audit_command="show running-config | include logging source-interface",
            audit_regex=r"logging\s+source-interface",
            remediation_command="logging source-interface Loopback0",
@@ -489,7 +506,7 @@ def get_all_controls() -> list[BenchmarkControl]:
         _c("2.2.5", "Set Logging Trap Informational", "Logging",
            "Sends logs at informational level and above to remote servers.",
            AssessmentStatus.AUTOMATED, ControlSeverity.MEDIUM,
-           "monitoring.syslog.severity_level", "equals", 6,
+           "monitoring.syslog.trap_level", "equals", 6,
            audit_command="show running-config | include logging trap informational",
            audit_regex=r"logging\s+trap\s+informational",
            remediation_command="logging trap informational",
@@ -498,19 +515,19 @@ def get_all_controls() -> list[BenchmarkControl]:
         _c("2.2.6", "Set Logging Console Level", "Logging",
            "Restricts console log messages to prevent DoS attacks.",
            AssessmentStatus.AUTOMATED, ControlSeverity.MEDIUM,
-           "monitoring.syslog.severity_level", "equals", 4,
+           "monitoring.syslog.console_level", "equals", 4,
            audit_command="show running-config | include logging console",
            audit_regex=r"logging\s+console\s+(emergencies|alerts|critical|errors|warnings|notifications|informational|debugging)",
-           remediation_command="logging console notifications",
+           remediation_command="logging console warnings",
            source_location="Page 138"),
 
         _c("2.2.7", "Set Logging Monitor Level", "Logging",
            "Restricts monitor (terminal) log messages to prevent DoS.",
            AssessmentStatus.AUTOMATED, ControlSeverity.MEDIUM,
-           "monitoring.syslog.severity_level", "equals", 4,
+           "monitoring.syslog.monitor_level", "equals", 4,
            audit_command="show running-config | include logging monitor",
            audit_regex=r"logging\s+monitor\s+(emergencies|alerts|critical|errors|warnings|notifications|informational|debugging)",
-           remediation_command="logging monitor notifications",
+           remediation_command="logging monitor warnings",
            source_location="Page 140"),
 
         # Section 2.3 - NTP Rules
@@ -535,7 +552,7 @@ def get_all_controls() -> list[BenchmarkControl]:
         _c("2.3.3", "Set NTP Trusted Key", "NTP",
            "Configures trusted NTP authentication keys.",
            AssessmentStatus.AUTOMATED, ControlSeverity.HIGH,
-           "ntp.authenticated", "equals", True,
+           "ntp.trusted_key", "equals", True,
            audit_command="show running-config | include ntp trusted-key",
            audit_regex=r"ntp\s+trusted-key",
            remediation_command="ntp trusted-key 1",
@@ -544,7 +561,7 @@ def get_all_controls() -> list[BenchmarkControl]:
         _c("2.3.4", "Configure NTP Source Interface", "NTP",
            "Specifies a source interface for NTP traffic.",
            AssessmentStatus.AUTOMATED, ControlSeverity.MEDIUM,
-           "ntp.configured", "equals", True,
+           "ntp.source_interface", "is_set", True,
            audit_command="show running-config | include ntp source",
            audit_regex=r"ntp\s+source",
            remediation_command="ntp source Loopback0",
@@ -563,13 +580,21 @@ def get_all_controls() -> list[BenchmarkControl]:
 
 
 def get_registry() -> BenchmarkRegistry:
-    """Build and return the complete Cisco IOS XE benchmark registry."""
+    """Build and return the complete Cisco IOS XE benchmark registry.
+
+    Authoritative attribution (F3): every control in this module is DEFINED
+    by CIS, so framework/version/rule-confidence are stamped here from the
+    defining benchmark — never inferred downstream.
+    """
+    from app.benchmarks.selection import assign_control_metadata
+
+    controls = [assign_control_metadata(c, "CIS") for c in get_all_controls()]
     registry = BenchmarkRegistry(
         benchmark_id=BENCHMARK_ID,
         benchmark_name=BENCHMARK_NAME,
         benchmark_version=BENCHMARK_VERSION,
         vendor=VENDOR,
         platform=PLATFORM,
-        controls=get_all_controls(),
+        controls=controls,
     )
     return registry

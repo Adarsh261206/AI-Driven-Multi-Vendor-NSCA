@@ -1,0 +1,5 @@
+source,label,p50_ms,p95_ms,max_ms,note
+sweep,480 dataset files through detection + normalization + control evaluation,,,,"total 44.8s (avg 93.3 ms/file, incl. interpreter + engine cold start)"
+V07-88,5 x BenchmarkExecutionEngine() construction,,,,"p50=2.72 ms samples=[2.6, 2.7, 2.8, 2.7, 2.8]"
+V07-89,"5 x bench.execute(secure.txt, 65 lines, 179 controls)",,,,"p50=10.22 ms samples=[10.2, 11.4, 10.3, 9.7, 9.1] evaluated=179"
+V07-90,17149 lines vs 239016 lines (same 179 controls),,,,"small=471.7 ms, large=6921.4 ms; time ratio=14.67 vs line ratio=13.94 -> super-linear factor=1.05 (731 ms per 17k lines to 14.2 s per 239k lines - worth profiling but not quadratic)"

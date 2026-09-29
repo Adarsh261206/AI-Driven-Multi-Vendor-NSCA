@@ -13,18 +13,28 @@ from enum import Enum
 
 
 class Severity(str, Enum):
-    """Control severity levels"""
-    CRITICAL = "critical"
-    HIGH = "high"
-    MEDIUM = "medium"
-    LOW = "low"
+    """Control severity levels.
+
+    Canonical §12 vocabulary is UPPERCASE ("CRITICAL" | "HIGH" | "MEDIUM"
+    | "LOW"), shared by the control, the finding, persistence, filters,
+    reports and the API. Nothing lowercases internally and uppercases at
+    the edge: the stored and filtered representation IS the canonical one.
+    """
+    CRITICAL = "CRITICAL"
+    HIGH = "HIGH"
+    MEDIUM = "MEDIUM"
+    LOW = "LOW"
 
 
 class ComplianceResultType(str, Enum):
-    """Result of compliance evaluation"""
-    PASS = "pass"
-    FAIL = "fail"
-    REVIEW = "review"
+    """Result of compliance evaluation.
+
+    Canonical §12 representation is UPPERCASE ("PASS" | "FAIL" | "REVIEW"),
+    shared by the domain object, persistence, API and reports.
+    """
+    PASS = "PASS"
+    FAIL = "FAIL"
+    REVIEW = "REVIEW"
 
 
 class FindingStatus(str, Enum):

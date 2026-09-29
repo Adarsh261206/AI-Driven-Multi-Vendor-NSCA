@@ -1,0 +1,55 @@
+{
+  "checks": [
+    {
+      "id": "C1",
+      "name": "no untyped errors (per-file exceptions recorded only)",
+      "probes": 480,
+      "violations": 0,
+      "detail": []
+    },
+    {
+      "id": "C2",
+      "name": "PASS evaluations never become findings",
+      "probes": 14221,
+      "violations": 0,
+      "detail": []
+    },
+    {
+      "id": "C3",
+      "name": "boundary runs carry zero findings; unsupported vendors zero decisive findings",
+      "probes": 480,
+      "violations": 0,
+      "detail": []
+    },
+    {
+      "id": "C4",
+      "name": "every finding carries the \u00a712 evidence interface",
+      "probes": 14221,
+      "violations": 0,
+      "detail": []
+    },
+    {
+      "id": "C5",
+      "name": "every finding carries the \u00a712 remediation interface",
+      "probes": 14221,
+      "violations": 0,
+      "detail": []
+    },
+    {
+      "id": "C6",
+      "name": "every severity is canonical uppercase",
+      "probes": 14221,
+      "violations": 0,
+      "detail": []
+    },
+    {
+      "id": "C7",
+      "name": "deterministic finding counts across runs",
+      "probes": 30,
+      "violations": 0,
+      "detail": []
+    }
+  ],
+  "violations_total": 0,
+  "verdict": "PASS"
+}

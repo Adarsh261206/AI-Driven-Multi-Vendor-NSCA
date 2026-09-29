@@ -2,7 +2,6 @@
 Unit Tests for Normalization Engine
 """
 
-import pytest
 from app.engines.normalization import NormalizationEngine, NormalizationResultType
 
 
@@ -16,7 +15,7 @@ class TestNormalizationEngine:
         config = {"raw_lines": ["hostname EdgeRouter"]}
         result = self.engine.normalize(config, "cisco", "ios")
         assert result.result_type == NormalizationResultType.SUCCESS
-        assert result.universal_config.get("hostname") == "EdgeRouter"
+        assert result.universal_config.get("device", {}).get("hostname") == "EdgeRouter"
     
     def test_cisco_http_disabled(self):
         config = {"raw_lines": ["no ip http server"]}
@@ -66,14 +65,14 @@ class TestNormalizationEngine:
         config = {"raw_lines": ["hostname TestRouter", "ip ssh version 2"]}
         result = self.engine.normalize(config, "cisco", "ios")
         assert len(result.mappings) > 0
-        assert result.mappings[0].universal_path is not None
+        assert result.mappings[0].model_path is not None
     
     def test_fortinet_hostname(self):
         config = {"raw_lines": ['config system global', 'set hostname "FortiGate-60E"', 'end']}
         result = self.engine.normalize(config, "fortinet", "fortios")
-        assert result.universal_config.get("hostname") == "FortiGate-60E"
-    
+        assert result.universal_config.get("device", {}).get("hostname") == "FortiGate-60E"
+
     def test_juniper_hostname(self):
         config = {"raw_lines": ["set system host-name EdgeRouter-Juniper"]}
         result = self.engine.normalize(config, "juniper", "junos")
-        assert result.universal_config.get("hostname") == "EdgeRouter-Juniper"
+        assert result.universal_config.get("device", {}).get("hostname") == "EdgeRouter-Juniper"

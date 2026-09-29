@@ -1,0 +1,1009 @@
+{
+  "engine": "06_knowledge_base",
+  "scope": "backend/app/ai/knowledge_base.py, backend/app/repositories/knowledge_base.py, backend/app/api/v1/training.py, backend/app/ai/adaptive.py, backend/app/models (semantic_mappings / mapping_versions) and alembic 001, plus the consumers named by the spec (app/engines/normalization.py, app/ai/semantic.py), validated against docs/PROJECT_MASTER_SPEC.md 10.6, 9.2, 14.1, 14.3, 15.1, 15.2, 15.3 and the section 12 TrainingMapping interface",
+  "pytest": {
+    "evidence_rows": 105,
+    "status_counts": {
+      "FAIL": 58,
+      "PASS": 47
+    },
+    "classification_counts": {
+      "MISSING": 16,
+      "BUG": 18,
+      "CONFIRMED BEHAVIOR": 47,
+      "DESIGN LIMITATION": 18,
+      "RECOMMENDATION": 6
+    },
+    "category_counts": {
+      "A": 8,
+      "B": 17,
+      "C": 13,
+      "D": 18,
+      "E": 10,
+      "F": 8,
+      "G": 7,
+      "H": 3,
+      "I": 6,
+      "J": 3,
+      "K": 3,
+      "L": 9
+    },
+    "category_status": {
+      "A": {
+        "FAIL": 5,
+        "PASS": 3
+      },
+      "B": {
+        "PASS": 12,
+        "FAIL": 5
+      },
+      "C": {
+        "PASS": 6,
+        "FAIL": 7
+      },
+      "D": {
+        "PASS": 10,
+        "FAIL": 8
+      },
+      "E": {
+        "PASS": 4,
+        "FAIL": 6
+      },
+      "F": {
+        "FAIL": 8
+      },
+      "G": {
+        "PASS": 4,
+        "FAIL": 3
+      },
+      "H": {
+        "FAIL": 2,
+        "PASS": 1
+      },
+      "I": {
+        "FAIL": 5,
+        "PASS": 1
+      },
+      "J": {
+        "PASS": 2,
+        "FAIL": 1
+      },
+      "K": {
+        "FAIL": 1,
+        "PASS": 2
+      },
+      "L": {
+        "FAIL": 7,
+        "PASS": 2
+      }
+    }
+  },
+  "hypotheses": [
+    {
+      "id": "H06-01",
+      "statement": "the section 15.1 UNIQUE(vendor, platform, raw_syntax, version) constraint is absent, so duplicate rows can be written and lookup then crashes with MultipleResultsFound",
+      "evidence_tests": [
+        "V06-01",
+        "V06-31",
+        "V06-41"
+      ],
+      "observed_statuses": [
+        "FAIL",
+        "FAIL",
+        "FAIL"
+      ],
+      "conclusion": "CONFIRMED",
+      "classifications": [
+        "BUG",
+        "MISSING"
+      ]
+    },
+    {
+      "id": "H06-02",
+      "statement": "the stored schema drifts from section 15.1 and the section 12 interface: universal_model_path is nullable, confidence is FLOAT not DECIMAL(5,2), created_by is a UUID not VARCHAR(100), and the API response omits interface fields",
+      "evidence_tests": [
+        "V06-02",
+        "V06-06",
+        "V06-07",
+        "V06-08"
+      ],
+      "observed_statuses": [
+        "FAIL",
+        "FAIL",
+        "FAIL",
+        "FAIL"
+      ],
+      "conclusion": "CONFIRMED",
+      "classifications": [
+        "BUG",
+        "DESIGN LIMITATION",
+        "MISSING"
+      ]
+    },
+    {
+      "id": "H06-03",
+      "statement": "the in-memory knowledge base absorbs a distinct but similar syntax into a neighbouring row, losing the new raw_syntax and serving a different command's meaning",
+      "evidence_tests": [
+        "V06-15",
+        "V06-16"
+      ],
+      "observed_statuses": [
+        "FAIL",
+        "FAIL"
+      ],
+      "conclusion": "CONFIRMED",
+      "classifications": [
+        "BUG"
+      ]
+    },
+    {
+      "id": "H06-04",
+      "statement": "editing a mapping confirms it - CONFIRM / EDIT / REJECT are not distinct in the storage layers (section 9.2 step 3, section 14.3.3)",
+      "evidence_tests": [
+        "V06-17",
+        "V06-34",
+        "V06-71"
+      ],
+      "observed_statuses": [
+        "FAIL",
+        "FAIL",
+        "FAIL"
+      ],
+      "conclusion": "CONFIRMED",
+      "classifications": [
+        "BUG",
+        "DESIGN LIMITATION"
+      ]
+    },
+    {
+      "id": "H06-05",
+      "statement": "a mapping is not versioned from creation - only later changes produce a record (section 9.2 step 4, section 15.2 step 3d)",
+      "evidence_tests": [
+        "V06-18",
+        "V06-68"
+      ],
+      "observed_statuses": [
+        "FAIL",
+        "FAIL"
+      ],
+      "conclusion": "CONFIRMED",
+      "classifications": [
+        "DESIGN LIMITATION",
+        "MISSING"
+      ]
+    },
+    {
+      "id": "H06-06",
+      "statement": "REJECT is broken or absent for confirmed mappings: the in-memory workflow silently no-ops where the API unconfirms the row",
+      "evidence_tests": [
+        "V06-24",
+        "V06-70"
+      ],
+      "observed_statuses": [
+        "FAIL",
+        "FAIL"
+      ],
+      "conclusion": "CONFIRMED",
+      "classifications": [
+        "BUG",
+        "DESIGN LIMITATION"
+      ]
+    },
+    {
+      "id": "H06-07",
+      "statement": "actor ids (created_by_id / changed_by_id) are not validated by the repository, so a missing actor fails as a raw DB IntegrityError instead of a typed API error",
+      "evidence_tests": [
+        "V06-27"
+      ],
+      "observed_statuses": [
+        "FAIL"
+      ],
+      "conclusion": "CONFIRMED",
+      "classifications": [
+        "BUG"
+      ]
+    },
+    {
+      "id": "H06-08",
+      "statement": "a mapping stored with trailing whitespace in raw_syntax is permanently unreachable, because write does not strip but read compares against the stripped query",
+      "evidence_tests": [
+        "V06-30"
+      ],
+      "observed_statuses": [
+        "FAIL"
+      ],
+      "conclusion": "CONFIRMED",
+      "classifications": [
+        "BUG"
+      ]
+    },
+    {
+      "id": "H06-09",
+      "statement": "lookup behaviour is implementation-specific: the repository's fuzzy_lookup is never called, the repository matches exactly while the in-memory twin fuzzy-matches above 0.8",
+      "evidence_tests": [
+        "V06-32",
+        "V06-33",
+        "V06-67"
+      ],
+      "observed_statuses": [
+        "FAIL",
+        "FAIL",
+        "FAIL"
+      ],
+      "conclusion": "CONFIRMED",
+      "classifications": [
+        "DESIGN LIMITATION",
+        "MISSING"
+      ]
+    },
+    {
+      "id": "H06-10",
+      "statement": "unfiltered list calls silently truncate: the API returns one page of 100 and the repository returns 100 rows with no total, while the in-memory twin returns everything",
+      "evidence_tests": [
+        "V06-36",
+        "V06-73"
+      ],
+      "observed_statuses": [
+        "FAIL",
+        "FAIL"
+      ],
+      "conclusion": "CONFIRMED",
+      "classifications": [
+        "DESIGN LIMITATION"
+      ]
+    },
+    {
+      "id": "H06-11",
+      "statement": "duplicate detection and listing use case-sensitive vendor equality while lookup uses case-insensitive ilike, so case-variant duplicates are accepted and later crash lookup",
+      "evidence_tests": [
+        "V06-41",
+        "V06-53"
+      ],
+      "observed_statuses": [
+        "FAIL",
+        "FAIL"
+      ],
+      "conclusion": "CONFIRMED",
+      "classifications": [
+        "BUG"
+      ]
+    },
+    {
+      "id": "H06-12",
+      "statement": "training endpoints never require an administrator, although section 10.6 ('administrator updates') and section 14.1 (admin confirms/rejects) reserve them and sibling routers already use require_admin/require_auditor",
+      "evidence_tests": [
+        "V06-52"
+      ],
+      "observed_statuses": [
+        "FAIL"
+      ],
+      "conclusion": "CONFIRMED",
+      "classifications": [
+        "MISSING"
+      ]
+    },
+    {
+      "id": "H06-13",
+      "statement": "mapping content is not validated at the API boundary: universal_model_path is never checked against the model, and empty raw_syntax / empty semantic_meaning are accepted",
+      "evidence_tests": [
+        "V06-42",
+        "V06-43",
+        "V06-82",
+        "V06-83"
+      ],
+      "observed_statuses": [
+        "FAIL",
+        "FAIL",
+        "FAIL",
+        "FAIL"
+      ],
+      "conclusion": "CONFIRMED",
+      "classifications": [
+        "MISSING",
+        "RECOMMENDATION"
+      ]
+    },
+    {
+      "id": "H06-14",
+      "statement": "version history records the wrong things: a no-op PUT writes a phantom version and a REJECT writes none at all",
+      "evidence_tests": [
+        "V06-45",
+        "V06-50"
+      ],
+      "observed_statuses": [
+        "FAIL",
+        "FAIL"
+      ],
+      "conclusion": "CONFIRMED",
+      "classifications": [
+        "BUG"
+      ]
+    },
+    {
+      "id": "H06-15",
+      "statement": "a hypothesis served from the knowledge base reports a constant security relevance of 'medium' instead of the mapping's own assessment",
+      "evidence_tests": [
+        "V06-56"
+      ],
+      "observed_statuses": [
+        "FAIL"
+      ],
+      "conclusion": "CONFIRMED",
+      "classifications": [
+        "DESIGN LIMITATION"
+      ]
+    },
+    {
+      "id": "H06-16",
+      "statement": "section 9.2 step 5 is not implemented: confirming a mapping never re-runs normalization or compliance, and nothing downstream reads the knowledge base",
+      "evidence_tests": [
+        "V06-59",
+        "V06-60"
+      ],
+      "observed_statuses": [
+        "FAIL",
+        "FAIL"
+      ],
+      "conclusion": "CONFIRMED",
+      "classifications": [
+        "MISSING"
+      ]
+    },
+    {
+      "id": "H06-17",
+      "statement": "section 15.3 mapping quality scoring (admin confirmations, consistency, age/version history, AI confidence at creation) is not implemented",
+      "evidence_tests": [
+        "V06-62"
+      ],
+      "observed_statuses": [
+        "FAIL"
+      ],
+      "conclusion": "CONFIRMED",
+      "classifications": [
+        "MISSING"
+      ]
+    },
+    {
+      "id": "H06-18",
+      "statement": "AI confidence is computed but never stored, updated or acted on: no confidence field in the schemas, no confidence filter in the API, and no review routing for low confidence (section 14.3.2, 14.1, 15.3)",
+      "evidence_tests": [
+        "V06-63",
+        "V06-64",
+        "V06-65",
+        "V06-89"
+      ],
+      "observed_statuses": [
+        "FAIL",
+        "FAIL",
+        "FAIL",
+        "FAIL"
+      ],
+      "conclusion": "CONFIRMED",
+      "classifications": [
+        "DESIGN LIMITATION",
+        "MISSING"
+      ]
+    },
+    {
+      "id": "H06-19",
+      "statement": "the three knowledge-base implementations drift: they disagree about version content, about what a create records, and about duplicate handling",
+      "evidence_tests": [
+        "V06-68",
+        "V06-69",
+        "V06-72"
+      ],
+      "observed_statuses": [
+        "FAIL",
+        "FAIL",
+        "FAIL"
+      ],
+      "conclusion": "CONFIRMED",
+      "classifications": [
+        "DESIGN LIMITATION"
+      ]
+    },
+    {
+      "id": "H06-20",
+      "statement": "two unrelated classes are both called TrainingMapping (in-memory dataclass and SQLAlchemy model) and are not interchangeable",
+      "evidence_tests": [
+        "V06-74"
+      ],
+      "observed_statuses": [
+        "FAIL"
+      ],
+      "conclusion": "CONFIRMED",
+      "classifications": [
+        "DESIGN LIMITATION"
+      ]
+    },
+    {
+      "id": "H06-21",
+      "statement": "mappings leak across vendors: a row stored for one vendor can answer a query for another vendor or platform",
+      "evidence_tests": [
+        "V06-75",
+        "V06-76",
+        "V06-77",
+        "V06-81"
+      ],
+      "observed_statuses": [
+        "PASS",
+        "PASS",
+        "PASS",
+        "PASS"
+      ],
+      "conclusion": "REJECTED",
+      "classifications": [
+        "CONFIRMED BEHAVIOR"
+      ]
+    },
+    {
+      "id": "H06-22",
+      "statement": "case-variant vendor strings and SQL wildcards in filters change lookup results, including returning a row for a vendor the caller did not name or crashing with MultipleResultsFound",
+      "evidence_tests": [
+        "V06-78",
+        "V06-79",
+        "V06-80"
+      ],
+      "observed_statuses": [
+        "FAIL",
+        "FAIL",
+        "FAIL"
+      ],
+      "conclusion": "CONFIRMED",
+      "classifications": [
+        "BUG",
+        "DESIGN LIMITATION"
+      ]
+    },
+    {
+      "id": "H06-23",
+      "statement": "the knowledge base is not wired into the product: normalization and the semantic analyzer never consult it, and the adaptive engine is only reachable from tests (section 10.6 'Provide lookup for normalization')",
+      "evidence_tests": [
+        "V06-85",
+        "V06-86",
+        "V06-88"
+      ],
+      "observed_statuses": [
+        "FAIL",
+        "FAIL",
+        "FAIL"
+      ],
+      "conclusion": "CONFIRMED",
+      "classifications": [
+        "MISSING"
+      ]
+    },
+    {
+      "id": "H06-24",
+      "statement": "re-analysing after an edit always uses the Cisco IOS parser regardless of the mapping's vendor",
+      "evidence_tests": [
+        "V06-87"
+      ],
+      "observed_statuses": [
+        "FAIL"
+      ],
+      "conclusion": "CONFIRMED",
+      "classifications": [
+        "BUG"
+      ]
+    },
+    {
+      "id": "H06-25",
+      "statement": "stats/list output order is not deterministic (list(set(...)) in memory, func.distinct without ORDER BY in SQL), so identical runs differ",
+      "evidence_tests": [
+        "V06-92"
+      ],
+      "observed_statuses": [
+        "FAIL"
+      ],
+      "conclusion": "CONFIRMED",
+      "classifications": [
+        "BUG"
+      ]
+    },
+    {
+      "id": "H06-26",
+      "statement": "identical operation sequences produce different knowledge-base state",
+      "evidence_tests": [
+        "V06-91",
+        "V06-93"
+      ],
+      "observed_statuses": [
+        "PASS",
+        "PASS"
+      ],
+      "conclusion": "REJECTED",
+      "classifications": [
+        "CONFIRMED BEHAVIOR"
+      ]
+    },
+    {
+      "id": "H06-27",
+      "statement": "KnowledgeBase.create scales quadratically with store size, so large imports stall",
+      "evidence_tests": [
+        "V06-94"
+      ],
+      "observed_statuses": [
+        "FAIL"
+      ],
+      "conclusion": "CONFIRMED",
+      "classifications": [
+        "DESIGN LIMITATION"
+      ]
+    },
+    {
+      "id": "H06-28",
+      "statement": "hostile or degenerate input reaches the database or crashes the caller: NUL bytes, 1 MiB syntax, non-string syntax, negative limit, over-length vendor and wildcard list filters are all unguarded",
+      "evidence_tests": [
+        "V06-97",
+        "V06-98",
+        "V06-99",
+        "V06-101",
+        "V06-102",
+        "V06-103",
+        "V06-105"
+      ],
+      "observed_statuses": [
+        "FAIL",
+        "FAIL",
+        "FAIL",
+        "FAIL",
+        "FAIL",
+        "FAIL",
+        "FAIL"
+      ],
+      "conclusion": "CONFIRMED",
+      "classifications": [
+        "BUG",
+        "DESIGN LIMITATION",
+        "RECOMMENDATION"
+      ]
+    },
+    {
+      "id": "H06-29",
+      "statement": "SQL injection through lookup can extract or destroy data",
+      "evidence_tests": [
+        "V06-100"
+      ],
+      "observed_statuses": [
+        "PASS"
+      ],
+      "conclusion": "REJECTED",
+      "classifications": [
+        "CONFIRMED BEHAVIOR"
+      ]
+    },
+    {
+      "id": "H06-30",
+      "statement": "the section 14.3.5 fallback (serve a hypothesis from the knowledge base without a configured LLM) does not work",
+      "evidence_tests": [
+        "V06-55",
+        "V06-90"
+      ],
+      "observed_statuses": [
+        "PASS",
+        "PASS"
+      ],
+      "conclusion": "REJECTED",
+      "classifications": [
+        "CONFIRMED BEHAVIOR"
+      ]
+    }
+  ],
+  "hypothesis_totals": {
+    "CONFIRMED": 26,
+    "REJECTED": 4
+  },
+  "unreferenced_rows": [
+    "V06-03",
+    "V06-04",
+    "V06-05",
+    "V06-09",
+    "V06-10",
+    "V06-11",
+    "V06-12",
+    "V06-13",
+    "V06-14",
+    "V06-19",
+    "V06-20",
+    "V06-21",
+    "V06-22",
+    "V06-23",
+    "V06-25",
+    "V06-26",
+    "V06-28",
+    "V06-29",
+    "V06-35",
+    "V06-37",
+    "V06-38",
+    "V06-39",
+    "V06-40",
+    "V06-44",
+    "V06-46",
+    "V06-47",
+    "V06-48",
+    "V06-49",
+    "V06-51",
+    "V06-54",
+    "V06-57",
+    "V06-58",
+    "V06-61",
+    "V06-66",
+    "V06-84",
+    "V06-95",
+    "V06-96",
+    "V06-104"
+  ],
+  "dataset": {
+    "engine": "06_knowledge_base",
+    "dataset_root": "C:\\Users\\priye\\Downloads\\SIH Config\\final-dataset",
+    "files_seen": 480,
+    "files_ingested": 479,
+    "caps": {
+      "max_lines_per_file": 120,
+      "max_chars": 200
+    },
+    "pass1_per_file": {
+      "files": 479,
+      "lines_loaded": 31952,
+      "absorbed": 216,
+      "absorbed_exact": 0,
+      "absorbed_fuzzy": 216,
+      "absorption_rate": 0.0068,
+      "fuzzy_absorption_rate": 0.0068,
+      "lookup_exact": 31736,
+      "lookup_collision": 216,
+      "lookup_miss": 0,
+      "collision_rate": 0.0068,
+      "load_ms_sum": 4679.8,
+      "load_ms_max": 37.4,
+      "ms_per_create_max": 0.3113
+    },
+    "pass1_by_label": {
+      "a10": {
+        "files": 3,
+        "lines_loaded": 156,
+        "absorbed": 0,
+        "absorbed_exact": 0,
+        "absorbed_fuzzy": 0,
+        "absorption_rate": 0.0,
+        "fuzzy_absorption_rate": 0.0,
+        "lookup_exact": 156,
+        "lookup_collision": 0,
+        "lookup_miss": 0,
+        "collision_rate": 0.0,
+        "load_ms_sum": 21.7,
+        "load_ms_max": 20.0,
+        "ms_per_create_max": 0.1665
+      },
+      "arista": {
+        "files": 38,
+        "lines_loaded": 2963,
+        "absorbed": 1,
+        "absorbed_exact": 0,
+        "absorbed_fuzzy": 1,
+        "absorption_rate": 0.0003,
+        "fuzzy_absorption_rate": 0.0003,
+        "lookup_exact": 2962,
+        "lookup_collision": 1,
+        "lookup_miss": 0,
+        "collision_rate": 0.0003,
+        "load_ms_sum": 448.9,
+        "load_ms_max": 23.7,
+        "ms_per_create_max": 0.2063
+      },
+      "cisco": {
+        "files": 251,
+        "lines_loaded": 16798,
+        "absorbed": 85,
+        "absorbed_exact": 0,
+        "absorbed_fuzzy": 85,
+        "absorption_rate": 0.0051,
+        "fuzzy_absorption_rate": 0.0051,
+        "lookup_exact": 16713,
+        "lookup_collision": 85,
+        "lookup_miss": 0,
+        "collision_rate": 0.0051,
+        "load_ms_sum": 2504.4,
+        "load_ms_max": 30.9,
+        "ms_per_create_max": 0.2572
+      },
+      "f5": {
+        "files": 11,
+        "lines_loaded": 500,
+        "absorbed": 0,
+        "absorbed_exact": 0,
+        "absorbed_fuzzy": 0,
+        "absorption_rate": 0.0,
+        "fuzzy_absorption_rate": 0.0,
+        "lookup_exact": 500,
+        "lookup_collision": 0,
+        "lookup_miss": 0,
+        "collision_rate": 0.0,
+        "load_ms_sum": 49.8,
+        "load_ms_max": 20.7,
+        "ms_per_create_max": 0.1728
+      },
+      "fortinet": {
+        "files": 30,
+        "lines_loaded": 2061,
+        "absorbed": 19,
+        "absorbed_exact": 0,
+        "absorbed_fuzzy": 19,
+        "absorption_rate": 0.0092,
+        "fuzzy_absorption_rate": 0.0092,
+        "lookup_exact": 2042,
+        "lookup_collision": 19,
+        "lookup_miss": 0,
+        "collision_rate": 0.0092,
+        "load_ms_sum": 354.2,
+        "load_ms_max": 37.4,
+        "ms_per_create_max": 0.3113
+      },
+      "frr": {
+        "files": 63,
+        "lines_loaded": 1868,
+        "absorbed": 4,
+        "absorbed_exact": 0,
+        "absorbed_fuzzy": 4,
+        "absorption_rate": 0.0021,
+        "fuzzy_absorption_rate": 0.0021,
+        "lookup_exact": 1864,
+        "lookup_collision": 4,
+        "lookup_miss": 0,
+        "collision_rate": 0.0021,
+        "load_ms_sum": 135.0,
+        "load_ms_max": 20.9,
+        "ms_per_create_max": 0.2116
+      },
+      "juniper": {
+        "files": 41,
+        "lines_loaded": 3319,
+        "absorbed": 66,
+        "absorbed_exact": 0,
+        "absorbed_fuzzy": 66,
+        "absorption_rate": 0.0199,
+        "fuzzy_absorption_rate": 0.0199,
+        "lookup_exact": 3253,
+        "lookup_collision": 66,
+        "lookup_miss": 0,
+        "collision_rate": 0.0199,
+        "load_ms_sum": 496.0,
+        "load_ms_max": 26.9,
+        "ms_per_create_max": 0.2343
+      },
+      "napalm": {
+        "files": 4,
+        "lines_loaded": 152,
+        "absorbed": 0,
+        "absorbed_exact": 0,
+        "absorbed_fuzzy": 0,
+        "absorption_rate": 0.0,
+        "fuzzy_absorption_rate": 0.0,
+        "lookup_exact": 152,
+        "lookup_collision": 0,
+        "lookup_miss": 0,
+        "collision_rate": 0.0,
+        "load_ms_sum": 9.9,
+        "load_ms_max": 3.1,
+        "ms_per_create_max": 0.0706
+      },
+      "paloalto": {
+        "files": 38,
+        "lines_loaded": 4135,
+        "absorbed": 41,
+        "absorbed_exact": 0,
+        "absorbed_fuzzy": 41,
+        "absorption_rate": 0.0099,
+        "fuzzy_absorption_rate": 0.0099,
+        "lookup_exact": 4094,
+        "lookup_collision": 41,
+        "lookup_miss": 0,
+        "collision_rate": 0.0099,
+        "load_ms_sum": 659.8,
+        "load_ms_max": 36.4,
+        "ms_per_create_max": 0.3031
+      }
+    },
+    "pass1_worst_absorption": [
+      {
+        "relpath": "Juniper\\Firewalls\\SRX\\juniper_firewall",
+        "fuzzy_absorbed": 26,
+        "exact_absorbed": 0,
+        "loaded": 46,
+        "fuzzy_rate": 0.5652
+      },
+      {
+        "relpath": "Juniper\\Switches\\QFX\\juniper_vlan",
+        "fuzzy_absorbed": 2,
+        "exact_absorbed": 0,
+        "loaded": 10,
+        "fuzzy_rate": 0.2
+      },
+      {
+        "relpath": "Cisco\\MultiAS-Lab\\mpls-infrastructure\\bgp-config.j2",
+        "fuzzy_absorbed": 8,
+        "exact_absorbed": 0,
+        "loaded": 50,
+        "fuzzy_rate": 0.16
+      },
+      {
+        "relpath": "Cisco\\Routers\\MPLS\\bgp-config.j2",
+        "fuzzy_absorbed": 8,
+        "exact_absorbed": 0,
+        "loaded": 50,
+        "fuzzy_rate": 0.16
+      },
+      {
+        "relpath": "Juniper\\Firewalls\\SRX\\configs_junos-srx-1.cfg",
+        "fuzzy_absorbed": 15,
+        "exact_absorbed": 0,
+        "loaded": 115,
+        "fuzzy_rate": 0.1304
+      },
+      {
+        "relpath": "Juniper\\Firewalls\\SRX\\juniper_syslog",
+        "fuzzy_absorbed": 11,
+        "exact_absorbed": 0,
+        "loaded": 92,
+        "fuzzy_rate": 0.1196
+      },
+      {
+        "relpath": "FRR\\Routers\\SONiC\\README.md",
+        "fuzzy_absorbed": 2,
+        "exact_absorbed": 0,
+        "loaded": 17,
+        "fuzzy_rate": 0.1176
+      },
+      {
+        "relpath": "Cisco\\MultiAS-Lab\\mpls-infrastructure\\nodes.j2",
+        "fuzzy_absorbed": 4,
+        "exact_absorbed": 0,
+        "loaded": 48,
+        "fuzzy_rate": 0.0833
+      },
+      {
+        "relpath": "Cisco\\MultiAS-Lab\\mpls-infrastructure\\vpnv4-config.j2",
+        "fuzzy_absorbed": 2,
+        "exact_absorbed": 0,
+        "loaded": 24,
+        "fuzzy_rate": 0.0833
+      },
+      {
+        "relpath": "Cisco\\Routers\\MPLS\\nodes.j2",
+        "fuzzy_absorbed": 4,
+        "exact_absorbed": 0,
+        "loaded": 48,
+        "fuzzy_rate": 0.0833
+      }
+    ],
+    "pass1_slowest_per_create": [
+      {
+        "relpath": "Fortinet\\Firewalls\\FortiGate\\U_FN_FortiGate_Firewall_NDM_STIG_V1R4_Manual-xccdf.xml",
+        "ms_per_create": 0.3113,
+        "kb_size": 112
+      },
+      {
+        "relpath": "Fortinet\\Firewalls\\FortiGate\\U_FN_FortiGate_Firewall_STIG_V1R3_Manual-xccdf.xml",
+        "ms_per_create": 0.3056,
+        "kb_size": 111
+      },
+      {
+        "relpath": "PaloAlto\\Firewalls\\Panorama\\template_panorama_set_commands_iron_skillet_panorama_full.conf",
+        "ms_per_create": 0.3031,
+        "kb_size": 114
+      },
+      {
+        "relpath": "PaloAlto\\Firewalls\\PAN-OS\\panos_v10.1\\iron_skillet_panorama_set-commands.conf",
+        "ms_per_create": 0.2991,
+        "kb_size": 114
+      },
+      {
+        "relpath": "PaloAlto\\Firewalls\\PAN-OS\\PAN-OS\\iron-skillet-panorama\\iron_skillet_panorama_set-commands.conf",
+        "ms_per_create": 0.2846,
+        "kb_size": 114
+      },
+      {
+        "relpath": "PaloAlto\\Firewalls\\PAN-OS\\PAN-OS\\iron-skillet-panos\\iron_skillet_panos_set-commands.conf",
+        "ms_per_create": 0.283,
+        "kb_size": 118
+      },
+      {
+        "relpath": "PaloAlto\\Firewalls\\PAN-OS\\panos_v10.1\\iron_skillet_panos_set-commands.conf",
+        "ms_per_create": 0.2773,
+        "kb_size": 118
+      },
+      {
+        "relpath": "PaloAlto\\Firewalls\\Panorama\\sample-set-commands_panorama_iron_skillet_panorama_full.conf",
+        "ms_per_create": 0.269,
+        "kb_size": 114
+      },
+      {
+        "relpath": "Cisco\\Routers\\IOS-XE\\csr1000v-running-config.txt",
+        "ms_per_create": 0.2572,
+        "kb_size": 120
+      },
+      {
+        "relpath": "Cisco\\Switches\\Nexus\\nxos-connection-log.txt",
+        "ms_per_create": 0.2398,
+        "kb_size": 120
+      }
+    ],
+    "pass2_cross_file": [
+      {
+        "pair": "Cisco\\MultiAS-Lab\\drift-snapshot\\as2border1.cfg -> Cisco\\MultiAS-Lab\\example-bgp\\as2border1.cfg",
+        "label": "cisco",
+        "stored_from_file_a": 120,
+        "queries_from_file_b": 120,
+        "exact": 120,
+        "collision": 0,
+        "miss": 0,
+        "collision_rate": 0.0,
+        "b_lines_absorbed_into_a_rows": 120,
+        "b_absorbed_exact": 120,
+        "b_absorbed_fuzzy": 0,
+        "b_absorption_rate": 1.0
+      },
+      {
+        "pair": "Juniper\\Routers\\MX-Series\\atla.conf -> Juniper\\Routers\\MX-Series\\chic.conf",
+        "label": "juniper",
+        "stored_from_file_a": 120,
+        "queries_from_file_b": 120,
+        "exact": 82,
+        "collision": 0,
+        "miss": 38,
+        "collision_rate": 0.0,
+        "b_lines_absorbed_into_a_rows": 82,
+        "b_absorbed_exact": 82,
+        "b_absorbed_fuzzy": 0,
+        "b_absorption_rate": 0.6833
+      },
+      {
+        "pair": "Fortinet\\Firewalls\\FortiGate\\4D-Demo\\4D-NGFW_NGFW-Demo-Config_NGFW_Demo.txt -> Fortinet\\Firewalls\\FortiGate\\4D-Demo\\4D-Switching_LAN_Edge_Demo.txt",
+        "label": "fortinet",
+        "stored_from_file_a": 120,
+        "queries_from_file_b": 120,
+        "exact": 14,
+        "collision": 0,
+        "miss": 106,
+        "collision_rate": 0.0,
+        "b_lines_absorbed_into_a_rows": 14,
+        "b_absorbed_exact": 14,
+        "b_absorbed_fuzzy": 0,
+        "b_absorption_rate": 0.1167
+      }
+    ],
+    "pass3_isolation": {
+      "pass": 3,
+      "relpath": "cross-vendor isolation",
+      "dir_label": "cisco,juniper,fortinet,paloalto",
+      "vendor": "all",
+      "platform": "all",
+      "lines_eligible": 136,
+      "lines_loaded": 136,
+      "absorbed": 0,
+      "absorption_rate": 0.0,
+      "lookup_exact": 0,
+      "lookup_collision": 0,
+      "lookup_miss": 0,
+      "lookup_ms": 18.725,
+      "note": "408 queries of a stored line under a DIFFERENT vendor label; collision column = isolation breaches",
+      "kb_size": 136
+    },
+    "elapsed_s": 5.48
+  },
+  "categories": {
+    "A": "spec schema / structure conformance (section 15.1 SQL, section 12 interface)",
+    "B": "functional - in-memory KnowledgeBase contract (app/ai/knowledge_base.py)",
+    "C": "functional - KnowledgeBaseRepository contract (app/repositories/knowledge_base.py)",
+    "D": "functional - REST API contract (app/api/v1/training.py)",
+    "E": "workflow contract (section 9.2 loop, section 14.3 AI safety, section 15.3)",
+    "F": "drift: in-memory twin vs repository vs REST API",
+    "G": "SEPARATE RECORD - wrong/unsupported-vendor consequences (methodology rule)",
+    "H": "semantic fidelity of stored meanings",
+    "I": "integration with the rest of the pipeline (section 9.2 / section 10.6 duties)",
+    "J": "determinism",
+    "K": "performance (measurement only)",
+    "L": "hostile and boundary input"
+  }
+}

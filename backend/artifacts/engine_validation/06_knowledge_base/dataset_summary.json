@@ -1,0 +1,454 @@
+{
+  "engine": "06_knowledge_base",
+  "contract_version": "E06",
+  "dataset_root": "C:\\Users\\priye\\Downloads\\SIH Config\\final-dataset",
+  "files_seen": 480,
+  "files_ingested": 479,
+  "caps": {
+    "max_lines_per_file": 120,
+    "max_chars": 200
+  },
+  "model_path_policy": "resolved by the real deterministic normalizer; unresolvable lines recorded as unmapped, never invented",
+  "contract_checks": [
+    {
+      "id": "C1",
+      "name": "lookup is total (hostile types are a miss)",
+      "probes": 27,
+      "violations": 0,
+      "detail": []
+    },
+    {
+      "id": "C2",
+      "name": "exact identity (no wrong-meaning absorption)",
+      "probes": 25,
+      "violations": 0,
+      "detail": []
+    },
+    {
+      "id": "C3",
+      "name": "trust threshold honoured (0.7)",
+      "probes": 120,
+      "violations": 0,
+      "detail": []
+    },
+    {
+      "id": "C4",
+      "name": "EDIT is confirmation/confidence neutral",
+      "probes": 20,
+      "violations": 0,
+      "detail": []
+    },
+    {
+      "id": "C5",
+      "name": "REJECT retains + unconfirms + versions the row",
+      "probes": 10,
+      "violations": 0,
+      "detail": []
+    },
+    {
+      "id": "C6",
+      "name": "every row has a valid model path and a version record",
+      "probes": 120,
+      "violations": 0,
+      "detail": []
+    },
+    {
+      "id": "C7",
+      "name": "cross-vendor isolation (no bleed between vendors)",
+      "probes": 114,
+      "violations": 0,
+      "detail": []
+    },
+    {
+      "id": "C8",
+      "name": "deterministic list order across independent builds",
+      "probes": 2,
+      "violations": 0,
+      "detail": []
+    },
+    {
+      "id": "C9",
+      "name": "zero fuzzy absorption corpus-wide",
+      "probes": 20420,
+      "violations": 0,
+      "detail": []
+    },
+    {
+      "id": "C10",
+      "name": "zero wrong-meaning lookups corpus-wide (pass 1/2)",
+      "probes": 20420,
+      "violations": 0,
+      "detail": []
+    }
+  ],
+  "contract_violations_total": 0,
+  "contract_verdict": "PASS",
+  "pass1_per_file": {
+    "files": 479,
+    "lines_mapped": 20420,
+    "lines_unmapped": 11532,
+    "rows_created": 20420,
+    "absorbed": 0,
+    "absorbed_exact": 0,
+    "absorbed_fuzzy": 0,
+    "absorption_rate": 0.0,
+    "fuzzy_absorption_rate": 0.0,
+    "lookup_exact": 20420,
+    "lookup_collision": 0,
+    "lookup_miss": 0,
+    "collision_rate": 0.0,
+    "load_ms_sum": 2876.4,
+    "load_ms_max": 28.0,
+    "ms_per_create_max": 0.2596
+  },
+  "pass1_by_label": {
+    "a10": {
+      "files": 3,
+      "lines_mapped": 0,
+      "lines_unmapped": 156,
+      "rows_created": 0,
+      "absorbed": 0,
+      "absorbed_exact": 0,
+      "absorbed_fuzzy": 0,
+      "absorption_rate": 0.0,
+      "fuzzy_absorption_rate": 0.0,
+      "lookup_exact": 0,
+      "lookup_collision": 0,
+      "lookup_miss": 0,
+      "collision_rate": 0.0,
+      "load_ms_sum": 0,
+      "load_ms_max": 0,
+      "ms_per_create_max": 0
+    },
+    "arista": {
+      "files": 38,
+      "lines_mapped": 0,
+      "lines_unmapped": 2963,
+      "rows_created": 0,
+      "absorbed": 0,
+      "absorbed_exact": 0,
+      "absorbed_fuzzy": 0,
+      "absorption_rate": 0.0,
+      "fuzzy_absorption_rate": 0.0,
+      "lookup_exact": 0,
+      "lookup_collision": 0,
+      "lookup_miss": 0,
+      "collision_rate": 0.0,
+      "load_ms_sum": 0,
+      "load_ms_max": 0,
+      "ms_per_create_max": 0
+    },
+    "cisco": {
+      "files": 251,
+      "lines_mapped": 16746,
+      "lines_unmapped": 52,
+      "rows_created": 16746,
+      "absorbed": 0,
+      "absorbed_exact": 0,
+      "absorbed_fuzzy": 0,
+      "absorption_rate": 0.0,
+      "fuzzy_absorption_rate": 0.0,
+      "lookup_exact": 16746,
+      "lookup_collision": 0,
+      "lookup_miss": 0,
+      "collision_rate": 0.0,
+      "load_ms_sum": 2350.4,
+      "load_ms_max": 28.0,
+      "ms_per_create_max": 0.2596
+    },
+    "f5": {
+      "files": 11,
+      "lines_mapped": 0,
+      "lines_unmapped": 500,
+      "rows_created": 0,
+      "absorbed": 0,
+      "absorbed_exact": 0,
+      "absorbed_fuzzy": 0,
+      "absorption_rate": 0.0,
+      "fuzzy_absorption_rate": 0.0,
+      "lookup_exact": 0,
+      "lookup_collision": 0,
+      "lookup_miss": 0,
+      "collision_rate": 0.0,
+      "load_ms_sum": 0,
+      "load_ms_max": 0,
+      "ms_per_create_max": 0
+    },
+    "fortinet": {
+      "files": 30,
+      "lines_mapped": 430,
+      "lines_unmapped": 1631,
+      "rows_created": 430,
+      "absorbed": 0,
+      "absorbed_exact": 0,
+      "absorbed_fuzzy": 0,
+      "absorption_rate": 0.0,
+      "fuzzy_absorption_rate": 0.0,
+      "lookup_exact": 430,
+      "lookup_collision": 0,
+      "lookup_miss": 0,
+      "collision_rate": 0.0,
+      "load_ms_sum": 51.4,
+      "load_ms_max": 6.0,
+      "ms_per_create_max": 0.1775
+    },
+    "frr": {
+      "files": 63,
+      "lines_mapped": 0,
+      "lines_unmapped": 1868,
+      "rows_created": 0,
+      "absorbed": 0,
+      "absorbed_exact": 0,
+      "absorbed_fuzzy": 0,
+      "absorption_rate": 0.0,
+      "fuzzy_absorption_rate": 0.0,
+      "lookup_exact": 0,
+      "lookup_collision": 0,
+      "lookup_miss": 0,
+      "collision_rate": 0.0,
+      "load_ms_sum": 0,
+      "load_ms_max": 0,
+      "ms_per_create_max": 0
+    },
+    "juniper": {
+      "files": 41,
+      "lines_mapped": 3244,
+      "lines_unmapped": 75,
+      "rows_created": 3244,
+      "absorbed": 0,
+      "absorbed_exact": 0,
+      "absorbed_fuzzy": 0,
+      "absorption_rate": 0.0,
+      "fuzzy_absorption_rate": 0.0,
+      "lookup_exact": 3244,
+      "lookup_collision": 0,
+      "lookup_miss": 0,
+      "collision_rate": 0.0,
+      "load_ms_sum": 474.6,
+      "load_ms_max": 21.4,
+      "ms_per_create_max": 0.1781
+    },
+    "napalm": {
+      "files": 4,
+      "lines_mapped": 0,
+      "lines_unmapped": 152,
+      "rows_created": 0,
+      "absorbed": 0,
+      "absorbed_exact": 0,
+      "absorbed_fuzzy": 0,
+      "absorption_rate": 0.0,
+      "fuzzy_absorption_rate": 0.0,
+      "lookup_exact": 0,
+      "lookup_collision": 0,
+      "lookup_miss": 0,
+      "collision_rate": 0.0,
+      "load_ms_sum": 0,
+      "load_ms_max": 0,
+      "ms_per_create_max": 0
+    },
+    "paloalto": {
+      "files": 38,
+      "lines_mapped": 0,
+      "lines_unmapped": 4135,
+      "rows_created": 0,
+      "absorbed": 0,
+      "absorbed_exact": 0,
+      "absorbed_fuzzy": 0,
+      "absorption_rate": 0.0,
+      "fuzzy_absorption_rate": 0.0,
+      "lookup_exact": 0,
+      "lookup_collision": 0,
+      "lookup_miss": 0,
+      "collision_rate": 0.0,
+      "load_ms_sum": 0,
+      "load_ms_max": 0,
+      "ms_per_create_max": 0
+    }
+  },
+  "pass1_worst_absorption": [
+    {
+      "relpath": "A10\\LoadBalancers\\ACOS\\lb42.cfg",
+      "fuzzy_absorbed": 0,
+      "exact_absorbed": 0,
+      "loaded": 0,
+      "fuzzy_rate": 0.0
+    },
+    {
+      "relpath": "A10\\LoadBalancers\\ACOS\\metadata.yaml",
+      "fuzzy_absorbed": 0,
+      "exact_absorbed": 0,
+      "loaded": 0,
+      "fuzzy_rate": 0.0
+    },
+    {
+      "relpath": "A10\\LoadBalancers\\ACOS\\README.md",
+      "fuzzy_absorbed": 0,
+      "exact_absorbed": 0,
+      "loaded": 0,
+      "fuzzy_rate": 0.0
+    },
+    {
+      "relpath": "Arista\\Switches\\EOS\\arista_acl",
+      "fuzzy_absorbed": 0,
+      "exact_absorbed": 0,
+      "loaded": 0,
+      "fuzzy_rate": 0.0
+    },
+    {
+      "relpath": "Arista\\Switches\\EOS\\arista_bgp",
+      "fuzzy_absorbed": 0,
+      "exact_absorbed": 0,
+      "loaded": 0,
+      "fuzzy_rate": 0.0
+    },
+    {
+      "relpath": "Arista\\Switches\\EOS\\arista_bgp_asn",
+      "fuzzy_absorbed": 0,
+      "exact_absorbed": 0,
+      "loaded": 0,
+      "fuzzy_rate": 0.0
+    },
+    {
+      "relpath": "Arista\\Switches\\EOS\\arista_misc",
+      "fuzzy_absorbed": 0,
+      "exact_absorbed": 0,
+      "loaded": 0,
+      "fuzzy_rate": 0.0
+    },
+    {
+      "relpath": "Arista\\Switches\\EOS\\arista_nat",
+      "fuzzy_absorbed": 0,
+      "exact_absorbed": 0,
+      "loaded": 0,
+      "fuzzy_rate": 0.0
+    },
+    {
+      "relpath": "Arista\\Switches\\EOS\\arista_ospf",
+      "fuzzy_absorbed": 0,
+      "exact_absorbed": 0,
+      "loaded": 0,
+      "fuzzy_rate": 0.0
+    },
+    {
+      "relpath": "Arista\\Switches\\EOS\\DC1-BL1A.cfg",
+      "fuzzy_absorbed": 0,
+      "exact_absorbed": 0,
+      "loaded": 0,
+      "fuzzy_rate": 0.0
+    }
+  ],
+  "pass1_slowest_per_create": [
+    {
+      "relpath": "Cisco\\MultiAS-Lab\\forwarding-change-validation\\README.md",
+      "ms_per_create": 0.2596,
+      "kb_size": 16
+    },
+    {
+      "relpath": "Cisco\\MultiAS-Lab\\pybatfish-test-snapshots\\h1.cfg",
+      "ms_per_create": 0.2399,
+      "kb_size": 1
+    },
+    {
+      "relpath": "Cisco\\MultiAS-Lab\\PublicRepos\\network-labs\\07-EIGRP_Enterprise-EIGRP-Multi-Path-Routing_configs_R4.txt",
+      "ms_per_create": 0.2337,
+      "kb_size": 120
+    },
+    {
+      "relpath": "Cisco\\MultiAS-Lab\\PublicRepos\\network-labs\\08-OSPF_Enterprise-Multi-Area-OSPF_configs_R4.txt",
+      "ms_per_create": 0.202,
+      "kb_size": 120
+    },
+    {
+      "relpath": "Cisco\\Routers\\IOS-XR\\iosxr-connection-log.txt",
+      "ms_per_create": 0.1902,
+      "kb_size": 73
+    },
+    {
+      "relpath": "Cisco\\MultiAS-Lab\\forwarding-change-validation\\base\\border2.cfg",
+      "ms_per_create": 0.1895,
+      "kb_size": 88
+    },
+    {
+      "relpath": "Cisco\\MultiAS-Lab\\route-analysis\\border2.cfg",
+      "ms_per_create": 0.1827,
+      "kb_size": 94
+    },
+    {
+      "relpath": "Cisco\\MultiAS-Lab\\PublicRepos\\network-labs\\05-Static-Routing_Multi-Hop-Static-Routing_configs_R0.txt",
+      "ms_per_create": 0.1807,
+      "kb_size": 39
+    },
+    {
+      "relpath": "Cisco\\MultiAS-Lab\\PublicRepos\\network-labs\\10-ACL_configs_IT.txt",
+      "ms_per_create": 0.1786,
+      "kb_size": 45
+    },
+    {
+      "relpath": "Juniper\\Routers\\T-Series\\wash.conf",
+      "ms_per_create": 0.1781,
+      "kb_size": 120
+    }
+  ],
+  "pass2_cross_file": [
+    {
+      "pair": "Cisco\\MultiAS-Lab\\drift-snapshot\\as2border1.cfg -> Cisco\\MultiAS-Lab\\example-bgp\\as2border1.cfg",
+      "label": "cisco",
+      "stored_from_file_a": 120,
+      "queries_from_file_b": 120,
+      "exact": 120,
+      "collision": 0,
+      "miss": 0,
+      "collision_rate": 0.0,
+      "b_lines_absorbed_into_a_rows": 120,
+      "b_absorbed_exact": 120,
+      "b_absorbed_fuzzy": 0,
+      "b_absorption_rate": 1.0
+    },
+    {
+      "pair": "Juniper\\Routers\\MX-Series\\atla.conf -> Juniper\\Routers\\MX-Series\\chic.conf",
+      "label": "juniper",
+      "stored_from_file_a": 120,
+      "queries_from_file_b": 120,
+      "exact": 82,
+      "collision": 0,
+      "miss": 38,
+      "collision_rate": 0.0,
+      "b_lines_absorbed_into_a_rows": 82,
+      "b_absorbed_exact": 82,
+      "b_absorbed_fuzzy": 0,
+      "b_absorption_rate": 0.6833
+    },
+    {
+      "pair": "Fortinet\\Firewalls\\FortiGate\\4D-Demo\\4D-NGFW_NGFW-Demo-Config_NGFW_Demo.txt -> Fortinet\\Firewalls\\FortiGate\\4D-Demo\\4D-Switching_LAN_Edge_Demo.txt",
+      "label": "fortinet",
+      "stored_from_file_a": 41,
+      "queries_from_file_b": 28,
+      "exact": 8,
+      "collision": 0,
+      "miss": 20,
+      "collision_rate": 0.0,
+      "b_lines_absorbed_into_a_rows": 8,
+      "b_absorbed_exact": 8,
+      "b_absorbed_fuzzy": 0,
+      "b_absorption_rate": 0.2857
+    }
+  ],
+  "pass3_isolation": {
+    "pass": 3,
+    "relpath": "cross-vendor isolation",
+    "dir_label": "cisco,juniper,fortinet,paloalto",
+    "vendor": "all",
+    "platform": "all",
+    "lines_eligible": 38,
+    "lines_loaded": 38,
+    "absorbed": 0,
+    "absorption_rate": 0.0,
+    "lookup_exact": 0,
+    "lookup_collision": 0,
+    "lookup_miss": 0,
+    "lookup_ms": 0.068,
+    "note": "114 queries of a stored line under a DIFFERENT vendor label; collision column = isolation breaches",
+    "kb_size": 38
+  },
+  "elapsed_s": 8.29
+}

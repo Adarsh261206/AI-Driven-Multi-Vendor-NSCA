@@ -15,7 +15,7 @@ from app.ai.validators import (
     OutputValidator, AIHypothesis, SemanticSection, SecurityRelevance,
 )
 from app.ai.prompts import build_hypothesis_prompt, SYSTEM_PROMPT
-from app.ai.providers import AIRequest, AIError
+from app.ai.providers import AIRequest
 
 
 @dataclass
@@ -89,6 +89,7 @@ class SemanticAnalyzer:
         vendor: str,
         platform: str,
         query_ai: bool = True,
+        knowledge_base: Any = None,
     ) -> SemanticAnalysis:
         """
         Analyze configuration parse results
@@ -98,6 +99,9 @@ class SemanticAnalyzer:
             vendor: Device vendor
             platform: Device platform
             query_ai: Whether to query AI for unknowns
+            knowledge_base: Optional knowledge base (E06 F1, spec 9.2
+                steps 1-2). Confirmed, trusted mappings resolve unknowns
+                without AI; anything else stays unresolved.
             
         Returns:
             SemanticAnalysis with known/unknown sections
@@ -108,9 +112,16 @@ class SemanticAnalyzer:
             interpretations=[],
         )
         
-        # Process parse tree
-        for node in parse_result.parse_tree:
-            self._process_node(node, [], analysis, vendor, platform)
+        # Process parse tree (iterative: safe for deeply nested trees)
+        stack: list[tuple[Any, list[str]]] = [
+            (node, []) for node in reversed(parse_result.parse_tree)]
+        while stack:
+            node, path = stack.pop()
+            self._process_node(node, path, analysis, vendor, platform)
+            current_path = path + [
+                f"{node.key}:{node.value}" if node.value else node.key]
+            stack.extend(
+                (child, current_path) for child in reversed(node.children))
         
         # Process unknown sections from parser
         for unknown in parse_result.unknown_sections:
@@ -121,11 +132,60 @@ class SemanticAnalyzer:
             )
             analysis.unknown_sections.append(unknown_section)
         
+        # E06 F1 (spec 9.2 steps 1-2): consult the knowledge base for
+        # unknowns before spending AI calls. Only confirmed mappings at or
+        # above the trust threshold resolve a section; suggestions and
+        # low-confidence rows never become authoritative here.
+        if knowledge_base is not None:
+            self._apply_kb_mappings(analysis, vendor, platform,
+                                    knowledge_base)
+        
         # Query AI for unknowns if enabled
         if query_ai and analysis.unknown_sections and self.ai_client:
             await self._query_ai_for_unknowns(analysis, vendor, platform)
         
         return analysis
+
+    def _apply_kb_mappings(
+        self,
+        analysis: SemanticAnalysis,
+        vendor: str,
+        platform: str,
+        knowledge_base: Any,
+    ) -> None:
+        """Resolve unknown sections from confirmed, trusted KB mappings."""
+        from app.ai import kb_domain as dom
+
+        for unknown in analysis.unknown_sections:
+            if unknown.kb_mapping_id is not None:
+                continue
+            try:
+                hit = knowledge_base.lookup(
+                    vendor=vendor,
+                    platform=platform,
+                    raw_syntax=unknown.raw_text,
+                    require_confirmed=True,
+                )
+            except Exception as exc:  # noqa: BLE001 - KB must not break analysis
+                analysis.ai_errors.append(
+                    f"KB lookup failed for '{unknown.raw_text[:50]}': "
+                    f"{type(exc).__name__}")
+                continue
+            if hit is None:
+                continue
+            if not dom.is_trusted(admin_confirmed=hit.admin_confirmed,
+                                  confidence=hit.confidence):
+                continue
+            unknown.kb_mapping_id = hit.id
+            analysis.interpretations.append(SemanticSection(
+                path=".".join(unknown.path),
+                meaning=hit.semantic_meaning,
+                security_relevance=SecurityRelevance(
+                    dom.relevance_for_path(hit.universal_model_path)),
+                confidence=hit.confidence,
+                universal_model_path=hit.universal_model_path,
+                explanation=f"Confirmed knowledge-base mapping {hit.id}",
+            ))
     
     def _process_node(
         self,
@@ -135,9 +195,11 @@ class SemanticAnalyzer:
         vendor: str,
         platform: str,
     ) -> None:
-        """Process a parse tree node"""
+        """Process a single parse tree node (non-recursive; the caller in
+        analyze() drives traversal iteratively so deep trees cannot exhaust
+        the stack)."""
         current_path = path + [f"{node.key}:{node.value}" if node.value else node.key]
-        
+
         # Add to known sections
         analysis.known_sections.append({
             "path": current_path,
@@ -145,10 +207,6 @@ class SemanticAnalyzer:
             "value": node.value,
             "children_count": len(node.children),
         })
-        
-        # Process children
-        for child in node.children:
-            self._process_node(child, current_path, analysis, vendor, platform)
     
     async def _query_ai_for_unknowns(
         self,
@@ -158,6 +216,8 @@ class SemanticAnalyzer:
     ) -> None:
         """Query AI for interpretations of unknown sections"""
         for unknown in analysis.unknown_sections:
+            if unknown.kb_mapping_id is not None:
+                continue  # resolved from the knowledge base; no AI needed
             try:
                 hypothesis = await self._generate_hypothesis(
                     raw_syntax=unknown.raw_text,

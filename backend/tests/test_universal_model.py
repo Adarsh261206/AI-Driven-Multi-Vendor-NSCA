@@ -2,7 +2,6 @@
 Unit Tests for Universal Security Model
 """
 
-import pytest
 from app.engines.universal_model import UniversalSecurityModel, SecurityRelevance
 
 

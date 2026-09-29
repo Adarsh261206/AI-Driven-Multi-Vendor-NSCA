@@ -4,7 +4,6 @@ Vertical Slice Integration Test
 Tests the complete flow: UPLOAD → VALIDATE → DETECT → PARSE → NORMALIZE → API RESPONSE
 """
 
-import pytest
 from app.engines.validation import ConfigurationValidator
 from app.engines.detection import VendorDetector
 from app.engines.parsing.cisco import CiscoIOSParser
@@ -126,52 +125,55 @@ end"""
     
     def test_fortinet_full_pipeline(self):
         """Test complete pipeline with Fortinet configuration"""
+        # E02 FIX (F5): this fixture was 100% '#'-commented, which the
+        # substantive-content gate now rejects; uncommented to restore the
+        # full-pipeline intent (verified: valid=True, vendor=fortinet).
         config_content = """#config-global
-#config system global
-#  set hostname "FortiGate-60E"
-#end
-#
-#config system interface
-#  edit "wan1"
-#    set mode static
-#    set ip 203.0.113.2 255.255.255.252
-#  next
-#  edit "lan"
-#    set ip 192.168.1.1 255.255.255.0
-#  next
-#end
-#
-#config firewall policy
-#  edit 1
-#    set srcintf "lan"
-#    set dstintf "wan1"
-#    set srcaddr "all"
-#    set dstaddr "all"
-#    set action accept
-#    set schedule "always"
-#    set service "HTTP" "HTTPS"
-#  next
-#end
-#
-#config system ntp
-#  set type custom
-#  set ntpserver "10.0.0.1"
-#end
-#
-#config log setting
-#  set status enable
-#end
-#
-#config system snmp-community
-#  edit 1
-#    set query-v2c-status enable
-#  next
-#end"""
+config system global
+  set hostname "FortiGate-60E"
+end
+
+config system interface
+  edit "wan1"
+    set mode static
+    set ip 203.0.113.2 255.255.255.252
+  next
+  edit "lan"
+    set ip 192.168.1.1 255.255.255.0
+  next
+end
+
+config firewall policy
+  edit 1
+    set srcintf "lan"
+    set dstintf "wan1"
+    set srcaddr "all"
+    set dstaddr "all"
+    set action accept
+    set schedule "always"
+    set service "HTTP" "HTTPS"
+  next
+end
+
+config system ntp
+  set type custom
+  set ntpserver "10.0.0.1"
+end
+
+config log setting
+  set status enable
+end
+
+config system snmp-community
+  edit 1
+    set query-v2c-status enable
+  next
+end"""
         
         # Step 1: Validate
         validation_result = self.validator.validate(config_content)
         assert validation_result.is_valid is True
-        print(f"✓ Validation passed")
+        print("✓ Validation passed")
         
         # Step 2: Detect vendor
         detection_result = self.detector.detect(config_content)
@@ -191,48 +193,51 @@ end"""
     
     def test_juniper_full_pipeline(self):
         """Test complete pipeline with Juniper configuration"""
-        config_content = """## system {
-##     host-name EdgeRouter-Juniper;
-##     services {
-##         ssh;
-##         telnet;
-##     }
-##     syslog {
-##         user * {
-##             interactive-commands any;
-##         }
-##     }
-## }
-## interfaces {
-##     ge-0/0/0 {
-##         unit 0 {
-##             family inet {
-##                 address 203.0.113.3/30;
-##             }
-##         }
-##     }
-##     ge-0/0/1 {
-##         unit 0 {
-##             family inet {
-##                 address 192.168.1.1/24;
-##             }
-##         }
-##     }
-## }
-## protocols {
-##     ntp {
-##         server 10.0.0.1;
-##         server 10.0.0.2;
-##     }
-##     ssh {
-##         root-login deny;
-##     }
-## }
-## snmp {
-##     community public {
-##         authorization read-only;
-##     }
-## }"""
+        # E02 FIX (F5): this fixture was 100% '##'-commented, which the
+        # substantive-content gate now rejects; uncommented to restore the
+        # full-pipeline intent (verified: valid=True, vendor=juniper).
+        config_content = """system {
+    host-name EdgeRouter-Juniper;
+    services {
+        ssh;
+        telnet;
+    }
+    syslog {
+        user * {
+            interactive-commands any;
+        }
+    }
+}
+interfaces {
+    ge-0/0/0 {
+        unit 0 {
+            family inet {
+                address 203.0.113.3/30;
+            }
+        }
+    }
+    ge-0/0/1 {
+        unit 0 {
+            family inet {
+                address 192.168.1.1/24;
+            }
+        }
+    }
+}
+protocols {
+    ntp {
+        server 10.0.0.1;
+        server 10.0.0.2;
+    }
+    ssh {
+        root-login deny;
+    }
+}
+snmp {
+    community public {
+        authorization read-only;
+    }
+}"""
         
         # Step 1: Validate
         validation_result = self.validator.validate(config_content)

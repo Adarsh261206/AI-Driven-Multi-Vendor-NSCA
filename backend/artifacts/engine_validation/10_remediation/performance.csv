@@ -1,0 +1,4 @@
+source,label,p50_ms,p95_ms,max_ms,note
+sweep,480 dataset files through the full executor (validation -> detection -> parsing -> normalization -> evaluation -> finding generation with canonical remediation),16.3,218.8,1539.5,total 34.3s; remediation is pure string work inside generation (no per-finding I/O)
+V10-36,2000 builds,,,,0.005 ms/build
+V10-37,secure.txt dual-baseline audit,,,,20 ms

@@ -1,0 +1,1109 @@
+{
+  "empty": {
+    "ms": 1853.2,
+    "score": 8.4,
+    "evaluated": 179,
+    "passed": 15,
+    "failed": 48,
+    "review": 116,
+    "passed_ids": [
+      "2.1.13",
+      "2.1.14",
+      "2.1.15",
+      "2.1.16",
+      "2.2.2",
+      "2.2.3",
+      "2.2.4",
+      "AU-2",
+      "AU-3",
+      "AU-3(1)",
+      "AU-4",
+      "AU-12",
+      "SI-4",
+      "SI-4(4)",
+      "IR-5"
+    ],
+    "failed_ids": [
+      "1.1.1",
+      "1.1.2",
+      "1.1.3",
+      "1.1.4",
+      "1.1.5",
+      "1.1.6",
+      "1.1.7",
+      "1.1.8",
+      "1.1.9",
+      "1.1.10",
+      "1.2.2",
+      "1.2.3",
+      "1.2.5",
+      "1.3.4",
+      "1.5.2",
+      "1.5.3",
+      "1.5.4",
+      "1.5.5",
+      "1.5.6",
+      "2.1.4",
+      "2.1.7",
+      "2.1.8",
+      "2.1.9",
+      "2.1.10",
+      "2.1.11",
+      "2.1.12",
+      "2.3.1",
+      "2.3.2",
+      "2.3.3",
+      "2.3.4",
+      "2.4.1",
+      "AC-2(1)",
+      "AC-3",
+      "AC-3(7)",
+      "AC-4",
+      "AC-6(5)",
+      "AC-17",
+      "AU-8",
+      "AU-8(1)",
+      "AU-9",
+      "CM-5",
+      "CM-7",
+      "CM-7(1)",
+      "IA-2",
+      "IA-5(1)",
+      "IA-8",
+      "SC-7",
+      "SC-12"
+    ],
+    "pass_details": [
+      {
+        "id": "2.1.13",
+        "path": "networking.access_control.enabled",
+        "actual": false,
+        "expected": true,
+        "operator": "is_set"
+      },
+      {
+        "id": "2.1.14",
+        "path": "networking.access_control.enabled",
+        "actual": false,
+        "expected": true,
+        "operator": "is_set"
+      },
+      {
+        "id": "2.1.15",
+        "path": "networking.access_control.enabled",
+        "actual": false,
+        "expected": true,
+        "operator": "is_set"
+      },
+      {
+        "id": "2.1.16",
+        "path": "networking.access_control.enabled",
+        "actual": false,
+        "expected": true,
+        "operator": "is_set"
+      },
+      {
+        "id": "2.2.2",
+        "path": "monitoring.audit_trail.enabled",
+        "actual": false,
+        "expected": true,
+        "operator": "is_set"
+      },
+      {
+        "id": "2.2.3",
+        "path": "monitoring.syslog.enabled",
+        "actual": false,
+        "expected": true,
+        "operator": "is_set"
+      },
+      {
+        "id": "2.2.4",
+        "path": "monitoring.syslog.enabled",
+        "actual": false,
+        "expected": true,
+        "operator": "is_set"
+      },
+      {
+        "id": "AU-2",
+        "path": "monitoring.audit_trail.enabled",
+        "actual": false,
+        "expected": true,
+        "operator": "is_set"
+      },
+      {
+        "id": "AU-3",
+        "path": "monitoring.audit_trail.enabled",
+        "actual": false,
+        "expected": true,
+        "operator": "is_set"
+      },
+      {
+        "id": "AU-3(1)",
+        "path": "monitoring.syslog.enabled",
+        "actual": false,
+        "expected": true,
+        "operator": "is_set"
+      },
+      {
+        "id": "AU-4",
+        "path": "monitoring.syslog.enabled",
+        "actual": false,
+        "expected": true,
+        "operator": "is_set"
+      },
+      {
+        "id": "AU-12",
+        "path": "monitoring.audit_trail.enabled",
+        "actual": false,
+        "expected": true,
+        "operator": "is_set"
+      },
+      {
+        "id": "SI-4",
+        "path": "monitoring.syslog.enabled",
+        "actual": false,
+        "expected": true,
+        "operator": "is_set"
+      },
+      {
+        "id": "SI-4(4)",
+        "path": "monitoring.syslog.enabled",
+        "actual": false,
+        "expected": true,
+        "operator": "is_set"
+      },
+      {
+        "id": "IR-5",
+        "path": "monitoring.audit_trail.enabled",
+        "actual": false,
+        "expected": true,
+        "operator": "is_set"
+      }
+    ],
+    "result_type": "success",
+    "norm_paths": 12,
+    "norm_mappings": 37
+  },
+  "comment_only": {
+    "ms": 19.2,
+    "score": 10.1,
+    "evaluated": 179,
+    "passed": 18,
+    "failed": 45,
+    "review": 116,
+    "passed_ids": [
+      "1.2.5",
+      "2.1.13",
+      "2.1.14",
+      "2.1.15",
+      "2.1.16",
+      "2.2.2",
+      "2.2.3",
+      "2.2.4",
+      "AC-4",
+      "AU-2",
+      "AU-3",
+      "AU-3(1)",
+      "AU-4",
+      "AU-12",
+      "SC-7",
+      "SI-4",
+      "SI-4(4)",
+      "IR-5"
+    ],
+    "failed_ids": [
+      "1.1.1",
+      "1.1.2",
+      "1.1.3",
+      "1.1.4",
+      "1.1.5",
+      "1.1.6",
+      "1.1.7",
+      "1.1.8",
+      "1.1.9",
+      "1.1.10",
+      "1.2.2",
+      "1.2.3",
+      "1.3.4",
+      "1.5.2",
+      "1.5.3",
+      "1.5.4",
+      "1.5.5",
+      "1.5.6",
+      "2.1.4",
+      "2.1.7",
+      "2.1.8",
+      "2.1.9",
+      "2.1.10",
+      "2.1.11",
+      "2.1.12",
+      "2.3.1",
+      "2.3.2",
+      "2.3.3",
+      "2.3.4",
+      "2.4.1",
+      "AC-2(1)",
+      "AC-3",
+      "AC-3(7)",
+      "AC-6(5)",
+      "AC-17",
+      "AU-8",
+      "AU-8(1)",
+      "AU-9",
+      "CM-5",
+      "CM-7",
+      "CM-7(1)",
+      "IA-2",
+      "IA-5(1)",
+      "IA-8",
+      "SC-12"
+    ],
+    "pass_details": [
+      {
+        "id": "1.2.5",
+        "path": "access_control.acl_applied",
+        "actual": true,
+        "expected": true,
+        "operator": "equals"
+      },
+      {
+        "id": "2.1.13",
+        "path": "networking.access_control.enabled",
+        "actual": false,
+        "expected": true,
+        "operator": "is_set"
+      },
+      {
+        "id": "2.1.14",
+        "path": "networking.access_control.enabled",
+        "actual": false,
+        "expected": true,
+        "operator": "is_set"
+      },
+      {
+        "id": "2.1.15",
+        "path": "networking.access_control.enabled",
+        "actual": false,
+        "expected": true,
+        "operator": "is_set"
+      },
+      {
+        "id": "2.1.16",
+        "path": "networking.access_control.enabled",
+        "actual": false,
+        "expected": true,
+        "operator": "is_set"
+      },
+      {
+        "id": "2.2.2",
+        "path": "monitoring.audit_trail.enabled",
+        "actual": true,
+        "expected": true,
+        "operator": "is_set"
+      },
+      {
+        "id": "2.2.3",
+        "path": "monitoring.syslog.enabled",
+        "actual": true,
+        "expected": true,
+        "operator": "is_set"
+      },
+      {
+        "id": "2.2.4",
+        "path": "monitoring.syslog.enabled",
+        "actual": true,
+        "expected": true,
+        "operator": "is_set"
+      },
+      {
+        "id": "AC-4",
+        "path": "access_control.acl_applied",
+        "actual": true,
+        "expected": true,
+        "operator": "equals"
+      },
+      {
+        "id": "AU-2",
+        "path": "monitoring.audit_trail.enabled",
+        "actual": true,
+        "expected": true,
+        "operator": "is_set"
+      },
+      {
+        "id": "AU-3",
+        "path": "monitoring.audit_trail.enabled",
+        "actual": true,
+        "expected": true,
+        "operator": "is_set"
+      },
+      {
+        "id": "AU-3(1)",
+        "path": "monitoring.syslog.enabled",
+        "actual": true,
+        "expected": true,
+        "operator": "is_set"
+      },
+      {
+        "id": "AU-4",
+        "path": "monitoring.syslog.enabled",
+        "actual": true,
+        "expected": true,
+        "operator": "is_set"
+      },
+      {
+        "id": "AU-12",
+        "path": "monitoring.audit_trail.enabled",
+        "actual": true,
+        "expected": true,
+        "operator": "is_set"
+      },
+      {
+        "id": "SC-7",
+        "path": "access_control.acl_applied",
+        "actual": true,
+        "expected": true,
+        "operator": "equals"
+      },
+      {
+        "id": "SI-4",
+        "path": "monitoring.syslog.enabled",
+        "actual": true,
+        "expected": true,
+        "operator": "is_set"
+      },
+      {
+        "id": "SI-4(4)",
+        "path": "monitoring.syslog.enabled",
+        "actual": true,
+        "expected": true,
+        "operator": "is_set"
+      },
+      {
+        "id": "IR-5",
+        "path": "monitoring.audit_trail.enabled",
+        "actual": true,
+        "expected": true,
+        "operator": "is_set"
+      }
+    ],
+    "result_type": "success",
+    "norm_paths": 12,
+    "norm_mappings": 37
+  },
+  "negated_comment_only": {
+    "ms": 3.6,
+    "score": 9.5,
+    "evaluated": 179,
+    "passed": 17,
+    "failed": 46,
+    "review": 116,
+    "passed_ids": [
+      "2.1.10",
+      "2.1.13",
+      "2.1.14",
+      "2.1.15",
+      "2.1.16",
+      "2.2.2",
+      "2.2.3",
+      "2.2.4",
+      "AU-2",
+      "AU-3",
+      "AU-3(1)",
+      "AU-4",
+      "AU-12",
+      "CM-7(1)",
+      "SI-4",
+      "SI-4(4)",
+      "IR-5"
+    ],
+    "failed_ids": [
+      "1.1.1",
+      "1.1.2",
+      "1.1.3",
+      "1.1.4",
+      "1.1.5",
+      "1.1.6",
+      "1.1.7",
+      "1.1.8",
+      "1.1.9",
+      "1.1.10",
+      "1.2.2",
+      "1.2.3",
+      "1.2.5",
+      "1.3.4",
+      "1.5.2",
+      "1.5.3",
+      "1.5.4",
+      "1.5.5",
+      "1.5.6",
+      "2.1.4",
+      "2.1.7",
+      "2.1.8",
+      "2.1.9",
+      "2.1.11",
+      "2.1.12",
+      "2.3.1",
+      "2.3.2",
+      "2.3.3",
+      "2.3.4",
+      "2.4.1",
+      "AC-2(1)",
+      "AC-3",
+      "AC-3(7)",
+      "AC-4",
+      "AC-6(5)",
+      "AC-17",
+      "AU-8",
+      "AU-8(1)",
+      "AU-9",
+      "CM-5",
+      "CM-7",
+      "IA-2",
+      "IA-5(1)",
+      "IA-8",
+      "SC-7",
+      "SC-12"
+    ],
+    "pass_details": [
+      {
+        "id": "2.1.10",
+        "path": "management.http.enabled",
+        "actual": false,
+        "expected": false,
+        "operator": "equals"
+      },
+      {
+        "id": "2.1.13",
+        "path": "networking.access_control.enabled",
+        "actual": false,
+        "expected": true,
+        "operator": "is_set"
+      },
+      {
+        "id": "2.1.14",
+        "path": "networking.access_control.enabled",
+        "actual": false,
+        "expected": true,
+        "operator": "is_set"
+      },
+      {
+        "id": "2.1.15",
+        "path": "networking.access_control.enabled",
+        "actual": false,
+        "expected": true,
+        "operator": "is_set"
+      },
+      {
+        "id": "2.1.16",
+        "path": "networking.access_control.enabled",
+        "actual": false,
+        "expected": true,
+        "operator": "is_set"
+      },
+      {
+        "id": "2.2.2",
+        "path": "monitoring.audit_trail.enabled",
+        "actual": false,
+        "expected": true,
+        "operator": "is_set"
+      },
+      {
+        "id": "2.2.3",
+        "path": "monitoring.syslog.enabled",
+        "actual": false,
+        "expected": true,
+        "operator": "is_set"
+      },
+      {
+        "id": "2.2.4",
+        "path": "monitoring.syslog.enabled",
+        "actual": false,
+        "expected": true,
+        "operator": "is_set"
+      },
+      {
+        "id": "AU-2",
+        "path": "monitoring.audit_trail.enabled",
+        "actual": false,
+        "expected": true,
+        "operator": "is_set"
+      },
+      {
+        "id": "AU-3",
+        "path": "monitoring.audit_trail.enabled",
+        "actual": false,
+        "expected": true,
+        "operator": "is_set"
+      },
+      {
+        "id": "AU-3(1)",
+        "path": "monitoring.syslog.enabled",
+        "actual": false,
+        "expected": true,
+        "operator": "is_set"
+      },
+      {
+        "id": "AU-4",
+        "path": "monitoring.syslog.enabled",
+        "actual": false,
+        "expected": true,
+        "operator": "is_set"
+      },
+      {
+        "id": "AU-12",
+        "path": "monitoring.audit_trail.enabled",
+        "actual": false,
+        "expected": true,
+        "operator": "is_set"
+      },
+      {
+        "id": "CM-7(1)",
+        "path": "",
+        "actual": null,
+        "expected": null,
+        "operator": ""
+      },
+      {
+        "id": "SI-4",
+        "path": "monitoring.syslog.enabled",
+        "actual": false,
+        "expected": true,
+        "operator": "is_set"
+      },
+      {
+        "id": "SI-4(4)",
+        "path": "monitoring.syslog.enabled",
+        "actual": false,
+        "expected": true,
+        "operator": "is_set"
+      },
+      {
+        "id": "IR-5",
+        "path": "monitoring.audit_trail.enabled",
+        "actual": false,
+        "expected": true,
+        "operator": "is_set"
+      }
+    ],
+    "result_type": "success",
+    "norm_paths": 12,
+    "norm_mappings": 37
+  },
+  "hostname_only": {
+    "ms": 3.1,
+    "score": 8.4,
+    "evaluated": 179,
+    "passed": 15,
+    "failed": 48,
+    "review": 116,
+    "passed_ids": [
+      "2.1.13",
+      "2.1.14",
+      "2.1.15",
+      "2.1.16",
+      "2.2.2",
+      "2.2.3",
+      "2.2.4",
+      "AU-2",
+      "AU-3",
+      "AU-3(1)",
+      "AU-4",
+      "AU-12",
+      "SI-4",
+      "SI-4(4)",
+      "IR-5"
+    ],
+    "failed_ids": [
+      "1.1.1",
+      "1.1.2",
+      "1.1.3",
+      "1.1.4",
+      "1.1.5",
+      "1.1.6",
+      "1.1.7",
+      "1.1.8",
+      "1.1.9",
+      "1.1.10",
+      "1.2.2",
+      "1.2.3",
+      "1.2.5",
+      "1.3.4",
+      "1.5.2",
+      "1.5.3",
+      "1.5.4",
+      "1.5.5",
+      "1.5.6",
+      "2.1.4",
+      "2.1.7",
+      "2.1.8",
+      "2.1.9",
+      "2.1.10",
+      "2.1.11",
+      "2.1.12",
+      "2.3.1",
+      "2.3.2",
+      "2.3.3",
+      "2.3.4",
+      "2.4.1",
+      "AC-2(1)",
+      "AC-3",
+      "AC-3(7)",
+      "AC-4",
+      "AC-6(5)",
+      "AC-17",
+      "AU-8",
+      "AU-8(1)",
+      "AU-9",
+      "CM-5",
+      "CM-7",
+      "CM-7(1)",
+      "IA-2",
+      "IA-5(1)",
+      "IA-8",
+      "SC-7",
+      "SC-12"
+    ],
+    "pass_details": [
+      {
+        "id": "2.1.13",
+        "path": "networking.access_control.enabled",
+        "actual": false,
+        "expected": true,
+        "operator": "is_set"
+      },
+      {
+        "id": "2.1.14",
+        "path": "networking.access_control.enabled",
+        "actual": false,
+        "expected": true,
+        "operator": "is_set"
+      },
+      {
+        "id": "2.1.15",
+        "path": "networking.access_control.enabled",
+        "actual": false,
+        "expected": true,
+        "operator": "is_set"
+      },
+      {
+        "id": "2.1.16",
+        "path": "networking.access_control.enabled",
+        "actual": false,
+        "expected": true,
+        "operator": "is_set"
+      },
+      {
+        "id": "2.2.2",
+        "path": "monitoring.audit_trail.enabled",
+        "actual": false,
+        "expected": true,
+        "operator": "is_set"
+      },
+      {
+        "id": "2.2.3",
+        "path": "monitoring.syslog.enabled",
+        "actual": false,
+        "expected": true,
+        "operator": "is_set"
+      },
+      {
+        "id": "2.2.4",
+        "path": "monitoring.syslog.enabled",
+        "actual": false,
+        "expected": true,
+        "operator": "is_set"
+      },
+      {
+        "id": "AU-2",
+        "path": "monitoring.audit_trail.enabled",
+        "actual": false,
+        "expected": true,
+        "operator": "is_set"
+      },
+      {
+        "id": "AU-3",
+        "path": "monitoring.audit_trail.enabled",
+        "actual": false,
+        "expected": true,
+        "operator": "is_set"
+      },
+      {
+        "id": "AU-3(1)",
+        "path": "monitoring.syslog.enabled",
+        "actual": false,
+        "expected": true,
+        "operator": "is_set"
+      },
+      {
+        "id": "AU-4",
+        "path": "monitoring.syslog.enabled",
+        "actual": false,
+        "expected": true,
+        "operator": "is_set"
+      },
+      {
+        "id": "AU-12",
+        "path": "monitoring.audit_trail.enabled",
+        "actual": false,
+        "expected": true,
+        "operator": "is_set"
+      },
+      {
+        "id": "SI-4",
+        "path": "monitoring.syslog.enabled",
+        "actual": false,
+        "expected": true,
+        "operator": "is_set"
+      },
+      {
+        "id": "SI-4(4)",
+        "path": "monitoring.syslog.enabled",
+        "actual": false,
+        "expected": true,
+        "operator": "is_set"
+      },
+      {
+        "id": "IR-5",
+        "path": "monitoring.audit_trail.enabled",
+        "actual": false,
+        "expected": true,
+        "operator": "is_set"
+      }
+    ],
+    "result_type": "success",
+    "norm_paths": 13,
+    "norm_mappings": 38
+  },
+  "insecure": {
+    "ms": 3.4,
+    "score": 10.1,
+    "evaluated": 179,
+    "passed": 18,
+    "failed": 48,
+    "review": 113,
+    "passed_ids": [
+      "1.2.8",
+      "2.1.13",
+      "2.1.14",
+      "2.1.15",
+      "2.1.16",
+      "2.2.2",
+      "2.2.3",
+      "2.2.4",
+      "AC-2(3)",
+      "AU-2",
+      "AU-3",
+      "AU-3(1)",
+      "AU-4",
+      "AU-12",
+      "SC-10",
+      "SI-4",
+      "SI-4(4)",
+      "IR-5"
+    ],
+    "failed_ids": [
+      "1.1.1",
+      "1.1.2",
+      "1.1.3",
+      "1.1.4",
+      "1.1.5",
+      "1.1.6",
+      "1.1.7",
+      "1.1.8",
+      "1.1.9",
+      "1.1.10",
+      "1.2.2",
+      "1.2.3",
+      "1.2.5",
+      "1.3.4",
+      "1.5.2",
+      "1.5.3",
+      "1.5.4",
+      "1.5.5",
+      "1.5.6",
+      "2.1.4",
+      "2.1.7",
+      "2.1.8",
+      "2.1.9",
+      "2.1.10",
+      "2.1.11",
+      "2.1.12",
+      "2.3.1",
+      "2.3.2",
+      "2.3.3",
+      "2.3.4",
+      "2.4.1",
+      "AC-2(1)",
+      "AC-3",
+      "AC-3(7)",
+      "AC-4",
+      "AC-6(5)",
+      "AC-17",
+      "AU-8",
+      "AU-8(1)",
+      "AU-9",
+      "CM-5",
+      "CM-7",
+      "CM-7(1)",
+      "IA-2",
+      "IA-5(1)",
+      "IA-8",
+      "SC-7",
+      "SC-12"
+    ],
+    "pass_details": [
+      {
+        "id": "1.2.8",
+        "path": "management.vty.vty_timeout",
+        "actual": [
+          {
+            "block": "line vty 0 4",
+            "timeout": 0,
+            "result": "PASS",
+            "raw": "exec-timeout 0 0"
+          }
+        ],
+        "expected": 601,
+        "operator": "less_than"
+      },
+      {
+        "id": "2.1.13",
+        "path": "networking.access_control.enabled",
+        "actual": false,
+        "expected": true,
+        "operator": "is_set"
+      },
+      {
+        "id": "2.1.14",
+        "path": "networking.access_control.enabled",
+        "actual": false,
+        "expected": true,
+        "operator": "is_set"
+      },
+      {
+        "id": "2.1.15",
+        "path": "networking.access_control.enabled",
+        "actual": false,
+        "expected": true,
+        "operator": "is_set"
+      },
+      {
+        "id": "2.1.16",
+        "path": "networking.access_control.enabled",
+        "actual": false,
+        "expected": true,
+        "operator": "is_set"
+      },
+      {
+        "id": "2.2.2",
+        "path": "monitoring.audit_trail.enabled",
+        "actual": false,
+        "expected": true,
+        "operator": "is_set"
+      },
+      {
+        "id": "2.2.3",
+        "path": "monitoring.syslog.enabled",
+        "actual": false,
+        "expected": true,
+        "operator": "is_set"
+      },
+      {
+        "id": "2.2.4",
+        "path": "monitoring.syslog.enabled",
+        "actual": false,
+        "expected": true,
+        "operator": "is_set"
+      },
+      {
+        "id": "AC-2(3)",
+        "path": "management.vty.vty_timeout",
+        "actual": 0,
+        "expected": 601,
+        "operator": "less_than"
+      },
+      {
+        "id": "AU-2",
+        "path": "monitoring.audit_trail.enabled",
+        "actual": false,
+        "expected": true,
+        "operator": "is_set"
+      },
+      {
+        "id": "AU-3",
+        "path": "monitoring.audit_trail.enabled",
+        "actual": false,
+        "expected": true,
+        "operator": "is_set"
+      },
+      {
+        "id": "AU-3(1)",
+        "path": "monitoring.syslog.enabled",
+        "actual": false,
+        "expected": true,
+        "operator": "is_set"
+      },
+      {
+        "id": "AU-4",
+        "path": "monitoring.syslog.enabled",
+        "actual": false,
+        "expected": true,
+        "operator": "is_set"
+      },
+      {
+        "id": "AU-12",
+        "path": "monitoring.audit_trail.enabled",
+        "actual": false,
+        "expected": true,
+        "operator": "is_set"
+      },
+      {
+        "id": "SC-10",
+        "path": "management.vty.vty_timeout",
+        "actual": 0,
+        "expected": 601,
+        "operator": "less_than"
+      },
+      {
+        "id": "SI-4",
+        "path": "monitoring.syslog.enabled",
+        "actual": false,
+        "expected": true,
+        "operator": "is_set"
+      },
+      {
+        "id": "SI-4(4)",
+        "path": "monitoring.syslog.enabled",
+        "actual": false,
+        "expected": true,
+        "operator": "is_set"
+      },
+      {
+        "id": "IR-5",
+        "path": "monitoring.audit_trail.enabled",
+        "actual": false,
+        "expected": true,
+        "operator": "is_set"
+      }
+    ],
+    "result_type": "success",
+    "norm_paths": 13,
+    "norm_mappings": 40
+  },
+  "empty_norm_values": {
+    "count": 37,
+    "truthy": [
+      [
+        "management.http.enabled",
+        true
+      ],
+      [
+        "management.ssh.port",
+        22
+      ],
+      [
+        "management.telnet.port",
+        23
+      ],
+      [
+        "management.vty.transport",
+        "unknown"
+      ],
+      [
+        "management.vty.all_blocks",
+        []
+      ],
+      [
+        "management.vty.exec_timeouts",
+        []
+      ],
+      [
+        "management.vty.transports",
+        []
+      ],
+      [
+        "management.vty.conflicts",
+        []
+      ],
+      [
+        "management.vty.all_vty_transport",
+        []
+      ],
+      [
+        "config.conflicts",
+        []
+      ],
+      [
+        "logging.level",
+        "informational"
+      ],
+      [
+        "ntp.servers",
+        []
+      ],
+      [
+        "access_control.rules_count",
+        0
+      ],
+      [
+        "services.snmp.version",
+        2
+      ],
+      [
+        "services.snmp.community_string_type",
+        "none"
+      ],
+      [
+        "interfaces.management_interface_identified",
+        true
+      ]
+    ],
+    "falsey_count": 21
+  },
+  "unsupported_vendor": {
+    "ms": 2.5,
+    "score": 0.0,
+    "evaluated": 126,
+    "passed": 0,
+    "failed": 2,
+    "review": 124,
+    "passed_ids": [],
+    "failed_ids": [
+      "CM-7",
+      "CM-7(1)"
+    ],
+    "pass_details": [],
+    "result_type": "failed",
+    "norm_paths": 0,
+    "norm_mappings": 0
+  },
+  "fortinet": {
+    "ms": 2.6,
+    "score": 0.0,
+    "evaluated": 126,
+    "passed": 0,
+    "failed": 14,
+    "review": 112,
+    "passed_ids": [],
+    "failed_ids": [
+      "AC-2(1)",
+      "AC-3",
+      "AC-3(7)",
+      "AC-4",
+      "AC-6(5)",
+      "AU-8",
+      "AU-9",
+      "CM-5",
+      "CM-7",
+      "CM-7(1)",
+      "IA-2",
+      "IA-5(1)",
+      "IA-8",
+      "SC-7"
+    ],
+    "pass_details": [],
+    "result_type": "success",
+    "norm_paths": 8,
+    "norm_mappings": 16
+  }
+}

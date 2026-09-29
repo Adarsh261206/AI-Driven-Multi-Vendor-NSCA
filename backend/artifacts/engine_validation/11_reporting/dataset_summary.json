@@ -1,0 +1,73 @@
+{
+  "files": 480,
+  "ok_files": 480,
+  "errors": 0,
+  "elapsed_s": 134.3,
+  "findings": 14221,
+  "pdf_bytes_total": 26493510,
+  "gen_ms": {
+    "p50": 142.7,
+    "p95": 160.1,
+    "max": 350.8
+  },
+  "contract_checks": [
+    {
+      "id": "C1",
+      "name": "no untyped errors across the corpus",
+      "probes": 480,
+      "violations": 0,
+      "detail": []
+    },
+    {
+      "id": "C1t",
+      "name": "no typed contract errors either",
+      "probes": 480,
+      "violations": 0,
+      "detail": []
+    },
+    {
+      "id": "C2",
+      "name": "every report is a well-formed PDF",
+      "probes": 960,
+      "violations": 0,
+      "detail": []
+    },
+    {
+      "id": "C3",
+      "name": "summary counts + every finding title rendered",
+      "probes": 14701,
+      "violations": 0,
+      "detail": []
+    },
+    {
+      "id": "C4",
+      "name": "Unattributed presence matches attribution expectation on matched/unmatched variants",
+      "probes": 960,
+      "violations": 0,
+      "detail": []
+    },
+    {
+      "id": "C5",
+      "name": "no unconditional ML claim in any report",
+      "probes": 480,
+      "violations": 0,
+      "detail": []
+    },
+    {
+      "id": "C6",
+      "name": "deterministic reports across re-runs",
+      "probes": 30,
+      "violations": 0,
+      "detail": []
+    },
+    {
+      "id": "C7",
+      "name": "per-report build under 30.0s",
+      "probes": 960,
+      "violations": 0,
+      "detail": []
+    }
+  ],
+  "contract_violations_total": 0,
+  "contract_verdict": "PASS"
+}
