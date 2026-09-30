@@ -1,0 +1,17 @@
+{
+  "schemaVersion": 1,
+  "receiptId": "dffdb14e-2530-4230-b7dc-c6278c5f04e3",
+  "status": "current",
+  "command": "deliver",
+  "type": "workflow",
+  "input": "/Users/adarshsharma/Documents/SIH 2026/.archify/workflow-audit-pipeline-20260930-162929/candidate.json",
+  "output": "/Users/adarshsharma/Documents/SIH 2026/.archify/workflow-audit-pipeline-20260930-162929/configshield-audit-workflow.html",
+  "specification": {
+    "sha256": "075eacdda6c9db6c20a1d89d78ffb77ebd14714695e73dd0ba202864f4361c15",
+    "bytes": 9110
+  },
+  "artifact": {
+    "sha256": "3adb6329836363fb6f0b3ad6c1c83216129a8d07beb95e41d029794e6f1ef386",
+    "bytes": 776087
+  }
+}

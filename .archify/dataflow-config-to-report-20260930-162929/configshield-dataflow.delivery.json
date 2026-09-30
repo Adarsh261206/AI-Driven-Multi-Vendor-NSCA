@@ -1,0 +1,17 @@
+{
+  "schemaVersion": 1,
+  "receiptId": "1e0247c0-3a31-4ee1-90a1-b80c314d5da4",
+  "status": "current",
+  "command": "deliver",
+  "type": "dataflow",
+  "input": "/Users/adarshsharma/Documents/SIH 2026/.archify/dataflow-config-to-report-20260930-162929/candidate.json",
+  "output": "/Users/adarshsharma/Documents/SIH 2026/.archify/dataflow-config-to-report-20260930-162929/configshield-dataflow.html",
+  "specification": {
+    "sha256": "6021a5489d26a70770ba953083a645094c96418c902ebc1ae68d0f18bb0ce119",
+    "bytes": 7299
+  },
+  "artifact": {
+    "sha256": "dddca79fc0ccf2eb23470f6223a83e1f46280e0df697a6defdf5a958a03b64ee",
+    "bytes": 769876
+  }
+}

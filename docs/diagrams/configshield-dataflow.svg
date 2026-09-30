@@ -1,0 +1,301 @@
+<svg viewBox="0 0 1085 697" role="img" lang="en" aria-labelledby="archify-diagram-title archify-diagram-description" data-animation="trace" data-preset="signal-flow" data-quality-profile="showcase">
+        <title id="archify-diagram-title">Configuration → Security State → Report</title>
+        <desc id="archify-diagram-description">Ingest once · normalize once · evaluate against CIS · persist evidence</desc>
+        <!-- Definitions -->
+        <defs>
+          <marker id="arrowhead" markerWidth="10" markerHeight="7" refX="9" refY="3.5" orient="auto">
+            <polygon points="0 0, 10 3.5, 0 7" class="m-default" />
+          </marker>
+          <marker id="arrowhead-emphasis" markerWidth="10" markerHeight="7" refX="9" refY="3.5" orient="auto">
+            <polygon points="0 0, 10 3.5, 0 7" class="m-emphasis" />
+          </marker>
+          <marker id="arrowhead-security" markerWidth="10" markerHeight="7" refX="9" refY="3.5" orient="auto">
+            <polygon points="0 0, 10 3.5, 0 7" class="m-security" />
+          </marker>
+          <marker id="arrowhead-dashed" markerWidth="10" markerHeight="7" refX="9" refY="3.5" orient="auto">
+            <polygon points="0 0, 10 3.5, 0 7" class="m-dashed" />
+          </marker>
+          <pattern id="grid" width="40" height="40" patternUnits="userSpaceOnUse">
+            <path d="M 40 0 L 0 0 0 40" class="c-grid" stroke-width="0.5"/>
+          </pattern>
+        </defs>
+
+        <!-- Background Grid -->
+        <rect width="100%" height="100%" fill="url(#grid)" />
+
+        <!-- Data Stages -->
+        <rect data-graph-role="structural-frame" data-composition-frame-kind="stage" data-composition-frame-id="0" x="16" y="46" width="168" height="577" rx="10" class="c-lane" stroke-width="1"/>
+        <text x="100" y="68" class="t-dim" font-size="9" font-weight="600" text-anchor="middle">01 / Input</text>
+
+        <rect data-graph-role="structural-frame" data-composition-frame-kind="stage" data-composition-frame-id="1" x="231" y="46" width="168" height="577" rx="10" class="c-lane" stroke-width="1"/>
+        <text x="315" y="68" class="t-dim" font-size="9" font-weight="600" text-anchor="middle">02 / Ingestion</text>
+
+        <rect data-graph-role="structural-frame" data-composition-frame-kind="stage" data-composition-frame-id="2" x="446" y="46" width="168" height="577" rx="10" class="c-lane" stroke-width="1"/>
+        <text x="530" y="68" class="t-dim" font-size="9" font-weight="600" text-anchor="middle">03 / Compliance Pipeline</text>
+
+        <rect data-graph-role="structural-frame" data-composition-frame-kind="stage" data-composition-frame-id="3" x="661" y="46" width="168" height="577" rx="10" class="c-lane" stroke-width="1"/>
+        <text x="745" y="68" class="t-dim" font-size="9" font-weight="600" text-anchor="middle">04 / Persistence</text>
+
+        <rect data-graph-role="structural-frame" data-composition-frame-kind="stage" data-composition-frame-id="4" x="876" y="46" width="168" height="577" rx="10" class="c-lane" stroke-width="1"/>
+        <text x="960" y="68" class="t-dim" font-size="9" font-weight="600" text-anchor="middle">05 / Consumers</text>
+
+        <!-- Flow paths -->
+        <path data-edge-from="files" data-edge-to="ingest" data-edge-label="raw bytes" data-edge-key="0" data-composition-points="156,157;259,157" d="M 156 157 L 259 157" class="a-emphasis" data-animate="edge" style="--step:0" stroke-width="1.8" marker-end="url(#arrowhead-emphasis)"/>
+        <path data-edge-from="devices" data-edge-to="ingest" data-edge-label="device binding" data-edge-key="1" data-composition-points="156,385;259,157" data-composition-route="straight" d="M 156 385 L 259 157" class="a-default" data-animate="edge" style="--step:1" stroke-width="1.4" marker-end="url(#arrowhead)"/>
+        <path data-edge-from="ingest" data-edge-to="configs" data-edge-label="stored row" data-edge-key="2" data-composition-points="315,186;315,356" d="M 315 186 L 315 356" class="a-emphasis" data-animate="edge" style="--step:2" stroke-width="1.8" marker-end="url(#arrowhead-emphasis)"/>
+        <path data-edge-from="ingest" data-edge-to="reject" data-edge-label="invalid input" data-edge-key="3" data-composition-points="315,186;315,210;40,210;40,528;315,528;315,470" d="M 315 186 L 315 210 L 40 210 L 40 528 L 315 528 L 315 470" class="a-security" data-animate="edge" style="--step:3" stroke-width="1.4" marker-end="url(#arrowhead-security)"/>
+        <path data-edge-from="configs" data-edge-to="detect" data-edge-label="raw content" data-edge-key="4" data-composition-points="371,385;474,157" data-composition-route="straight" d="M 371 385 L 474 157" class="a-emphasis" data-animate="edge" style="--step:4" stroke-width="1.8" marker-end="url(#arrowhead-emphasis)"/>
+        <path data-edge-from="detect" data-edge-to="ident" data-edge-label="vendor evidence" data-edge-key="5" data-composition-points="586,157;689,157" d="M 586 157 L 689 157" class="a-default" data-animate="edge" style="--step:5" stroke-width="1.4" marker-end="url(#arrowhead)"/>
+        <path data-edge-from="detect" data-edge-to="parse" data-edge-label="vendor grammar" data-edge-key="6" data-composition-points="530,186;530,242" d="M 530 186 L 530 242" class="a-default" data-animate="edge" style="--step:6" stroke-width="1.4" marker-end="url(#arrowhead)"/>
+        <path data-edge-from="parse" data-edge-to="normalize" data-edge-label="syntax tree" data-edge-key="7" data-composition-points="530,300;530,356" d="M 530 300 L 530 356" class="a-emphasis" data-animate="edge" style="--step:7" stroke-width="1.8" marker-end="url(#arrowhead-emphasis)"/>
+        <path data-edge-from="normalize" data-edge-to="evaluate" data-edge-label="universal model" data-edge-key="8" data-composition-points="530,414;530,470" d="M 530 414 L 530 470" class="a-emphasis" data-animate="edge" style="--step:8" stroke-width="1.8" marker-end="url(#arrowhead-emphasis)"/>
+        <path data-edge-from="evaluate" data-edge-to="results" data-edge-label="control verdicts" data-edge-key="9" data-composition-points="586,499;689,499" d="M 586 499 L 689 499" class="a-emphasis" data-animate="edge" style="--step:9" stroke-width="1.8" marker-end="url(#arrowhead-emphasis)"/>
+        <path data-edge-from="results" data-edge-to="reports" data-edge-label="verdicts + findings" data-edge-key="10" data-composition-points="801,499;904,499" d="M 801 499 L 904 499" class="a-emphasis" data-animate="edge" style="--step:10" stroke-width="1.8" marker-end="url(#arrowhead-emphasis)"/>
+        <path data-edge-from="reports" data-edge-to="auditor" data-edge-label="PDF + baseline" data-edge-key="11" data-composition-points="960,470;960,300" d="M 960 470 L 960 300" class="a-default" data-animate="edge" style="--step:11" stroke-width="1.4" marker-end="url(#arrowhead)"/>
+
+        <!-- Nodes -->
+        <g id="node-files" data-node-id="files" data-node-label="Config Files" tabindex="0" role="button" aria-label="Focus Config Files, 01 / Input" aria-pressed="false" data-node-kind="external" data-node-tag="any vendor" data-node-context="01 / Input">
+          <title>Config Files · 01 / Input · any vendor</title>
+          <rect x="44" y="128" width="112" height="58" rx="6" class="c-mask"/>
+          <rect x="44" y="128" width="112" height="58" rx="6" class="c-external" data-animate="node" style="--step:0" stroke-width="1.5"/>
+          <g aria-hidden="true" data-semantic-sigil="external" class="semantic-sigil s-external" transform="translate(50 134) scale(0.6875)">
+            <rect x="2.5" y="5" width="8.5" height="8" rx="1.5"/>
+            <path d="M8 2.5h5.5V8M13.5 2.5 7.5 8.5"/>
+          </g>
+          <text data-node-label="" x="100" y="149" class="t-primary" font-size="10" font-weight="600" text-anchor="middle">Config Files</text>
+        <text data-detail="fine" x="100" y="175" class="t-external" font-size="7" text-anchor="middle">any vendor</text>
+        </g>
+
+        <g id="node-devices" data-node-id="devices" data-node-label="Device Inventory" tabindex="0" role="button" aria-label="Focus Device Inventory, owned · active, 01 / Input" aria-pressed="false" data-node-kind="database" data-node-sublabel="owned · active" data-node-tag="scope source" data-node-context="01 / Input">
+          <title>Device Inventory · owned · active · 01 / Input · scope source</title>
+          <rect x="44" y="356" width="112" height="58" rx="6" class="c-mask"/>
+          <rect x="44" y="356" width="112" height="58" rx="6" class="c-database" data-animate="node" style="--step:1" stroke-width="1.5"/>
+          <g aria-hidden="true" data-semantic-sigil="database" class="semantic-sigil s-database" transform="translate(50 357) scale(0.375)">
+            <ellipse cx="8" cy="4" rx="5" ry="2"/>
+            <path d="M3 4v8c0 1.1 2.2 2 5 2s5-.9 5-2V4M3 8c0 1.1 2.2 2 5 2s5-.9 5-2"/>
+          </g>
+          <text data-node-label="" data-detail-anchor="" x="100" y="377" class="t-primary" font-size="10" font-weight="600" text-anchor="middle">Device Inventory</text>
+          <text data-detail="context" x="100" y="393" class="t-muted" font-size="7" text-anchor="middle">owned · active</text>
+        <text data-detail="fine" x="100" y="403" class="t-database" font-size="7" text-anchor="middle">scope source</text>
+        </g>
+
+        <g id="node-ingest" data-node-id="ingest" data-node-label="IngestionEngine" tabindex="0" role="button" aria-label="Focus IngestionEngine, SHA-256 · dedup, 02 / Ingestion" aria-pressed="false" data-node-kind="backend" data-node-sublabel="SHA-256 · dedup" data-node-tag="validate + decode" data-node-context="02 / Ingestion">
+          <title>IngestionEngine · SHA-256 · dedup · 02 / Ingestion · validate + decode</title>
+          <rect x="259" y="128" width="112" height="58" rx="6" class="c-mask"/>
+          <rect x="259" y="128" width="112" height="58" rx="6" class="c-backend" data-animate="node" style="--step:1" stroke-width="1.5"/>
+          <g aria-hidden="true" data-semantic-sigil="backend" class="semantic-sigil s-backend" transform="translate(265 134) scale(0.6875)">
+            <path d="M6 3 3 8l3 5M10 3l3 5-3 5"/>
+          </g>
+          <text data-node-label="" data-detail-anchor="" x="315" y="159" class="t-primary" font-size="10" font-weight="600" text-anchor="middle">IngestionEngine</text>
+          <text data-detail="context" x="315" y="170" class="t-muted" font-size="7" text-anchor="middle">SHA-256 · dedup</text>
+        <text data-detail="fine" x="315" y="180.1" class="t-backend" font-size="7" text-anchor="middle">validate + decode</text>
+        </g>
+
+        <g id="node-configs" data-node-id="configs" data-node-label="Configurations" tabindex="0" role="button" aria-label="Focus Configurations, unique (dev, hash), 02 / Ingestion" aria-pressed="false" data-node-kind="database" data-node-sublabel="unique (dev, hash)" data-node-tag="source row" data-node-context="02 / Ingestion">
+          <title>Configurations · unique (dev, hash) · 02 / Ingestion · source row</title>
+          <rect x="259" y="356" width="112" height="58" rx="6" class="c-mask"/>
+          <rect x="259" y="356" width="112" height="58" rx="6" class="c-database" data-animate="node" style="--step:3" stroke-width="1.5"/>
+          <g aria-hidden="true" data-semantic-sigil="database" class="semantic-sigil s-database" transform="translate(265 362) scale(0.6875)">
+            <ellipse cx="8" cy="4" rx="5" ry="2"/>
+            <path d="M3 4v8c0 1.1 2.2 2 5 2s5-.9 5-2V4M3 8c0 1.1 2.2 2 5 2s5-.9 5-2"/>
+          </g>
+          <text data-node-label="" data-detail-anchor="" x="315" y="387" class="t-primary" font-size="10" font-weight="600" text-anchor="middle">Configurations</text>
+          <text data-detail="context" x="315" y="398" class="t-muted" font-size="7" text-anchor="middle">unique (dev, hash)</text>
+        <text data-detail="fine" x="315" y="408.1" class="t-database" font-size="7" text-anchor="middle">source row</text>
+        </g>
+
+        <g id="node-reject" data-node-id="reject" data-node-label="Rejected" tabindex="0" role="button" aria-label="Focus Rejected, binary · oversize, 02 / Ingestion" aria-pressed="false" data-node-kind="security" data-node-sublabel="binary · oversize" data-node-tag="typed errors" data-node-context="02 / Ingestion">
+          <title>Rejected · binary · oversize · 02 / Ingestion · typed errors</title>
+          <rect x="259" y="470" width="112" height="58" rx="6" class="c-mask"/>
+          <rect x="259" y="470" width="112" height="58" rx="6" class="c-security" data-animate="node" style="--step:4" stroke-width="1.5"/>
+          <g aria-hidden="true" data-semantic-sigil="security" class="semantic-sigil s-security" transform="translate(265 476) scale(0.6875)">
+            <path d="M8 2.2 13 4v3.5c0 3.1-1.8 5.4-5 6.5-3.2-1.1-5-3.4-5-6.5V4Z"/>
+            <path d="m5.8 8 1.5 1.5 3-3"/>
+          </g>
+          <text data-node-label="" data-detail-anchor="" x="315" y="491" class="t-primary" font-size="10" font-weight="600" text-anchor="middle">Rejected</text>
+          <text data-detail="context" x="315" y="507" class="t-muted" font-size="7" text-anchor="middle">binary · oversize</text>
+        <text data-detail="fine" x="315" y="517" class="t-security" font-size="7" text-anchor="middle">typed errors</text>
+        </g>
+
+        <g id="node-detect" data-node-id="detect" data-node-label="Vendor Detection" tabindex="0" role="button" aria-label="Focus Vendor Detection, vendor · platform, 03 / Compliance Pipeline" aria-pressed="false" data-node-kind="backend" data-node-sublabel="vendor · platform" data-node-tag="TF-IDF + regression" data-node-context="03 / Compliance Pipeline">
+          <title>Vendor Detection · vendor · platform · 03 / Compliance Pipeline · TF-IDF + regression</title>
+          <rect x="474" y="128" width="112" height="58" rx="6" class="c-mask"/>
+          <rect x="474" y="128" width="112" height="58" rx="6" class="c-backend" data-animate="node" style="--step:5" stroke-width="1.5"/>
+          <g aria-hidden="true" data-semantic-sigil="backend" class="semantic-sigil s-backend" transform="translate(480 134) scale(0.6875)">
+            <path d="M6 3 3 8l3 5M10 3l3 5-3 5"/>
+          </g>
+          <text data-node-label="" data-detail-anchor="" x="530" y="159" class="t-primary" font-size="10" font-weight="600" text-anchor="middle">Vendor Detection</text>
+          <text data-detail="context" x="530" y="170" class="t-muted" font-size="7" text-anchor="middle">vendor · platform</text>
+        <text data-detail="fine" x="530" y="180.1" class="t-backend" font-size="7" text-anchor="middle">TF-IDF + regression</text>
+        </g>
+
+        <g id="node-parse" data-node-id="parse" data-node-label="Parsing" tabindex="0" role="button" aria-label="Focus Parsing, syntax tree · diag, 03 / Compliance Pipeline" aria-pressed="false" data-node-kind="backend" data-node-sublabel="syntax tree · diag" data-node-tag="per-vendor grammar" data-node-context="03 / Compliance Pipeline">
+          <title>Parsing · syntax tree · diag · 03 / Compliance Pipeline · per-vendor grammar</title>
+          <rect x="474" y="242" width="112" height="58" rx="6" class="c-mask"/>
+          <rect x="474" y="242" width="112" height="58" rx="6" class="c-backend" data-animate="node" style="--step:7" stroke-width="1.5"/>
+          <g aria-hidden="true" data-semantic-sigil="backend" class="semantic-sigil s-backend" transform="translate(480 248) scale(0.6875)">
+            <path d="M6 3 3 8l3 5M10 3l3 5-3 5"/>
+          </g>
+          <text data-node-label="" data-detail-anchor="" x="530" y="263" class="t-primary" font-size="10" font-weight="600" text-anchor="middle">Parsing</text>
+          <text data-detail="context" x="530" y="279" class="t-muted" font-size="7" text-anchor="middle">syntax tree · diag</text>
+        <text data-detail="fine" x="530" y="289" class="t-backend" font-size="7" text-anchor="middle">per-vendor grammar</text>
+        </g>
+
+        <g id="node-normalize" data-node-id="normalize" data-node-label="Normalization" tabindex="0" role="button" aria-label="Focus Normalization, Universal model, 03 / Compliance Pipeline" aria-pressed="false" data-node-kind="backend" data-node-sublabel="Universal model" data-node-tag="28 canonical paths" data-node-context="03 / Compliance Pipeline">
+          <title>Normalization · Universal model · 03 / Compliance Pipeline · 28 canonical paths</title>
+          <rect x="474" y="356" width="112" height="58" rx="6" class="c-mask"/>
+          <rect x="474" y="356" width="112" height="58" rx="6" class="c-backend" data-animate="node" style="--step:8" stroke-width="1.5"/>
+          <g aria-hidden="true" data-semantic-sigil="backend" class="semantic-sigil s-backend" transform="translate(480 362) scale(0.6875)">
+            <path d="M6 3 3 8l3 5M10 3l3 5-3 5"/>
+          </g>
+          <text data-node-label="" data-detail-anchor="" x="532" y="377" class="t-primary" font-size="10" font-weight="600" text-anchor="middle">Normalization</text>
+          <text data-detail="context" x="530" y="393" class="t-muted" font-size="7" text-anchor="middle">Universal model</text>
+        <text data-detail="fine" x="530" y="403" class="t-backend" font-size="7" text-anchor="middle">28 canonical paths</text>
+        </g>
+
+        <g id="node-evaluate" data-node-id="evaluate" data-node-label="Evaluate" tabindex="0" role="button" aria-label="Focus Evaluate, CIS controls, 03 / Compliance Pipeline" aria-pressed="false" data-node-kind="backend" data-node-sublabel="CIS controls" data-node-tag="PASS / FAIL / REVIEW" data-node-context="03 / Compliance Pipeline">
+          <title>Evaluate · CIS controls · 03 / Compliance Pipeline · PASS / FAIL / REVIEW</title>
+          <rect x="474" y="470" width="112" height="58" rx="6" class="c-mask"/>
+          <rect x="474" y="470" width="112" height="58" rx="6" class="c-backend" data-animate="node" style="--step:9" stroke-width="1.5"/>
+          <g aria-hidden="true" data-semantic-sigil="backend" class="semantic-sigil s-backend" transform="translate(480 476) scale(0.6875)">
+            <path d="M6 3 3 8l3 5M10 3l3 5-3 5"/>
+          </g>
+          <text data-node-label="" data-detail-anchor="" x="520" y="491" class="t-primary" font-size="10" font-weight="600" text-anchor="middle">Evaluate</text>
+          <text data-detail="context" x="530" y="507" class="t-muted" font-size="7" text-anchor="middle">CIS controls</text>
+        <text data-detail="fine" x="530" y="517" class="t-backend" font-size="7" text-anchor="middle">PASS / FAIL / REVIEW</text>
+        </g>
+
+        <g id="node-ident" data-node-id="ident" data-node-label="Vendor Identity" tabindex="0" role="button" aria-label="Focus Vendor Identity, evidence · conf, 04 / Persistence" aria-pressed="false" data-node-kind="database" data-node-sublabel="evidence · conf" data-node-tag="ML provenance" data-node-context="04 / Persistence">
+          <title>Vendor Identity · evidence · conf · 04 / Persistence · ML provenance</title>
+          <rect x="689" y="128" width="112" height="58" rx="6" class="c-mask"/>
+          <rect x="689" y="128" width="112" height="58" rx="6" class="c-database" data-animate="node" style="--step:6" stroke-width="1.5"/>
+          <g aria-hidden="true" data-semantic-sigil="database" class="semantic-sigil s-database" transform="translate(695 129) scale(0.375)">
+            <ellipse cx="8" cy="4" rx="5" ry="2"/>
+            <path d="M3 4v8c0 1.1 2.2 2 5 2s5-.9 5-2V4M3 8c0 1.1 2.2 2 5 2s5-.9 5-2"/>
+          </g>
+          <text data-node-label="" data-detail-anchor="" x="745" y="149" class="t-primary" font-size="10" font-weight="600" text-anchor="middle">Vendor Identity</text>
+          <text data-detail="context" x="745" y="165" class="t-muted" font-size="7" text-anchor="middle">evidence · conf</text>
+        <text data-detail="fine" x="745" y="175" class="t-database" font-size="7" text-anchor="middle">ML provenance</text>
+        </g>
+
+        <g id="node-results" data-node-id="results" data-node-label="Results &amp; Findings" tabindex="0" role="button" aria-label="Focus Results &amp; Findings, verdicts · remediate, 04 / Persistence" aria-pressed="false" data-node-kind="database" data-node-sublabel="verdicts · remediate" data-node-tag="evidence chains" data-node-context="04 / Persistence">
+          <title>Results &amp; Findings · verdicts · remediate · 04 / Persistence · evidence chains</title>
+          <rect x="689" y="470" width="112" height="58" rx="6" class="c-mask"/>
+          <rect x="689" y="470" width="112" height="58" rx="6" class="c-database" data-animate="node" style="--step:10" stroke-width="1.5"/>
+          <g aria-hidden="true" data-semantic-sigil="database" class="semantic-sigil s-database" transform="translate(695 476) scale(0.6875)">
+            <ellipse cx="8" cy="4" rx="5" ry="2"/>
+            <path d="M3 4v8c0 1.1 2.2 2 5 2s5-.9 5-2V4M3 8c0 1.1 2.2 2 5 2s5-.9 5-2"/>
+          </g>
+          <text data-node-label="" data-detail-anchor="" x="745" y="500.6" class="t-primary" font-size="9.6" font-weight="600" text-anchor="middle">Results &amp; Findings</text>
+          <text data-detail="context" x="745" y="511.5" class="t-muted" font-size="7" text-anchor="middle">verdicts · remediate</text>
+        <text data-detail="fine" x="745" y="521.6" class="t-database" font-size="7" text-anchor="middle">evidence chains</text>
+        </g>
+
+        <g id="node-reports" data-node-id="reports" data-node-label="Reporting Engine" tabindex="0" role="button" aria-label="Focus Reporting Engine, PDF · baseline, 05 / Consumers" aria-pressed="false" data-node-kind="backend" data-node-sublabel="PDF · baseline" data-node-tag="per-device" data-node-context="05 / Consumers">
+          <title>Reporting Engine · PDF · baseline · 05 / Consumers · per-device</title>
+          <rect x="904" y="470" width="112" height="58" rx="6" class="c-mask"/>
+          <rect x="904" y="470" width="112" height="58" rx="6" class="c-backend" data-animate="node" style="--step:11" stroke-width="1.5"/>
+          <g aria-hidden="true" data-semantic-sigil="backend" class="semantic-sigil s-backend" transform="translate(910 476) scale(0.6875)">
+            <path d="M6 3 3 8l3 5M10 3l3 5-3 5"/>
+          </g>
+          <text data-node-label="" data-detail-anchor="" x="960" y="501" class="t-primary" font-size="10" font-weight="600" text-anchor="middle">Reporting Engine</text>
+          <text data-detail="context" x="960" y="512" class="t-muted" font-size="7" text-anchor="middle">PDF · baseline</text>
+        <text data-detail="fine" x="960" y="522.1" class="t-backend" font-size="7" text-anchor="middle">per-device</text>
+        </g>
+
+        <g id="node-auditor" data-node-id="auditor" data-node-label="Auditor Review" tabindex="0" role="button" aria-label="Focus Auditor Review, review + remediate, 05 / Consumers" aria-pressed="false" data-node-kind="external" data-node-sublabel="review + remediate" data-node-tag="human-in-the-loop" data-node-context="05 / Consumers">
+          <title>Auditor Review · review + remediate · 05 / Consumers · human-in-the-loop</title>
+          <rect x="904" y="242" width="112" height="58" rx="6" class="c-mask"/>
+          <rect x="904" y="242" width="112" height="58" rx="6" class="c-external" data-animate="node" style="--step:12" stroke-width="1.5"/>
+          <g aria-hidden="true" data-semantic-sigil="external" class="semantic-sigil s-external" transform="translate(910 248) scale(0.6875)">
+            <rect x="2.5" y="5" width="8.5" height="8" rx="1.5"/>
+            <path d="M8 2.5h5.5V8M13.5 2.5 7.5 8.5"/>
+          </g>
+          <text data-node-label="" data-detail-anchor="" x="965" y="263" class="t-primary" font-size="10" font-weight="600" text-anchor="middle">Auditor Review</text>
+          <text data-detail="context" x="960" y="279" class="t-muted" font-size="7" text-anchor="middle">review + remediate</text>
+        <text data-detail="fine" x="960" y="289" class="t-external" font-size="7" text-anchor="middle">human-in-the-loop</text>
+        </g>
+
+        <!-- Flow labels -->
+        <g data-detail="context" data-edge-from="files" data-edge-to="ingest" data-edge-label="raw bytes" data-edge-key="0">
+          <rect x="172.1" y="136" width="70.8" height="27" rx="4" class="c-mask"/>
+          <text x="207.5" y="147" class="t-edge-emphasis" font-size="8" text-anchor="middle">raw bytes</text>
+        <text data-detail="fine" x="207.5" y="158" class="t-dim" font-size="7" text-anchor="middle">bounded read</text>
+        </g>
+        <g data-detail="context" data-edge-from="devices" data-edge-to="ingest" data-edge-label="device binding" data-edge-key="1">
+          <rect x="167.2" y="348" width="80.6" height="27" rx="4" class="c-mask"/>
+          <text x="207.5" y="359" class="t-edge-default" font-size="8" text-anchor="middle">device binding</text>
+        <text data-detail="fine" x="207.5" y="370" class="t-dim" font-size="7" text-anchor="middle">ownership</text>
+        </g>
+        <g data-detail="context" data-edge-from="ingest" data-edge-to="configs" data-edge-label="stored row" data-edge-key="2">
+          <rect x="257.55" y="285" width="114.9" height="27" rx="4" class="c-mask"/>
+          <text x="315" y="296" class="t-edge-emphasis" font-size="8" text-anchor="middle">stored row</text>
+        <text data-detail="fine" x="315" y="307" class="t-dim" font-size="7" text-anchor="middle">(device, hash) unique</text>
+        </g>
+        <g data-detail="context" data-edge-from="ingest" data-edge-to="reject" data-edge-label="invalid input" data-edge-key="3">
+          <rect x="132.15" y="505" width="75.7" height="27" rx="4" class="c-mask"/>
+          <text x="170" y="516" class="t-edge-security" font-size="8" text-anchor="middle">invalid input</text>
+        <text data-detail="fine" x="170" y="527" class="t-dim" font-size="7" text-anchor="middle">typed error</text>
+        </g>
+        <g data-detail="context" data-edge-from="configs" data-edge-to="detect" data-edge-label="raw content" data-edge-key="4">
+          <rect x="389.55" y="364" width="65.9" height="27" rx="4" class="c-mask"/>
+          <text x="422.5" y="375" class="t-edge-emphasis" font-size="8" text-anchor="middle">raw content</text>
+        <text data-detail="fine" x="422.5" y="386" class="t-dim" font-size="7" text-anchor="middle">byte-exact</text>
+        </g>
+        <g data-detail="context" data-edge-from="detect" data-edge-to="ident" data-edge-label="vendor evidence" data-edge-key="5">
+          <rect x="589.35" y="271" width="95.3" height="27" rx="4" class="c-mask"/>
+          <text x="637" y="282" class="t-edge-default" font-size="8" text-anchor="middle">vendor evidence</text>
+        <text data-detail="fine" x="637" y="293" class="t-dim" font-size="7" text-anchor="middle">confidence scored</text>
+        </g>
+        <g data-detail="context" data-edge-from="detect" data-edge-to="parse" data-edge-label="vendor grammar" data-edge-key="6">
+          <rect x="497.35" y="189" width="95.3" height="27" rx="4" class="c-mask"/>
+          <text x="545" y="200" class="t-edge-default" font-size="8" text-anchor="middle">vendor grammar</text>
+        <text data-detail="fine" x="545" y="211" class="t-dim" font-size="7" text-anchor="middle">language selected</text>
+        </g>
+        <g data-detail="context" data-edge-from="parse" data-edge-to="normalize" data-edge-label="syntax tree" data-edge-key="7">
+          <rect x="512.05" y="307" width="65.9" height="27" rx="4" class="c-mask"/>
+          <text x="545" y="318" class="t-edge-emphasis" font-size="8" text-anchor="middle">syntax tree</text>
+        <text data-detail="fine" x="545" y="329" class="t-dim" font-size="7" text-anchor="middle">per-vendor</text>
+        </g>
+        <g data-detail="context" data-edge-from="normalize" data-edge-to="evaluate" data-edge-label="universal model" data-edge-key="8">
+          <rect x="494.9" y="435" width="100.2" height="27" rx="4" class="c-mask"/>
+          <text x="545" y="446" class="t-edge-emphasis" font-size="8" text-anchor="middle">universal model</text>
+        <text data-detail="fine" x="545" y="457" class="t-dim" font-size="7" text-anchor="middle">28 canonical paths</text>
+        </g>
+        <g data-detail="context" data-edge-from="evaluate" data-edge-to="results" data-edge-label="control verdicts" data-edge-key="9">
+          <rect x="577.1" y="549" width="119.8" height="27" rx="4" class="c-mask"/>
+          <text x="637" y="560" class="t-edge-emphasis" font-size="8" text-anchor="middle">control verdicts</text>
+        <text data-detail="fine" x="637" y="571" class="t-dim" font-size="7" text-anchor="middle">evidence + remediation</text>
+        </g>
+        <g data-detail="context" data-edge-from="results" data-edge-to="reports" data-edge-label="verdicts + findings" data-edge-key="10">
+          <rect x="827.45" y="339" width="105.1" height="27" rx="4" class="c-mask"/>
+          <text x="880" y="350" class="t-edge-emphasis" font-size="8" text-anchor="middle">verdicts + findings</text>
+        <text data-detail="fine" x="880" y="361" class="t-dim" font-size="7" text-anchor="middle">snapshot-first</text>
+        </g>
+        <g data-detail="context" data-edge-from="reports" data-edge-to="auditor" data-edge-label="PDF + baseline" data-edge-key="11">
+          <rect x="939.7" y="399" width="80.6" height="27" rx="4" class="c-mask"/>
+          <text x="980" y="410" class="t-edge-default" font-size="8" text-anchor="middle">PDF + baseline</text>
+        <text data-detail="fine" x="980" y="421" class="t-dim" font-size="7" text-anchor="middle">per-device</text>
+        </g>
+
+        <!-- Legend -->
+        <g data-legend="" data-legend-bridge="">
+          <text x="40" y="641" class="t-primary" font-size="12" font-weight="650">Legend</text>
+          <g data-legend-semantic-kind="emphasis" data-legend-x="40" data-legend-baseline="661" data-legend-width="103">
+            <path d="M 40 658 L 74 658" class="a-emphasis" stroke-width="1.8" marker-end="url(#arrowhead-emphasis)"/>
+            <text x="83" y="661" class="t-muted" font-size="10" font-weight="500">primary data</text>
+          </g>
+          <g data-legend-semantic-kind="security" data-legend-x="165" data-legend-baseline="661" data-legend-width="103">
+            <path d="M 165 658 L 199 658" class="a-security" stroke-width="1.4" marker-end="url(#arrowhead-security)"/>
+            <text x="208" y="661" class="t-muted" font-size="10" font-weight="500">policy / PII</text>
+          </g>
+          <g data-legend-semantic-kind="database" data-legend-kind="database" data-legend-label="data store" data-legend-x="290" data-legend-baseline="661" data-legend-width="93">
+            <rect x="290" y="653" width="14" height="9" rx="2" class="c-database" stroke-width="1"/>
+            <text x="312" y="661" class="t-muted" font-size="10" font-weight="500">data store</text>
+          </g>
+          <g data-legend-semantic-kind="default" data-legend-x="405" data-legend-baseline="661" data-legend-width="88">
+            <path d="M 405 658 L 439 658" class="a-default" stroke-width="1.4" marker-end="url(#arrowhead)"/>
+            <text x="448" y="661" class="t-muted" font-size="10" font-weight="500">data flow</text>
+          </g>
+        </g>
+      </svg>

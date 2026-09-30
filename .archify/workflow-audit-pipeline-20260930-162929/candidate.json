@@ -1,0 +1,410 @@
+{
+  "schema_version": 2,
+  "diagram_type": "workflow",
+  "meta": {
+    "title": "Audit Pipeline Workflow \u2014 ConfigShield",
+    "subtitle": "Upload \u00b7 scope \u00b7 queue \u00b7 engine pipeline \u00b7 live outcome",
+    "output": ".archify/workflow-audit-pipeline-20260930-162929/configshield-audit-workflow.html",
+    "animation": "trace",
+    "visual_preset": "signal-flow",
+    "quality_profile": "showcase",
+    "locale": "en",
+    "repository": {
+      "url": "https://github.com/Adarsh261206/AI-Driven-Multi-Vendor-NSCA.git",
+      "provider": "github",
+      "link_mode": "web",
+      "revision": "6f2395b9b2a0bfe42c91b93cfa20933b205b240c"
+    }
+  },
+  "lanes": [
+    {
+      "id": "upload",
+      "label": "Upload & Scope"
+    },
+    {
+      "id": "orchestrate",
+      "label": "Queue & Execution"
+    },
+    {
+      "id": "syntax",
+      "label": "Pipeline \u00b7 syntax"
+    },
+    {
+      "id": "evaluation",
+      "label": "Pipeline \u00b7 evaluation"
+    },
+    {
+      "id": "state",
+      "label": "Persistence & Live UI"
+    }
+  ],
+  "phases": [
+    {
+      "id": "phase-scope",
+      "label": "Scope + queue",
+      "fromCol": 0,
+      "toCol": 3
+    },
+    {
+      "id": "phase-pipeline",
+      "label": "Engine pipeline",
+      "fromCol": 4,
+      "toCol": 5,
+      "variant": "emphasis"
+    }
+  ],
+  "groups": [
+    {
+      "id": "g-dedup",
+      "label": "Fleet scoped dedup",
+      "lane": "state",
+      "fromCol": 1,
+      "toCol": 2,
+      "variant": "dashed"
+    },
+    {
+      "id": "g-live",
+      "label": "Live progress sync",
+      "lane": "state",
+      "fromCol": 3,
+      "toCol": 5,
+      "variant": "dashed"
+    },
+    {
+      "id": "g-exception",
+      "label": "Reject / retry / cancel",
+      "lane": "orchestrate",
+      "fromCol": 2,
+      "toCol": 5,
+      "variant": "security"
+    }
+  ],
+  "mainPath": [
+    "auditor",
+    "upload",
+    "scope",
+    "queue",
+    "claim",
+    "validate",
+    "normalize",
+    "evaluate"
+  ],
+  "nodes": [
+    {
+      "id": "auditor",
+      "lane": "upload",
+      "col": 0,
+      "type": "external",
+      "label": "Auditor",
+      "sublabel": "device + config",
+      "width": 140
+    },
+    {
+      "id": "upload",
+      "lane": "upload",
+      "col": 1,
+      "type": "frontend",
+      "label": "Upload",
+      "sublabel": "bound to device",
+      "width": 140,
+      "sources": [
+        {
+          "path": "backend/app/api/v1/configurations.py",
+          "line": 77
+        }
+      ]
+    },
+    {
+      "id": "scope",
+      "lane": "upload",
+      "col": 2,
+      "type": "security",
+      "label": "Scope Gate",
+      "sublabel": "owned \u00b7 active",
+      "width": 140,
+      "sources": [
+        {
+          "path": "backend/app/services/scope.py",
+          "line": 31
+        }
+      ]
+    },
+    {
+      "id": "archived",
+      "lane": "upload",
+      "col": 3,
+      "type": "security",
+      "label": "Archived?",
+      "sublabel": "unarchive first",
+      "width": 140,
+      "sources": [
+        {
+          "path": "backend/app/services/scope.py",
+          "line": 180
+        }
+      ]
+    },
+    {
+      "id": "queue",
+      "lane": "orchestrate",
+      "col": 2,
+      "type": "messagebus",
+      "label": "Queued",
+      "sublabel": "execution row",
+      "width": 140,
+      "sources": [
+        {
+          "path": "backend/app/services/execution.py",
+          "line": 90
+        }
+      ]
+    },
+    {
+      "id": "claim",
+      "lane": "orchestrate",
+      "col": 3,
+      "type": "backend",
+      "label": "Worker Claim",
+      "sublabel": "atomic lease",
+      "width": 140,
+      "sources": [
+        {
+          "path": "backend/app/services/execution.py",
+          "line": 118
+        }
+      ]
+    },
+    {
+      "id": "retry",
+      "lane": "state",
+      "col": 2,
+      "type": "messagebus",
+      "label": "Retry",
+      "sublabel": "attempt+1",
+      "width": 140,
+      "sources": [
+        {
+          "path": "backend/app/tasks.py",
+          "line": 56
+        }
+      ]
+    },
+    {
+      "id": "cancel",
+      "lane": "orchestrate",
+      "col": 4,
+      "type": "security",
+      "label": "Cancelled",
+      "sublabel": "terminal",
+      "width": 140
+    },
+    {
+      "id": "validate",
+      "lane": "syntax",
+      "col": 4,
+      "type": "backend",
+      "label": "Validate & Detect",
+      "sublabel": "integrity \u00b7 vendor ML",
+      "width": 140,
+      "sources": [
+        {
+          "path": "backend/app/api/v1/audit_execution.py",
+          "line": 331
+        }
+      ]
+    },
+    {
+      "id": "normalize",
+      "lane": "syntax",
+      "col": 5,
+      "type": "backend",
+      "label": "Parse & Normalize",
+      "sublabel": "28 universal paths",
+      "width": 140
+    },
+    {
+      "id": "evaluate",
+      "lane": "evaluation",
+      "col": 5,
+      "type": "backend",
+      "label": "Evaluate + Findings",
+      "sublabel": "CIS controls \u00b7 risk",
+      "width": 140,
+      "sources": [
+        {
+          "path": "backend/app/api/v1/audit_execution.py",
+          "line": 381
+        }
+      ]
+    },
+    {
+      "id": "complete",
+      "lane": "state",
+      "col": 5,
+      "type": "database",
+      "label": "Completed",
+      "sublabel": "score + findings",
+      "width": 140
+    },
+    {
+      "id": "configstore",
+      "lane": "state",
+      "col": 1,
+      "type": "database",
+      "label": "Configurations",
+      "sublabel": "(device, hash) unique",
+      "width": 140,
+      "sources": [
+        {
+          "path": "backend/app/models/__init__.py",
+          "line": 158
+        }
+      ]
+    },
+    {
+      "id": "progress",
+      "lane": "state",
+      "col": 3,
+      "type": "database",
+      "label": "audit_progress",
+      "sublabel": "steps \u00b7 logs \u00b7 pct",
+      "width": 140,
+      "sources": [
+        {
+          "path": "backend/app/models/__init__.py",
+          "line": 500
+        }
+      ]
+    }
+  ],
+  "edges": [
+    {
+      "id": "auditor-upload",
+      "from": "auditor",
+      "to": "upload",
+      "variant": "default"
+    },
+    {
+      "id": "upload-scope",
+      "from": "upload",
+      "to": "scope",
+      "label": "bind + gate",
+      "variant": "security"
+    },
+    {
+      "id": "upload-store",
+      "from": "upload",
+      "to": "configstore",
+      "label": "same bytes \u2192 replay / new row",
+      "variant": "dashed"
+    },
+    {
+      "id": "scope-queue",
+      "from": "scope",
+      "to": "queue",
+      "label": "execute",
+      "variant": "emphasis"
+    },
+    {
+      "id": "scope-archived",
+      "from": "scope",
+      "to": "archived",
+      "label": "is_active?",
+      "variant": "security",
+      "role": "error"
+    },
+    {
+      "id": "queue-claim",
+      "from": "queue",
+      "to": "claim",
+      "label": "atomic claim",
+      "variant": "emphasis"
+    },
+    {
+      "id": "claim-cancel",
+      "from": "claim",
+      "to": "cancel",
+      "label": "cancel requested",
+      "variant": "security",
+      "role": "error"
+    },
+    {
+      "id": "claim-validate",
+      "from": "claim",
+      "to": "validate",
+      "variant": "default"
+    },
+    {
+      "id": "validate-normalize",
+      "from": "validate",
+      "to": "normalize",
+      "variant": "default"
+    },
+    {
+      "id": "normalize-evaluate",
+      "from": "normalize",
+      "to": "evaluate",
+      "variant": "default"
+    },
+    {
+      "id": "evaluate-complete",
+      "from": "evaluate",
+      "to": "complete",
+      "label": "persist outcome",
+      "variant": "emphasis"
+    },
+    {
+      "id": "evaluate-progress",
+      "from": "evaluate",
+      "to": "progress",
+      "label": "sync steps",
+      "variant": "dashed",
+      "role": "branch"
+    },
+    {
+      "id": "claim-retry",
+      "from": "claim",
+      "to": "retry",
+      "label": "pipeline failure",
+      "variant": "security",
+      "role": "error"
+    },
+    {
+      "id": "retry-queue",
+      "from": "retry",
+      "to": "queue",
+      "label": "attempt+1",
+      "variant": "dashed",
+      "role": "branch"
+    }
+  ],
+  "cards": [
+    {
+      "dot": "cyan",
+      "title": "Scope Contract",
+      "items": [
+        "Configs bind to an owned, active device \u2014 archived devices reject uploads and audits",
+        "Fleet dedup: identical bytes store per device; same device replays idempotently",
+        "Every gate is server-enforced, never client-trusted"
+      ]
+    },
+    {
+      "dot": "emerald",
+      "title": "Live Pipeline",
+      "items": [
+        "Each engine step commits progress to audit_progress \u2014 visible across processes",
+        "Granular steps (validate \u2192 detect \u2192 parse \u2192 normalize \u2192 evaluate \u2192 findings \u2192 report) appear in the sequence and data-flow diagrams",
+        "Evaluation updates per file with real percentages"
+      ]
+    },
+    {
+      "dot": "rose",
+      "title": "Failure Ownership",
+      "items": [
+        "Pipeline failure marks the execution failed; retry creates a fresh row (attempt+1)",
+        "Cancellation is cooperative at checkpoints, confirmed as terminal",
+        "Lease reaping recovers worker-lost executions"
+      ]
+    }
+  ]
+}

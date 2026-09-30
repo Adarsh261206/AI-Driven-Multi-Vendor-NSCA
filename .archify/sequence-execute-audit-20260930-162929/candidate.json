@@ -1,0 +1,334 @@
+{
+  "schema_version": 1,
+  "diagram_type": "sequence",
+  "meta": {
+    "title": "Run Audit \u2014 Queue Roundtrip",
+    "subtitle": "upload \u2192 execute \u2192 worker claim \u2192 pipeline \u2192 live status \u2192 complete",
+    "output": ".archify/sequence-execute-audit-20260930-162929/configshield-execute-sequence.html",
+    "viewBox": [
+      1340,
+      858
+    ],
+    "column_fit": "spread",
+    "animation": "trace",
+    "visual_preset": "signal-flow",
+    "quality_profile": "showcase",
+    "locale": "en",
+    "repository": {
+      "url": "https://github.com/Adarsh261206/AI-Driven-Multi-Vendor-NSCA.git",
+      "provider": "github",
+      "link_mode": "web",
+      "revision": "6f2395b9b2a0bfe42c91b93cfa20933b205b240c"
+    }
+  },
+  "participants": [
+    {
+      "id": "auditor",
+      "type": "external",
+      "label": "Auditor"
+    },
+    {
+      "id": "ui",
+      "type": "frontend",
+      "label": "Next.js UI"
+    },
+    {
+      "id": "api",
+      "type": "backend",
+      "label": "FastAPI",
+      "sources": [
+        {
+          "path": "backend/app/api/v1/audit_execution.py",
+          "line": 1062
+        }
+      ]
+    },
+    {
+      "id": "scope",
+      "type": "security",
+      "label": "Scope Gate",
+      "sources": [
+        {
+          "path": "backend/app/services/scope.py",
+          "line": 62
+        }
+      ]
+    },
+    {
+      "id": "db",
+      "type": "database",
+      "label": "PostgreSQL",
+      "sources": [
+        {
+          "path": "backend/app/models/__init__.py",
+          "line": 463
+        }
+      ]
+    },
+    {
+      "id": "worker",
+      "type": "backend",
+      "label": "Celery Worker",
+      "sources": [
+        {
+          "path": "backend/app/tasks.py",
+          "line": 32
+        }
+      ]
+    },
+    {
+      "id": "pipeline",
+      "type": "backend",
+      "label": "Pipeline",
+      "sources": [
+        {
+          "path": "backend/app/api/v1/audit_execution.py",
+          "line": 247
+        }
+      ]
+    }
+  ],
+  "segments": [
+    {
+      "from": 150,
+      "to": 305,
+      "label": "Upload + scope"
+    },
+    {
+      "from": 315,
+      "to": 440,
+      "label": "Queue"
+    },
+    {
+      "from": 450,
+      "to": 560,
+      "label": "Pipeline"
+    },
+    {
+      "from": 570,
+      "to": 700,
+      "label": "Live status + complete"
+    }
+  ],
+  "messages": [
+    {
+      "id": "m-upload",
+      "from": "auditor",
+      "to": "ui",
+      "y": 166,
+      "label": "upload config for device",
+      "variant": "default"
+    },
+    {
+      "id": "m-post-upload",
+      "from": "ui",
+      "to": "api",
+      "y": 194,
+      "label": "POST /configurations/upload?device_id",
+      "variant": "emphasis"
+    },
+    {
+      "id": "m-scope-own",
+      "from": "api",
+      "to": "scope",
+      "y": 222,
+      "label": "resolve owned device",
+      "variant": "security"
+    },
+    {
+      "id": "m-scope-ok",
+      "from": "scope",
+      "to": "api",
+      "y": 250,
+      "label": "owned \u00b7 active",
+      "variant": "return"
+    },
+    {
+      "id": "m-insert",
+      "from": "api",
+      "to": "db",
+      "y": 278,
+      "label": "insert Configuration (hash)",
+      "variant": "default"
+    },
+    {
+      "id": "m-201",
+      "from": "api",
+      "to": "ui",
+      "y": 306,
+      "label": "201 config id",
+      "variant": "return"
+    },
+    {
+      "id": "m-execute",
+      "from": "ui",
+      "to": "api",
+      "y": 334,
+      "label": "POST /audit-execution/execute",
+      "variant": "emphasis"
+    },
+    {
+      "id": "m-scope-audit",
+      "from": "api",
+      "to": "scope",
+      "y": 362,
+      "label": "configs auditable?",
+      "variant": "security"
+    },
+    {
+      "id": "m-exec-row",
+      "from": "api",
+      "to": "db",
+      "y": 390,
+      "label": "create execution (queued)",
+      "variant": "default"
+    },
+    {
+      "id": "m-publish",
+      "from": "api",
+      "to": "worker",
+      "y": 418,
+      "label": "publish execute_audit_task",
+      "variant": "dashed"
+    },
+    {
+      "id": "m-202",
+      "from": "api",
+      "to": "ui",
+      "y": 446,
+      "label": "202 accepted",
+      "variant": "return"
+    },
+    {
+      "id": "m-claim",
+      "from": "worker",
+      "to": "db",
+      "y": 474,
+      "label": "atomic claim QUEUED\u2192RUNNING",
+      "variant": "emphasis"
+    },
+    {
+      "id": "m-run",
+      "from": "worker",
+      "to": "pipeline",
+      "y": 502,
+      "label": "run_audit_pipeline",
+      "variant": "emphasis"
+    },
+    {
+      "id": "m-steps",
+      "from": "pipeline",
+      "to": "db",
+      "y": 530,
+      "label": "commit steps \u2192 audit_progress",
+      "variant": "dashed"
+    },
+    {
+      "id": "m-results",
+      "from": "pipeline",
+      "to": "db",
+      "y": 558,
+      "label": "persist results + findings",
+      "variant": "default"
+    },
+    {
+      "id": "m-poll",
+      "from": "ui",
+      "to": "api",
+      "y": 586,
+      "label": "poll status \u00b7 800 ms",
+      "variant": "dashed"
+    },
+    {
+      "id": "m-read",
+      "from": "api",
+      "to": "db",
+      "y": 614,
+      "label": "read execution + audit_progress",
+      "variant": "dashed"
+    },
+    {
+      "id": "m-status",
+      "from": "db",
+      "to": "api",
+      "y": 642,
+      "label": "progress \u00b7 steps \u00b7 logs",
+      "variant": "return"
+    },
+    {
+      "id": "m-complete",
+      "from": "worker",
+      "to": "db",
+      "y": 670,
+      "label": "complete execution \u00b7 CAS",
+      "variant": "emphasis"
+    }
+  ],
+  "activations": [
+    {
+      "participant": "ui",
+      "from": 190,
+      "to": 760,
+      "type": "frontend"
+    },
+    {
+      "participant": "api",
+      "from": 195,
+      "to": 700,
+      "type": "backend"
+    },
+    {
+      "participant": "scope",
+      "from": 215,
+      "to": 372,
+      "type": "security"
+    },
+    {
+      "participant": "db",
+      "from": 273,
+      "to": 735,
+      "type": "database"
+    },
+    {
+      "participant": "worker",
+      "from": 418,
+      "to": 760,
+      "type": "backend"
+    },
+    {
+      "participant": "pipeline",
+      "from": 500,
+      "to": 570,
+      "type": "backend"
+    }
+  ],
+  "cards": [
+    {
+      "dot": "cyan",
+      "title": "Queue Contract",
+      "items": [
+        "Execution row is durable before the task is published",
+        "Claim is atomic \u2014 duplicate delivery exits safely",
+        "Complete is a CAS: cancel that wins first is honored"
+      ]
+    },
+    {
+      "dot": "emerald",
+      "title": "Live Progress",
+      "items": [
+        "Worker commits steps to audit_progress (own session, no row lock)",
+        "UI polls every 800 ms and renders the running step",
+        "Progress survives worker/API process split"
+      ]
+    },
+    {
+      "dot": "rose",
+      "title": "Scope First",
+      "items": [
+        "Ownership and lifecycle gates run before any row is created",
+        "Non-admin auditors audit only their own devices' configs",
+        "Archived devices reject new uploads and audits"
+      ]
+    }
+  ]
+}

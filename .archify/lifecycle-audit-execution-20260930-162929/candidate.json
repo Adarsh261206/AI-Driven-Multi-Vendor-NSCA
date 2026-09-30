@@ -1,0 +1,52 @@
+{
+  "schema_version": 2,
+  "diagram_type": "lifecycle",
+  "meta": {
+    "title": "Audit Execution Lifecycle",
+    "subtitle": "queued → running → completed · cancel · retry · lease recovery",
+    "output": ".archify/lifecycle-audit-execution-20260930-162929/configshield-execution-lifecycle.html",
+    "animation": "trace",
+    "visual_preset": "signal-flow",
+    "quality_profile": "showcase",
+    "locale": "en",
+    "repository": {
+      "url": "https://github.com/Adarsh261206/AI-Driven-Multi-Vendor-NSCA.git",
+      "provider": "github",
+      "link_mode": "web",
+      "revision": "6f2395b9b2a0bfe42c91b93cfa20933b205b240c"
+    }
+  },
+  "lanes": [
+    { "id": "main", "label": "Execution rail" },
+    { "id": "waiting", "label": "Cancel & wait" },
+    { "id": "recovery", "label": "Recovery & retry" },
+    { "id": "terminal", "label": "Terminal exits" }
+  ],
+  "states": [
+    { "id": "queued", "type": "start", "label": "Queued", "sublabel": "execution row persisted", "lane": "main", "col": 0, "step": "01", "tag": "awaiting worker", "sources": [{ "path": "backend/app/services/execution.py", "line": 90 }] },
+    { "id": "running", "type": "active", "label": "Running", "sublabel": "lease heartbeated", "lane": "main", "col": 1, "step": "02", "tag": "pipeline active", "sources": [{ "path": "backend/app/services/execution.py", "line": 118 }] },
+    { "id": "completed", "type": "success", "label": "Completed", "sublabel": "score + findings landed", "lane": "main", "col": 2, "step": "03", "tag": "success", "sources": [{ "path": "backend/app/services/execution.py", "line": 184 }] },
+    { "id": "cancel_requested", "type": "waiting", "label": "Cancel Requested", "sublabel": "cooperative checkpoint", "lane": "waiting", "col": 1, "tag": "pause" },
+    { "id": "reaped", "type": "waiting", "label": "Lease Expired", "sublabel": "worker lost · recovery", "lane": "recovery", "col": 1, "tag": "reap" },
+    { "id": "retry", "type": "active", "label": "Retry", "sublabel": "new row · attempt+1", "lane": "recovery", "col": 2, "tag": "attempt+1", "sources": [{ "path": "backend/app/tasks.py", "line": 56 }] },
+    { "id": "cancelled", "type": "failure", "label": "Cancelled", "sublabel": "confirmed terminal", "lane": "terminal", "col": 1, "tag": "terminal" },
+    { "id": "failed", "type": "failure", "label": "Failed", "sublabel": "pipeline error · reaped", "lane": "terminal", "col": 2, "tag": "terminal" }
+  ],
+  "transitions": [
+    { "from": "queued", "to": "running", "label": "atomic claim", "variant": "emphasis" },
+    { "from": "queued", "to": "cancelled", "label": "cancel before claim", "variant": "security" },
+    { "from": "running", "to": "completed", "label": "CAS complete", "variant": "emphasis" },
+    { "from": "running", "to": "cancel_requested", "label": "cancel requested", "variant": "security" },
+    { "from": "cancel_requested", "to": "cancelled", "label": "checkpoint confirms", "variant": "security" },
+    { "from": "running", "to": "failed", "label": "pipeline error", "variant": "security" },
+    { "from": "running", "to": "reaped", "label": "lease expired", "variant": "dashed" },
+    { "from": "reaped", "to": "failed", "label": "recovery closes", "variant": "dashed" },
+    { "from": "failed", "to": "retry", "label": "retryable", "variant": "dashed" },
+    { "from": "retry", "to": "queued", "label": "attempt+1 row", "variant": "dashed" }
+  ],
+  "cards": [
+    { "dot": "cyan", "title": "Durable Rail", "items": ["The execution row is persisted before the task is published", "Claim is atomic — exactly one worker wins duplicates", "Completion is a CAS that honors a concurrent cancel"] },
+    { "dot": "amber", "title": "Cooperative Cancel", "items": ["Cancellation is requested, then confirmed at a safe checkpoint", "Cancel-before-claim ends directly as Cancelled", "Recovery reaps worker-lost leases on the next task run"] },
+    { "dot": "rose", "title": "Retry Is a New Row", "items": ["A failed attempt never mutates into a retry — history is preserved", "Attempt+1 publishes a fresh queued execution", "Terminal states are never reused"] }
+  ]
+}

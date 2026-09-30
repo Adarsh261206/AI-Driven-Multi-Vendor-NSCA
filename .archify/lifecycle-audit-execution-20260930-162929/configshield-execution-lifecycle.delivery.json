@@ -1,0 +1,17 @@
+{
+  "schemaVersion": 1,
+  "receiptId": "00875d5e-4328-4d0f-b645-cc3bf426d3a9",
+  "status": "current",
+  "command": "deliver",
+  "type": "lifecycle",
+  "input": "/Users/adarshsharma/Documents/SIH 2026/.archify/lifecycle-audit-execution-20260930-162929/candidate.json",
+  "output": "/Users/adarshsharma/Documents/SIH 2026/.archify/lifecycle-audit-execution-20260930-162929/configshield-execution-lifecycle.html",
+  "specification": {
+    "sha256": "c76e2a95cd93acc8192994ce7adc5184abefc8dd79df5ea02580bcf2bec900b6",
+    "bytes": 4115
+  },
+  "artifact": {
+    "sha256": "4763b477f8e7a7a5eb1706ecb3cf97b0661bab64678c0f24658e2debb7cb1bd1",
+    "bytes": 766889
+  }
+}

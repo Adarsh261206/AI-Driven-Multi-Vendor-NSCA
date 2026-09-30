@@ -1,0 +1,54 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "ConfigShield — AI-Driven Multi-Vendor Security Compliance",
+    "subtitle": "Next.js console · FastAPI · Celery worker · PostgreSQL — repository-backed",
+    "output": ".archify/architecture-configshield-20260930-162929/configshield-architecture.html",
+    "visual_preset": "signal-flow",
+    "animation": "trace",
+    "quality_profile": "showcase",
+    "locale": "en",
+    "repository": {
+      "url": "https://github.com/Adarsh261206/AI-Driven-Multi-Vendor-NSCA.git",
+      "provider": "github",
+      "link_mode": "web",
+      "revision": "6f2395b9b2a0bfe42c91b93cfa20933b205b240c"
+    }
+  },
+  "components": [
+    { "id": "auditor", "type": "external", "label": "Auditor", "sublabel": "browser session", "pos": [30, 250], "size": [120, 60] },
+    { "id": "ui", "type": "frontend", "label": "ConfigShield UI", "sublabel": "Next.js console", "pos": [220, 250], "size": [150, 60], "sources": [{ "path": "frontend/app/audit/new/page.tsx", "line": 53 }, { "path": "frontend/app/audit/[id]/page.tsx", "line": 75 }] },
+    { "id": "api", "type": "backend", "label": "FastAPI Gateway", "sublabel": "/api/v1 routers", "pos": [440, 250], "size": [140, 60], "sources": [{ "path": "backend/app/main.py", "line": 83 }, { "path": "backend/app/api/v1/configurations.py", "line": 77 }] },
+    { "id": "scope", "type": "security", "label": "Scope Gate", "sublabel": "ownership · lifecycle", "pos": [300, 80], "size": [150, 60], "sources": [{ "path": "backend/app/services/scope.py", "line": 31 }, { "path": "backend/app/services/scope.py", "line": 62 }] },
+    { "id": "baseline", "type": "backend", "label": "Baseline Service", "sublabel": "org controls in scope", "pos": [470, 80], "size": [150, 60], "sources": [{ "path": "backend/app/api/v1/baseline.py", "line": 366 }] },
+    { "id": "redis", "type": "messagebus", "label": "Celery Broker", "sublabel": "Redis · durable queue", "pos": [650, 80], "size": [140, 60], "sources": [{ "path": "backend/app/celery_app.py", "line": 19 }] },
+    { "id": "worker", "type": "backend", "label": "Celery Worker", "sublabel": "claim · lease · retry", "pos": [650, 250], "size": [140, 60], "sources": [{ "path": "backend/app/tasks.py", "line": 32 }, { "path": "backend/app/services/execution.py", "line": 118 }] },
+    { "id": "engines", "type": "backend", "label": "Compliance Pipeline", "sublabel": "detect · parse · normalize · evaluate · findings", "pos": [880, 250], "size": [200, 60], "sources": [{ "path": "backend/app/api/v1/audit_execution.py", "line": 247 }, { "path": "backend/app/engines/compliance/executor.py", "line": 121 }] },
+    { "id": "db", "type": "database", "label": "PostgreSQL", "sublabel": "configs · audits · results", "pos": [880, 80], "size": [200, 60], "sources": [{ "path": "backend/app/models/__init__.py", "line": 158 }, { "path": "backend/app/models/__init__.py", "line": 463 }, { "path": "backend/app/models/__init__.py", "line": 500 }] },
+    { "id": "reporting", "type": "backend", "label": "Reporting Engine", "sublabel": "PDF · baseline projection", "pos": [440, 430], "size": [140, 60], "sources": [{ "path": "backend/app/engines/reporting.py", "line": 320 }] }
+  ],
+  "boundaries": [
+    { "kind": "region", "label": "ConfigShield platform", "wraps": ["ui", "api", "scope", "baseline", "redis", "worker", "engines", "db", "reporting"] },
+    { "kind": "security-group", "label": "API trust zone — server-enforced ownership", "wraps": ["api", "scope", "baseline"] },
+    { "kind": "security-group", "label": "Audit execution zone — worker-owned state machine", "wraps": ["worker", "engines"] }
+  ],
+  "connections": [
+    { "id": "auditor-ui", "from": "auditor", "to": "ui", "label": "HTTPS", "variant": "emphasis" },
+    { "id": "ui-api", "from": "ui", "to": "api", "label": "REST /api/v1", "variant": "emphasis" },
+    { "id": "api-scope", "from": "api", "to": "scope", "label": "own device?", "variant": "security", "fromSide": "top", "toSide": "bottom" },
+    { "id": "api-baseline", "from": "api", "to": "baseline", "label": "resolve scope", "variant": "dashed", "fromSide": "top", "toSide": "bottom" },
+    { "id": "api-redis", "from": "api", "to": "redis", "label": "publish task", "variant": "dashed", "fromSide": "top", "toSide": "bottom" },
+    { "id": "redis-worker", "from": "redis", "to": "worker", "label": "consume", "variant": "dashed", "fromSide": "bottom", "toSide": "top" },
+    { "id": "worker-engines", "from": "worker", "to": "engines", "label": "run pipeline", "variant": "emphasis" },
+    { "id": "engines-db", "from": "engines", "to": "db", "label": "results + progress", "fromSide": "top", "toSide": "bottom" },
+    { "id": "api-db", "from": "api", "to": "db", "label": "read status", "variant": "dashed", "fromSide": "right", "toSide": "bottom" },
+    { "id": "api-reporting", "from": "api", "to": "reporting", "label": "build report", "fromSide": "bottom", "toSide": "top" },
+    { "id": "reporting-db", "from": "reporting", "to": "db", "label": "read results", "variant": "dashed", "fromSide": "right", "toSide": "bottom" },
+    { "id": "db-ui", "from": "db", "to": "ui", "label": "live polls", "variant": "dashed", "fromSide": "left", "toSide": "right" }
+  ],
+  "cards": [
+    { "dot": "cyan", "title": "Verifiable Pipeline", "items": ["Every engine stage is source-referenced in this diagram", "1847 backend tests pin scope, dedup, execution and baseline behavior", "Uploads are bound to an owned device — ownership is server-enforced"] },
+    { "dot": "emerald", "title": "Live Progress", "items": ["Worker commits steps to a dedicated audit_progress row (no execution-row lock)", "UI polls status every 800 ms and renders the running step", "Cross-process progress survives worker/API split and restarts"] }
+  ]
+}

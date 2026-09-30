@@ -1,0 +1,319 @@
+<svg viewBox="0 0 1214 776" data-layout-contract="readable-v2" role="img" lang="en" aria-labelledby="archify-diagram-title archify-diagram-description" data-animation="trace" data-preset="signal-flow" data-quality-profile="showcase">
+        <title id="archify-diagram-title">Audit Pipeline Workflow — ConfigShield</title>
+        <desc id="archify-diagram-description">Upload · scope · queue · engine pipeline · live outcome</desc>
+        <!-- Definitions -->
+        <defs>
+          <marker id="arrowhead" markerWidth="10" markerHeight="7" refX="9" refY="3.5" orient="auto">
+            <polygon points="0 0, 10 3.5, 0 7" class="m-default" />
+          </marker>
+          <marker id="arrowhead-emphasis" markerWidth="10" markerHeight="7" refX="9" refY="3.5" orient="auto">
+            <polygon points="0 0, 10 3.5, 0 7" class="m-emphasis" />
+          </marker>
+          <marker id="arrowhead-security" markerWidth="10" markerHeight="7" refX="9" refY="3.5" orient="auto">
+            <polygon points="0 0, 10 3.5, 0 7" class="m-security" />
+          </marker>
+          <marker id="arrowhead-dashed" markerWidth="10" markerHeight="7" refX="9" refY="3.5" orient="auto">
+            <polygon points="0 0, 10 3.5, 0 7" class="m-dashed" />
+          </marker>
+          <pattern id="grid" width="40" height="40" patternUnits="userSpaceOnUse">
+            <path d="M 40 0 L 0 0 0 40" class="c-grid" stroke-width="0.5"/>
+          </pattern>
+        </defs>
+
+        <!-- Background Grid -->
+        <rect width="100%" height="100%" fill="url(#grid)" />
+
+        <!-- Swimlanes -->
+        <rect data-graph-role="structural-frame" data-composition-frame-kind="lane" data-composition-frame-id="lane-0" x="40" y="52" width="1158" height="104" rx="10" class="c-lane" stroke-width="1"/>
+        <text x="54" y="74" class="t-dim" font-size="10" font-weight="600">01 / Upload &amp; Scope</text>
+
+        <rect data-graph-role="structural-frame" data-composition-frame-kind="lane" data-composition-frame-id="lane-1" x="40" y="176" width="1158" height="104" rx="10" class="c-lane" stroke-width="1"/>
+        <text x="54" y="198" class="t-dim" font-size="10" font-weight="600">02 / Queue &amp; Execution</text>
+
+        <rect data-graph-role="structural-frame" data-composition-frame-kind="lane" data-composition-frame-id="lane-2" x="40" y="300" width="1158" height="104" rx="10" class="c-lane" stroke-width="1"/>
+        <text x="54" y="322" class="t-dim" font-size="10" font-weight="600">03 / Pipeline · syntax</text>
+
+        <rect data-graph-role="structural-frame" data-composition-frame-kind="lane" data-composition-frame-id="lane-3" x="40" y="424" width="1158" height="104" rx="10" class="c-lane" stroke-width="1"/>
+        <text x="54" y="446" class="t-dim" font-size="10" font-weight="600">04 / Pipeline · evaluation</text>
+
+        <rect data-graph-role="structural-frame" data-composition-frame-kind="lane" data-composition-frame-id="lane-4" x="40" y="548" width="1158" height="104" rx="10" class="c-lane" stroke-width="1"/>
+        <text x="54" y="570" class="t-dim" font-size="10" font-weight="600">05 / Persistence &amp; Live UI</text>
+
+        <!-- Phase headers -->
+        <line x1="72" y1="35" x2="758.4" y2="35" class="a-default" stroke-width="1.1"/>
+        <rect x="72" y="27" width="686.4" height="16" rx="4" class="c-mask"/>
+        <text x="415.2" y="39" class="t-muted" font-size="8" font-weight="600" text-anchor="middle">Scope + queue</text>
+        <line x1="901.2" y1="35" x2="1161.2" y2="35" class="a-emphasis" stroke-width="1.1"/>
+        <rect x="901.2" y="27" width="260" height="16" rx="4" class="c-mask"/>
+        <text x="1031.2" y="39" class="t-backend" font-size="8" font-weight="600" text-anchor="middle">Engine pipeline</text>
+
+        <!-- Workflow groups -->
+        <rect data-graph-role="structural-frame" data-composition-frame-kind="group" data-composition-frame-id="group-0" x="422.8" y="214" width="742.4000000000001" height="62" rx="9" class="c-security-group" stroke-width="1"/>
+        <text x="432.8" y="212" class="t-security" font-size="7" font-weight="600">Reject / retry / cancel</text>
+        <rect data-graph-role="structural-frame" data-composition-frame-kind="group" data-composition-frame-id="group-1" x="212" y="586" width="358.79999999999995" height="62" rx="9" class="c-lane" stroke-width="1"/>
+        <text x="222" y="584" class="t-messagebus" font-size="7" font-weight="600">Fleet scoped dedup</text>
+        <rect data-graph-role="structural-frame" data-composition-frame-kind="group" data-composition-frame-id="group-2" x="638.4" y="586" width="550.8000000000001" height="62" rx="9" class="c-lane" stroke-width="1"/>
+        <text x="648.4" y="584" class="t-messagebus" font-size="7" font-weight="600">Live progress sync</text>
+
+        <!-- Edge paths -->
+        <path data-edge-from="auditor" data-edge-to="upload" data-edge-key="0" data-edge-id="auditor-upload" data-composition-routing="workflow-v2-auto" data-edge-role="" data-composition-points="188,119;216,119" d="M 188 119 L 216 119" class="a-default" data-animate="edge" style="--step:0" stroke-width="1.4" marker-end="url(#arrowhead)"/>
+        <path data-edge-from="claim" data-edge-to="cancel" data-edge-label="cancel requested" data-edge-key="1" data-edge-id="claim-cancel" data-composition-routing="workflow-v2-auto" data-edge-role="error" data-composition-points="782.4,243;877.2,243" d="M 782.4 243 L 877.2 243" class="a-security" data-animate="edge" style="--step:9" stroke-width="1.4" marker-end="url(#arrowhead-security)"/>
+        <path data-edge-from="claim" data-edge-to="retry" data-edge-label="pipeline failure" data-edge-key="2" data-edge-id="claim-retry" data-composition-routing="workflow-v2-auto" data-edge-role="error" data-composition-points="712.4,269;712.4,414;496.8,414;496.8,589" d="M 712.4 269 L 712.4 414 L 496.8 414 L 496.8 589" class="a-security" data-animate="edge" style="--step:10" stroke-width="1.4" marker-end="url(#arrowhead-security)"/>
+        <path data-edge-from="claim" data-edge-to="validate" data-edge-key="3" data-edge-id="claim-validate" data-composition-routing="workflow-v2-auto" data-edge-role="" data-composition-points="724.4,269;724.4,367;877.2,367" d="M 724.4 269 L 724.4 367 L 877.2 367" class="a-default" data-animate="edge" style="--step:4" stroke-width="1.4" marker-end="url(#arrowhead)"/>
+        <path data-edge-from="evaluate" data-edge-to="complete" data-edge-label="persist outcome" data-edge-key="4" data-edge-id="evaluate-complete" data-composition-routing="workflow-v2-auto" data-edge-role="" data-composition-points="1115.2,517;1115.2,589" d="M 1115.2 517 L 1115.2 589" class="a-emphasis" data-animate="edge" style="--step:12" stroke-width="1.8" marker-end="url(#arrowhead-emphasis)"/>
+        <path data-edge-from="evaluate" data-edge-to="progress" data-edge-label="sync steps" data-edge-key="5" data-edge-id="evaluate-progress" data-composition-routing="workflow-v2-auto" data-edge-role="branch" data-composition-points="1045.2,491;913.8,491;913.8,615;782.4,615" d="M 1045.2 491 L 913.8 491 L 913.8 615 L 782.4 615" class="a-dashed" data-animate="edge" style="--step:12" stroke-width="1.4" marker-end="url(#arrowhead-dashed)"/>
+        <path data-edge-from="normalize" data-edge-to="evaluate" data-edge-key="6" data-edge-id="normalize-evaluate" data-composition-routing="workflow-v2-auto" data-edge-role="" data-composition-points="1115.2,393;1115.2,465" d="M 1115.2 393 L 1115.2 465" class="a-default" data-animate="edge" style="--step:6" stroke-width="1.4" marker-end="url(#arrowhead)"/>
+        <path data-edge-from="queue" data-edge-to="claim" data-edge-label="atomic claim" data-edge-key="7" data-edge-id="queue-claim" data-composition-routing="workflow-v2-auto" data-edge-role="" data-composition-points="566.8,243;642.4,243" d="M 566.8 243 L 642.4 243" class="a-emphasis" data-animate="edge" style="--step:3" stroke-width="1.8" marker-end="url(#arrowhead-emphasis)"/>
+        <path data-edge-from="retry" data-edge-to="queue" data-edge-label="attempt+1" data-edge-key="8" data-edge-id="retry-queue" data-composition-routing="workflow-v2-auto" data-edge-role="branch" data-composition-points="426.8,615;410.8,615;410.8,414;496.8,414;496.8,269" d="M 426.8 615 L 410.8 615 L 410.8 414 L 496.8 414 L 496.8 269" class="a-dashed" data-animate="edge" style="--step:12" stroke-width="1.4" marker-end="url(#arrowhead-dashed)"/>
+        <path data-edge-from="scope" data-edge-to="archived" data-edge-label="is_active?" data-edge-key="9" data-edge-id="scope-archived" data-composition-routing="workflow-v2-auto" data-edge-role="error" data-composition-points="566.8,119;642.4,119" d="M 566.8 119 L 642.4 119" class="a-security" data-animate="edge" style="--step:12" stroke-width="1.4" marker-end="url(#arrowhead-security)"/>
+        <path data-edge-from="scope" data-edge-to="queue" data-edge-label="execute" data-edge-key="10" data-edge-id="scope-queue" data-composition-routing="workflow-v2-auto" data-edge-role="" data-composition-points="496.8,145;496.8,166;410.8,166;410.8,243;426.8,243" d="M 496.8 145 L 496.8 166 L 410.8 166 L 410.8 243 L 426.8 243" class="a-emphasis" data-animate="edge" style="--step:2" stroke-width="1.8" marker-end="url(#arrowhead-emphasis)"/>
+        <path data-edge-from="upload" data-edge-to="scope" data-edge-label="bind + gate" data-edge-key="11" data-edge-id="upload-scope" data-composition-routing="workflow-v2-auto" data-edge-role="" data-composition-points="356,119;426.8,119" d="M 356 119 L 426.8 119" class="a-security" data-animate="edge" style="--step:1" stroke-width="1.4" marker-end="url(#arrowhead-security)"/>
+        <path data-edge-from="upload" data-edge-to="configstore" data-edge-label="same bytes → replay / new row" data-edge-key="12" data-edge-id="upload-store" data-composition-routing="workflow-v2-auto" data-edge-role="" data-composition-points="286,145;286,352;372,352;372,615;356,615" d="M 286 145 L 286 352 L 372 352 L 372 615 L 356 615" class="a-dashed" data-animate="edge" style="--step:12" stroke-width="1.4" marker-end="url(#arrowhead-dashed)"/>
+        <path data-edge-from="validate" data-edge-to="normalize" data-edge-key="13" data-edge-id="validate-normalize" data-composition-routing="workflow-v2-auto" data-edge-role="" data-composition-points="1017.2,367;1045.2,367" d="M 1017.2 367 L 1045.2 367" class="a-default" data-animate="edge" style="--step:5" stroke-width="1.4" marker-end="url(#arrowhead)"/>
+
+        <!-- Nodes -->
+        <g id="node-auditor" data-node-id="auditor" data-node-label="Auditor" tabindex="0" role="button" aria-label="Focus Auditor, device + config, Upload &amp; Scope › Scope + queue" aria-pressed="false" data-node-kind="external" data-node-sublabel="device + config" data-node-context="Upload &amp; Scope › Scope + queue">
+          <title>Auditor · device + config · Upload &amp; Scope › Scope + queue</title>
+          <rect x="48" y="93" width="140" height="52" rx="6" class="c-mask"/>
+          <rect x="48" y="93" width="140" height="52" rx="6" class="c-external" data-animate="node" style="--step:0" stroke-width="1.5"/>
+          <g aria-hidden="true" data-semantic-sigil="external" class="semantic-sigil s-external" transform="translate(54 99) scale(0.6875)">
+            <rect x="2.5" y="5" width="8.5" height="8" rx="1.5"/>
+            <path d="M8 2.5h5.5V8M13.5 2.5 7.5 8.5"/>
+          </g>
+          <text data-node-label="" data-detail-anchor="" x="118" y="114" class="t-primary" font-size="11" font-weight="600" text-anchor="middle">Auditor</text>
+          <text data-detail="context" x="118" y="131" class="t-muted" font-size="8" text-anchor="middle">device + config</text>
+        </g>
+
+        <g id="node-upload" data-node-id="upload" data-node-label="Upload" tabindex="0" role="button" aria-label="Focus Upload, bound to device, Upload &amp; Scope › Scope + queue" aria-pressed="false" data-node-kind="frontend" data-node-sublabel="bound to device" data-node-context="Upload &amp; Scope › Scope + queue">
+          <title>Upload · bound to device · Upload &amp; Scope › Scope + queue</title>
+          <rect x="216" y="93" width="140" height="52" rx="6" class="c-mask"/>
+          <rect x="216" y="93" width="140" height="52" rx="6" class="c-frontend" data-animate="node" style="--step:1" stroke-width="1.5"/>
+          <g aria-hidden="true" data-semantic-sigil="frontend" class="semantic-sigil s-frontend" transform="translate(222 99) scale(0.6875)">
+            <rect x="2" y="3" width="12" height="10" rx="2"/>
+            <path d="M2 6.5h12"/>
+            <circle cx="4.1" cy="4.8" r=".7" class="sigil-fill"/>
+            <circle cx="6.3" cy="4.8" r=".7" class="sigil-fill"/>
+          </g>
+          <text data-node-label="" data-detail-anchor="" x="286" y="114" class="t-primary" font-size="11" font-weight="600" text-anchor="middle">Upload</text>
+          <text data-detail="context" x="286" y="131" class="t-muted" font-size="8" text-anchor="middle">bound to device</text>
+        </g>
+
+        <g id="node-scope" data-node-id="scope" data-node-label="Scope Gate" tabindex="0" role="button" aria-label="Focus Scope Gate, owned · active, Upload &amp; Scope › Scope + queue" aria-pressed="false" data-node-kind="security" data-node-sublabel="owned · active" data-node-context="Upload &amp; Scope › Scope + queue">
+          <title>Scope Gate · owned · active · Upload &amp; Scope › Scope + queue</title>
+          <rect x="426.8" y="93" width="140" height="52" rx="6" class="c-mask"/>
+          <rect x="426.8" y="93" width="140" height="52" rx="6" class="c-security" data-animate="node" style="--step:2" stroke-width="1.5"/>
+          <g aria-hidden="true" data-semantic-sigil="security" class="semantic-sigil s-security" transform="translate(432.8 99) scale(0.6875)">
+            <path d="M8 2.2 13 4v3.5c0 3.1-1.8 5.4-5 6.5-3.2-1.1-5-3.4-5-6.5V4Z"/>
+            <path d="m5.8 8 1.5 1.5 3-3"/>
+          </g>
+          <text data-node-label="" data-detail-anchor="" x="491.8" y="114" class="t-primary" font-size="11" font-weight="600" text-anchor="middle">Scope Gate</text>
+          <text data-detail="context" x="496.8" y="131" class="t-muted" font-size="8" text-anchor="middle">owned · active</text>
+        </g>
+
+        <g id="node-archived" data-node-id="archived" data-node-label="Archived?" tabindex="0" role="button" aria-label="Focus Archived?, unarchive first, Upload &amp; Scope › Scope + queue" aria-pressed="false" data-node-kind="security" data-node-sublabel="unarchive first" data-node-context="Upload &amp; Scope › Scope + queue">
+          <title>Archived? · unarchive first · Upload &amp; Scope › Scope + queue</title>
+          <rect x="642.4" y="93" width="140" height="52" rx="6" class="c-mask"/>
+          <rect x="642.4" y="93" width="140" height="52" rx="6" class="c-security" data-animate="node" style="--step:11" stroke-width="1.5"/>
+          <g aria-hidden="true" data-semantic-sigil="security" class="semantic-sigil s-security" transform="translate(648.4 99) scale(0.6875)">
+            <path d="M8 2.2 13 4v3.5c0 3.1-1.8 5.4-5 6.5-3.2-1.1-5-3.4-5-6.5V4Z"/>
+            <path d="m5.8 8 1.5 1.5 3-3"/>
+          </g>
+          <text data-node-label="" data-detail-anchor="" x="710.6999999999999" y="114" class="t-primary" font-size="11" font-weight="600" text-anchor="middle">Archived?</text>
+          <text data-detail="context" x="712.4" y="131" class="t-muted" font-size="8" text-anchor="middle">unarchive first</text>
+        </g>
+
+        <g id="node-queue" data-node-id="queue" data-node-label="Queued" tabindex="0" role="button" aria-label="Focus Queued, execution row, Queue &amp; Execution › Reject / retry / cancel › Scope + queue" aria-pressed="false" data-node-kind="messagebus" data-node-sublabel="execution row" data-node-context="Queue &amp; Execution › Reject / retry / cancel › Scope + queue">
+          <title>Queued · execution row · Queue &amp; Execution › Reject / retry / cancel › Scope + queue</title>
+          <rect x="426.8" y="217" width="140" height="52" rx="6" class="c-mask"/>
+          <rect x="426.8" y="217" width="140" height="52" rx="6" class="c-messagebus" data-animate="node" style="--step:3" stroke-width="1.5"/>
+          <g aria-hidden="true" data-semantic-sigil="messagebus" class="semantic-sigil s-messagebus" transform="translate(432.8 223) scale(0.6875)">
+            <path d="M2.5 4.5h11M2.5 8h11M2.5 11.5h11"/>
+            <circle cx="5" cy="4.5" r="1" class="sigil-fill"/>
+            <circle cx="10.5" cy="8" r="1" class="sigil-fill"/>
+            <circle cx="7" cy="11.5" r="1" class="sigil-fill"/>
+          </g>
+          <text data-node-label="" data-detail-anchor="" x="496.8" y="238" class="t-primary" font-size="11" font-weight="600" text-anchor="middle">Queued</text>
+          <text data-detail="context" x="496.8" y="255" class="t-muted" font-size="8" text-anchor="middle">execution row</text>
+        </g>
+
+        <g id="node-claim" data-node-id="claim" data-node-label="Worker Claim" tabindex="0" role="button" aria-label="Focus Worker Claim, atomic lease, Queue &amp; Execution › Reject / retry / cancel › Scope + queue" aria-pressed="false" data-node-kind="backend" data-node-sublabel="atomic lease" data-node-context="Queue &amp; Execution › Reject / retry / cancel › Scope + queue">
+          <title>Worker Claim · atomic lease · Queue &amp; Execution › Reject / retry / cancel › Scope + queue</title>
+          <rect x="642.4" y="217" width="140" height="52" rx="6" class="c-mask"/>
+          <rect x="642.4" y="217" width="140" height="52" rx="6" class="c-backend" data-animate="node" style="--step:4" stroke-width="1.5"/>
+          <g aria-hidden="true" data-semantic-sigil="backend" class="semantic-sigil s-backend" transform="translate(648.4 223) scale(0.6875)">
+            <path d="M6 3 3 8l3 5M10 3l3 5-3 5"/>
+          </g>
+          <text data-node-label="" data-detail-anchor="" x="712.4" y="249" class="t-primary" font-size="11" font-weight="600" text-anchor="middle">Worker Claim</text>
+          <text data-detail="context" x="712.4" y="261.3" class="t-muted" font-size="8" text-anchor="middle">atomic lease</text>
+        </g>
+
+        <g id="node-cancel" data-node-id="cancel" data-node-label="Cancelled" tabindex="0" role="button" aria-label="Focus Cancelled, terminal, Queue &amp; Execution › Reject / retry / cancel › Engine pipeline" aria-pressed="false" data-node-kind="security" data-node-sublabel="terminal" data-node-context="Queue &amp; Execution › Reject / retry / cancel › Engine pipeline">
+          <title>Cancelled · terminal · Queue &amp; Execution › Reject / retry / cancel › Engine pipeline</title>
+          <rect x="877.2" y="217" width="140" height="52" rx="6" class="c-mask"/>
+          <rect x="877.2" y="217" width="140" height="52" rx="6" class="c-security" data-animate="node" style="--step:12" stroke-width="1.5"/>
+          <g aria-hidden="true" data-semantic-sigil="security" class="semantic-sigil s-security" transform="translate(883.2 223) scale(0.6875)">
+            <path d="M8 2.2 13 4v3.5c0 3.1-1.8 5.4-5 6.5-3.2-1.1-5-3.4-5-6.5V4Z"/>
+            <path d="m5.8 8 1.5 1.5 3-3"/>
+          </g>
+          <text data-node-label="" data-detail-anchor="" x="947.2" y="238" class="t-primary" font-size="11" font-weight="600" text-anchor="middle">Cancelled</text>
+          <text data-detail="context" x="947.2" y="255" class="t-muted" font-size="8" text-anchor="middle">terminal</text>
+        </g>
+
+        <g id="node-validate" data-node-id="validate" data-node-label="Validate &amp; Detect" tabindex="0" role="button" aria-label="Focus Validate &amp; Detect, integrity · vendor ML, Pipeline · syntax › Engine pipeline" aria-pressed="false" data-node-kind="backend" data-node-sublabel="integrity · vendor ML" data-node-context="Pipeline · syntax › Engine pipeline">
+          <title>Validate &amp; Detect · integrity · vendor ML · Pipeline · syntax › Engine pipeline</title>
+          <rect x="877.2" y="341" width="140" height="52" rx="6" class="c-mask"/>
+          <rect x="877.2" y="341" width="140" height="52" rx="6" class="c-backend" data-animate="node" style="--step:5" stroke-width="1.5"/>
+          <g aria-hidden="true" data-semantic-sigil="backend" class="semantic-sigil s-backend" transform="translate(883.2 347) scale(0.6875)">
+            <path d="M6 3 3 8l3 5M10 3l3 5-3 5"/>
+          </g>
+          <text data-node-label="" data-detail-anchor="" x="947.2" y="373" class="t-primary" font-size="11" font-weight="600" text-anchor="middle">Validate &amp; Detect</text>
+          <text data-detail="context" x="947.2" y="385.3" class="t-muted" font-size="8" text-anchor="middle">integrity · vendor ML</text>
+        </g>
+
+        <g id="node-normalize" data-node-id="normalize" data-node-label="Parse &amp; Normalize" tabindex="0" role="button" aria-label="Focus Parse &amp; Normalize, 28 universal paths, Pipeline · syntax › Engine pipeline" aria-pressed="false" data-node-kind="backend" data-node-sublabel="28 universal paths" data-node-context="Pipeline · syntax › Engine pipeline">
+          <title>Parse &amp; Normalize · 28 universal paths · Pipeline · syntax › Engine pipeline</title>
+          <rect x="1045.2" y="341" width="140" height="52" rx="6" class="c-mask"/>
+          <rect x="1045.2" y="341" width="140" height="52" rx="6" class="c-backend" data-animate="node" style="--step:6" stroke-width="1.5"/>
+          <g aria-hidden="true" data-semantic-sigil="backend" class="semantic-sigil s-backend" transform="translate(1051.2 347) scale(0.6875)">
+            <path d="M6 3 3 8l3 5M10 3l3 5-3 5"/>
+          </g>
+          <text data-node-label="" data-detail-anchor="" x="1120.3" y="362" class="t-primary" font-size="11" font-weight="600" text-anchor="middle">Parse &amp; Normalize</text>
+          <text data-detail="context" x="1115.2" y="379" class="t-muted" font-size="8" text-anchor="middle">28 universal paths</text>
+        </g>
+
+        <g id="node-evaluate" data-node-id="evaluate" data-node-label="Evaluate + Findings" tabindex="0" role="button" aria-label="Focus Evaluate + Findings, CIS controls · risk, Pipeline · evaluation › Engine pipeline" aria-pressed="false" data-node-kind="backend" data-node-sublabel="CIS controls · risk" data-node-context="Pipeline · evaluation › Engine pipeline">
+          <title>Evaluate + Findings · CIS controls · risk · Pipeline · evaluation › Engine pipeline</title>
+          <rect x="1045.2" y="465" width="140" height="52" rx="6" class="c-mask"/>
+          <rect x="1045.2" y="465" width="140" height="52" rx="6" class="c-backend" data-animate="node" style="--step:7" stroke-width="1.5"/>
+          <g aria-hidden="true" data-semantic-sigil="backend" class="semantic-sigil s-backend" transform="translate(1051.2 471) scale(0.6875)">
+            <path d="M6 3 3 8l3 5M10 3l3 5-3 5"/>
+          </g>
+          <text data-node-label="" data-detail-anchor="" x="1115.2" y="497" class="t-primary" font-size="11" font-weight="600" text-anchor="middle">Evaluate + Findings</text>
+          <text data-detail="context" x="1115.2" y="509.3" class="t-muted" font-size="8" text-anchor="middle">CIS controls · risk</text>
+        </g>
+
+        <g id="node-configstore" data-node-id="configstore" data-node-label="Configurations" tabindex="0" role="button" aria-label="Focus Configurations, (device, hash) unique, Persistence &amp; Live UI › Fleet scoped dedup › Scope + queue" aria-pressed="false" data-node-kind="database" data-node-sublabel="(device, hash) unique" data-node-context="Persistence &amp; Live UI › Fleet scoped dedup › Scope + queue">
+          <title>Configurations · (device, hash) unique · Persistence &amp; Live UI › Fleet scoped dedup › Scope + queue</title>
+          <rect x="216" y="589" width="140" height="52" rx="6" class="c-mask"/>
+          <rect x="216" y="589" width="140" height="52" rx="6" class="c-database" data-animate="node" style="--step:12" stroke-width="1.5"/>
+          <g aria-hidden="true" data-semantic-sigil="database" class="semantic-sigil s-database" transform="translate(222 595) scale(0.6875)">
+            <ellipse cx="8" cy="4" rx="5" ry="2"/>
+            <path d="M3 4v8c0 1.1 2.2 2 5 2s5-.9 5-2V4M3 8c0 1.1 2.2 2 5 2s5-.9 5-2"/>
+          </g>
+          <text data-node-label="" data-detail-anchor="" x="286" y="621" class="t-primary" font-size="11" font-weight="600" text-anchor="middle">Configurations</text>
+          <text data-detail="context" x="286" y="633.3" class="t-muted" font-size="8" text-anchor="middle">(device, hash) unique</text>
+        </g>
+
+        <g id="node-retry" data-node-id="retry" data-node-label="Retry" tabindex="0" role="button" aria-label="Focus Retry, attempt+1, Persistence &amp; Live UI › Fleet scoped dedup › Scope + queue" aria-pressed="false" data-node-kind="messagebus" data-node-sublabel="attempt+1" data-node-context="Persistence &amp; Live UI › Fleet scoped dedup › Scope + queue">
+          <title>Retry · attempt+1 · Persistence &amp; Live UI › Fleet scoped dedup › Scope + queue</title>
+          <rect x="426.8" y="589" width="140" height="52" rx="6" class="c-mask"/>
+          <rect x="426.8" y="589" width="140" height="52" rx="6" class="c-messagebus" data-animate="node" style="--step:12" stroke-width="1.5"/>
+          <g aria-hidden="true" data-semantic-sigil="messagebus" class="semantic-sigil s-messagebus" transform="translate(432.8 595) scale(0.6875)">
+            <path d="M2.5 4.5h11M2.5 8h11M2.5 11.5h11"/>
+            <circle cx="5" cy="4.5" r="1" class="sigil-fill"/>
+            <circle cx="10.5" cy="8" r="1" class="sigil-fill"/>
+            <circle cx="7" cy="11.5" r="1" class="sigil-fill"/>
+          </g>
+          <text data-node-label="" data-detail-anchor="" x="496.8" y="610" class="t-primary" font-size="11" font-weight="600" text-anchor="middle">Retry</text>
+          <text data-detail="context" x="496.8" y="627" class="t-muted" font-size="8" text-anchor="middle">attempt+1</text>
+        </g>
+
+        <g id="node-progress" data-node-id="progress" data-node-label="audit_progress" tabindex="0" role="button" aria-label="Focus audit_progress, steps · logs · pct, Persistence &amp; Live UI › Live progress sync › Scope + queue" aria-pressed="false" data-node-kind="database" data-node-sublabel="steps · logs · pct" data-node-context="Persistence &amp; Live UI › Live progress sync › Scope + queue">
+          <title>audit_progress · steps · logs · pct · Persistence &amp; Live UI › Live progress sync › Scope + queue</title>
+          <rect x="642.4" y="589" width="140" height="52" rx="6" class="c-mask"/>
+          <rect x="642.4" y="589" width="140" height="52" rx="6" class="c-database" data-animate="node" style="--step:12" stroke-width="1.5"/>
+          <g aria-hidden="true" data-semantic-sigil="database" class="semantic-sigil s-database" transform="translate(648.4 595) scale(0.6875)">
+            <ellipse cx="8" cy="4" rx="5" ry="2"/>
+            <path d="M3 4v8c0 1.1 2.2 2 5 2s5-.9 5-2V4M3 8c0 1.1 2.2 2 5 2s5-.9 5-2"/>
+          </g>
+          <text data-node-label="" data-detail-anchor="" x="712.4" y="621" class="t-primary" font-size="11" font-weight="600" text-anchor="middle">audit_progress</text>
+          <text data-detail="context" x="712.4" y="633.3" class="t-muted" font-size="8" text-anchor="middle">steps · logs · pct</text>
+        </g>
+
+        <g id="node-complete" data-node-id="complete" data-node-label="Completed" tabindex="0" role="button" aria-label="Focus Completed, score + findings, Persistence &amp; Live UI › Live progress sync › Engine pipeline" aria-pressed="false" data-node-kind="database" data-node-sublabel="score + findings" data-node-context="Persistence &amp; Live UI › Live progress sync › Engine pipeline">
+          <title>Completed · score + findings · Persistence &amp; Live UI › Live progress sync › Engine pipeline</title>
+          <rect x="1045.2" y="589" width="140" height="52" rx="6" class="c-mask"/>
+          <rect x="1045.2" y="589" width="140" height="52" rx="6" class="c-database" data-animate="node" style="--step:12" stroke-width="1.5"/>
+          <g aria-hidden="true" data-semantic-sigil="database" class="semantic-sigil s-database" transform="translate(1051.2 595) scale(0.6875)">
+            <ellipse cx="8" cy="4" rx="5" ry="2"/>
+            <path d="M3 4v8c0 1.1 2.2 2 5 2s5-.9 5-2V4M3 8c0 1.1 2.2 2 5 2s5-.9 5-2"/>
+          </g>
+          <text data-node-label="" data-detail-anchor="" x="1115.2" y="610" class="t-primary" font-size="11" font-weight="600" text-anchor="middle">Completed</text>
+          <text data-detail="context" x="1115.2" y="627" class="t-muted" font-size="8" text-anchor="middle">score + findings</text>
+        </g>
+
+        <!-- Edge labels -->
+
+        <g data-detail="context" data-edge-from="claim" data-edge-to="cancel" data-edge-label="cancel requested" data-edge-key="1" data-edge-id="claim-cancel">
+          <rect x="786.4" y="223" width="86.8" height="14" rx="3" class="c-mask"/>
+          <text x="829.8" y="233" class="t-edge-security" font-size="8" text-anchor="middle">cancel requested</text>
+        </g>
+        <g data-detail="context" data-edge-from="claim" data-edge-to="retry" data-edge-label="pipeline failure" data-edge-key="2" data-edge-id="claim-retry">
+          <rect x="561.2" y="394" width="86.8" height="14" rx="3" class="c-mask"/>
+          <text x="604.6" y="404" class="t-edge-security" font-size="8" text-anchor="middle">pipeline failure</text>
+        </g>
+
+        <g data-detail="context" data-edge-from="evaluate" data-edge-to="complete" data-edge-label="persist outcome" data-edge-key="4" data-edge-id="evaluate-complete">
+          <rect x="1074.2" y="543" width="82" height="14" rx="3" class="c-mask"/>
+          <text x="1115.2" y="553" class="t-edge-emphasis" font-size="8" text-anchor="middle">persist outcome</text>
+        </g>
+        <g data-detail="context" data-edge-from="evaluate" data-edge-to="progress" data-edge-label="sync steps" data-edge-key="5" data-edge-id="evaluate-progress">
+          <rect x="950.5" y="471" width="58" height="14" rx="3" class="c-mask"/>
+          <text x="979.5" y="481" class="t-edge-dashed" font-size="8" text-anchor="middle">sync steps</text>
+        </g>
+
+        <g data-detail="context" data-edge-from="queue" data-edge-to="claim" data-edge-label="atomic claim" data-edge-key="7" data-edge-id="queue-claim">
+          <rect x="570.8" y="223" width="67.6" height="14" rx="3" class="c-mask"/>
+          <text x="604.5999999999999" y="233" class="t-edge-emphasis" font-size="8" text-anchor="middle">atomic claim</text>
+        </g>
+        <g data-detail="context" data-edge-from="retry" data-edge-to="queue" data-edge-label="attempt+1" data-edge-key="8" data-edge-id="retry-queue">
+          <rect x="427.2" y="394" width="53.199999999999996" height="14" rx="3" class="c-mask"/>
+          <text x="453.8" y="404" class="t-edge-dashed" font-size="8" text-anchor="middle">attempt+1</text>
+        </g>
+        <g data-detail="context" data-edge-from="scope" data-edge-to="archived" data-edge-label="is_active?" data-edge-key="9" data-edge-id="scope-archived">
+          <rect x="575.5999999999999" y="99" width="58" height="14" rx="3" class="c-mask"/>
+          <text x="604.5999999999999" y="109" class="t-edge-security" font-size="8" text-anchor="middle">is_active?</text>
+        </g>
+        <g data-detail="context" data-edge-from="scope" data-edge-to="queue" data-edge-label="execute" data-edge-key="10" data-edge-id="scope-queue">
+          <rect x="432" y="146" width="43.6" height="14" rx="3" class="c-mask"/>
+          <text x="453.8" y="156" class="t-edge-emphasis" font-size="8" text-anchor="middle">execute</text>
+        </g>
+        <g data-detail="context" data-edge-from="upload" data-edge-to="scope" data-edge-label="bind + gate" data-edge-key="11" data-edge-id="upload-scope">
+          <rect x="360" y="99" width="62.8" height="14" rx="3" class="c-mask"/>
+          <text x="391.4" y="109" class="t-edge-security" font-size="8" text-anchor="middle">bind + gate</text>
+        </g>
+        <g data-detail="context" data-edge-from="upload" data-edge-to="configstore" data-edge-label="same bytes → replay / new row" data-edge-key="12" data-edge-id="upload-store">
+          <rect x="254.4" y="332" width="149.2" height="14" rx="3" class="c-mask"/>
+          <text x="329" y="342" class="t-edge-dashed" font-size="8" text-anchor="middle">same bytes → replay / new row</text>
+        </g>
+
+
+        <!-- Legend -->
+        <g data-legend="" data-legend-bridge="">
+          <text x="20" y="676" class="t-primary" font-size="12" font-weight="650">Legend</text>
+          <g data-legend-semantic-kind="frontend" data-legend-kind="frontend" data-legend-label="User UI" data-legend-x="20" data-legend-baseline="696" data-legend-width="74">
+            <rect x="20" y="688" width="14" height="9" rx="2" class="c-frontend" stroke-width="1"/>
+            <text x="42" y="696" class="t-muted" font-size="7.5" font-weight="500">User UI</text>
+          </g>
+          <g data-legend-semantic-kind="backend" data-legend-kind="backend" data-legend-label="Agent logic" data-legend-x="101" data-legend-baseline="696" data-legend-width="91">
+            <rect x="101" y="688" width="14" height="9" rx="2" class="c-backend" stroke-width="1"/>
+            <text x="123" y="696" class="t-muted" font-size="7.5" font-weight="500">Agent logic</text>
+          </g>
+          <g data-legend-semantic-kind="security" data-legend-kind="security" data-legend-label="Policy" data-legend-x="199" data-legend-baseline="696" data-legend-width="70">
+            <rect x="199" y="688" width="14" height="9" rx="2" class="c-security" stroke-width="1"/>
+            <text x="221" y="696" class="t-muted" font-size="7.5" font-weight="500">Policy</text>
+          </g>
+          <g data-legend-semantic-kind="messagebus" data-legend-kind="messagebus" data-legend-label="Tool action" data-legend-x="276" data-legend-baseline="696" data-legend-width="91">
+            <rect x="276" y="688" width="14" height="9" rx="2" class="c-messagebus" stroke-width="1"/>
+            <text x="298" y="696" class="t-muted" font-size="7.5" font-weight="500">Tool action</text>
+          </g>
+          <g data-legend-semantic-kind="database" data-legend-kind="database" data-legend-label="Context / trace" data-legend-x="374" data-legend-baseline="696" data-legend-width="109">
+            <rect x="374" y="688" width="14" height="9" rx="2" class="c-database" stroke-width="1"/>
+            <text x="396" y="696" class="t-muted" font-size="7.5" font-weight="500">Context / trace</text>
+          </g>
+          <g data-legend-semantic-kind="external" data-legend-kind="external" data-legend-label="External system" data-legend-x="490" data-legend-baseline="696" data-legend-width="109">
+            <rect x="490" y="688" width="14" height="9" rx="2" class="c-external" stroke-width="1"/>
+            <text x="512" y="696" class="t-muted" font-size="7.5" font-weight="500">External system</text>
+          </g>
+        </g>
+      </svg>

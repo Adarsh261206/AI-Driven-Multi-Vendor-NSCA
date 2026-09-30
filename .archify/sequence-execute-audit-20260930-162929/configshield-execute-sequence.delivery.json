@@ -1,0 +1,17 @@
+{
+  "schemaVersion": 1,
+  "receiptId": "5739451a-f7d9-4d75-83e5-6ac6c90489d9",
+  "status": "current",
+  "command": "deliver",
+  "type": "sequence",
+  "input": "/Users/adarshsharma/Documents/SIH 2026/.archify/sequence-execute-audit-20260930-162929/candidate.json",
+  "output": "/Users/adarshsharma/Documents/SIH 2026/.archify/sequence-execute-audit-20260930-162929/configshield-execute-sequence.html",
+  "specification": {
+    "sha256": "52ae6f10932cc9d46b24c07c637c10a890809dc5ba6bb511be0e604758f0578f",
+    "bytes": 7006
+  },
+  "artifact": {
+    "sha256": "a9a55b229b03e65d77569da9178e323dec704aa230340410c231e2785a104b88",
+    "bytes": 768385
+  }
+}

@@ -1,0 +1,8 @@
+{
+  "schemaVersion": 1,
+  "command": "deliver",
+  "status": "pending",
+  "receiptId": "40c83d18-21b0-476c-b033-74b994ae628e",
+  "input": "/Users/adarshsharma/Documents/SIH 2026/.archify/workflow-audit-pipeline-20260930-162929/candidate.json",
+  "output": "/Users/adarshsharma/Documents/SIH 2026/.archify/workflow-audit-pipeline-20260930-162929/test.html"
+}

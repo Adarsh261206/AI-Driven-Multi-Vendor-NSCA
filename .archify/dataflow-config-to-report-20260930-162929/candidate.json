@@ -1,0 +1,348 @@
+{
+  "schema_version": 1,
+  "diagram_type": "dataflow",
+  "meta": {
+    "title": "Configuration \u2192 Security State \u2192 Report",
+    "subtitle": "Ingest once \u00b7 normalize once \u00b7 evaluate against CIS \u00b7 persist evidence",
+    "output": ".archify/dataflow-config-to-report-20260930-162929/configshield-dataflow.html",
+    "viewBox": [
+      1085,
+      697
+    ],
+    "animation": "trace",
+    "visual_preset": "signal-flow",
+    "quality_profile": "showcase",
+    "locale": "en",
+    "repository": {
+      "url": "https://github.com/Adarsh261206/AI-Driven-Multi-Vendor-NSCA.git",
+      "provider": "github",
+      "link_mode": "web",
+      "revision": "6f2395b9b2a0bfe42c91b93cfa20933b205b240c"
+    }
+  },
+  "stages": [
+    {
+      "label": "Input"
+    },
+    {
+      "label": "Ingestion"
+    },
+    {
+      "label": "Compliance Pipeline"
+    },
+    {
+      "label": "Persistence"
+    },
+    {
+      "label": "Consumers"
+    }
+  ],
+  "nodes": [
+    {
+      "id": "files",
+      "type": "external",
+      "label": "Config Files",
+      "stage": 0,
+      "row": 0,
+      "tag": "any vendor"
+    },
+    {
+      "id": "devices",
+      "type": "database",
+      "label": "Device Inventory",
+      "sublabel": "owned \u00b7 active",
+      "stage": 0,
+      "row": 2,
+      "tag": "scope source"
+    },
+    {
+      "id": "ingest",
+      "type": "backend",
+      "label": "IngestionEngine",
+      "sublabel": "SHA-256 \u00b7 dedup",
+      "stage": 1,
+      "row": 0,
+      "tag": "validate + decode",
+      "sources": [
+        {
+          "path": "backend/app/engines/ingestion.py",
+          "line": 174
+        }
+      ]
+    },
+    {
+      "id": "configs",
+      "type": "database",
+      "label": "Configurations",
+      "sublabel": "unique (dev, hash)",
+      "stage": 1,
+      "row": 2,
+      "tag": "source row",
+      "sources": [
+        {
+          "path": "backend/app/models/__init__.py",
+          "line": 158
+        }
+      ]
+    },
+    {
+      "id": "reject",
+      "type": "security",
+      "label": "Rejected",
+      "sublabel": "binary \u00b7 oversize",
+      "stage": 1,
+      "row": 3,
+      "tag": "typed errors"
+    },
+    {
+      "id": "detect",
+      "type": "backend",
+      "label": "Vendor Detection",
+      "sublabel": "vendor \u00b7 platform",
+      "stage": 2,
+      "row": 0,
+      "tag": "TF-IDF + regression",
+      "sources": [
+        {
+          "path": "backend/app/engines/detection.py",
+          "line": 1
+        }
+      ]
+    },
+    {
+      "id": "parse",
+      "type": "backend",
+      "label": "Parsing",
+      "sublabel": "syntax tree \u00b7 diag",
+      "stage": 2,
+      "row": 1,
+      "tag": "per-vendor grammar"
+    },
+    {
+      "id": "normalize",
+      "type": "backend",
+      "label": "Normalization",
+      "sublabel": "Universal model",
+      "stage": 2,
+      "row": 2,
+      "tag": "28 canonical paths"
+    },
+    {
+      "id": "evaluate",
+      "type": "backend",
+      "label": "Evaluate",
+      "sublabel": "CIS controls",
+      "stage": 2,
+      "row": 3,
+      "tag": "PASS / FAIL / REVIEW",
+      "sources": [
+        {
+          "path": "backend/app/engines/compliance/executor.py",
+          "line": 121
+        }
+      ]
+    },
+    {
+      "id": "ident",
+      "type": "database",
+      "label": "Vendor Identity",
+      "sublabel": "evidence \u00b7 conf",
+      "stage": 3,
+      "row": 0,
+      "tag": "ML provenance"
+    },
+    {
+      "id": "results",
+      "type": "database",
+      "label": "Results & Findings",
+      "sublabel": "verdicts \u00b7 remediate",
+      "stage": 3,
+      "row": 3,
+      "tag": "evidence chains",
+      "sources": [
+        {
+          "path": "backend/app/models/__init__.py",
+          "line": 312
+        }
+      ]
+    },
+    {
+      "id": "reports",
+      "type": "backend",
+      "label": "Reporting Engine",
+      "sublabel": "PDF \u00b7 baseline",
+      "stage": 4,
+      "row": 3,
+      "tag": "per-device",
+      "sources": [
+        {
+          "path": "backend/app/engines/reporting.py",
+          "line": 320
+        }
+      ]
+    },
+    {
+      "id": "auditor",
+      "type": "external",
+      "label": "Auditor Review",
+      "sublabel": "review + remediate",
+      "stage": 4,
+      "row": 1,
+      "tag": "human-in-the-loop"
+    }
+  ],
+  "flows": [
+    {
+      "from": "files",
+      "to": "ingest",
+      "label": "raw bytes",
+      "classification": "bounded read",
+      "variant": "emphasis",
+      "route": "straight"
+    },
+    {
+      "from": "devices",
+      "to": "ingest",
+      "label": "device binding",
+      "classification": "ownership",
+      "variant": "default",
+      "route": "straight",
+      "labelDy": -16
+    },
+    {
+      "from": "ingest",
+      "to": "configs",
+      "label": "stored row",
+      "classification": "(device, hash) unique",
+      "variant": "emphasis",
+      "route": "straight",
+      "labelAt": [
+        315,
+        296
+      ]
+    },
+    {
+      "from": "ingest",
+      "to": "reject",
+      "label": "invalid input",
+      "classification": "typed error",
+      "variant": "security",
+      "via": [
+        [
+          315,
+          210
+        ],
+        [
+          40,
+          210
+        ],
+        [
+          40,
+          528
+        ],
+        [
+          315,
+          528
+        ]
+      ],
+      "labelAt": [
+        170,
+        516
+      ]
+    },
+    {
+      "from": "configs",
+      "to": "detect",
+      "label": "raw content",
+      "classification": "byte-exact",
+      "variant": "emphasis",
+      "route": "straight"
+    },
+    {
+      "from": "detect",
+      "to": "ident",
+      "label": "vendor evidence",
+      "classification": "confidence scored",
+      "variant": "default",
+      "route": "straight",
+      "labelAt": [
+        637,
+        282
+      ]
+    },
+    {
+      "from": "detect",
+      "to": "parse",
+      "label": "vendor grammar",
+      "classification": "language selected",
+      "variant": "default",
+      "route": "straight",
+      "labelAt": [
+        545,
+        200
+      ]
+    },
+    {
+      "from": "parse",
+      "to": "normalize",
+      "label": "syntax tree",
+      "classification": "per-vendor",
+      "variant": "emphasis",
+      "route": "straight",
+      "labelAt": [
+        545,
+        318
+      ]
+    },
+    {
+      "from": "normalize",
+      "to": "evaluate",
+      "label": "universal model",
+      "classification": "28 canonical paths",
+      "variant": "emphasis",
+      "route": "straight",
+      "labelAt": [
+        545,
+        446
+      ]
+    },
+    {
+      "from": "evaluate",
+      "to": "results",
+      "label": "control verdicts",
+      "classification": "evidence + remediation",
+      "variant": "emphasis",
+      "route": "straight",
+      "labelAt": [
+        637,
+        560
+      ],
+      "fromSide": "right",
+      "toSide": "left"
+    },
+    {
+      "from": "results",
+      "to": "reports",
+      "label": "verdicts + findings",
+      "classification": "snapshot-first",
+      "variant": "emphasis",
+      "route": "straight",
+      "labelAt": [
+        880,
+        350
+      ]
+    },
+    {
+      "from": "reports",
+      "to": "auditor",
+      "label": "PDF + baseline",
+      "classification": "per-device",
+      "variant": "default",
+      "route": "straight",
+      "labelAt": [
+        980,
+        410
+      ]
+    }
+  ]
+}

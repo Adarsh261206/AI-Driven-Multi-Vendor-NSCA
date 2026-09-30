@@ -1,0 +1,256 @@
+<svg viewBox="0 0 730 794" data-reader-fit="intrinsic-height" role="img" lang="en" aria-labelledby="archify-diagram-title archify-diagram-description" data-animation="trace" data-preset="signal-flow" data-quality-profile="showcase">
+        <title id="archify-diagram-title">Audit Execution Lifecycle</title>
+        <desc id="archify-diagram-description">queued → running → completed · cancel · retry · lease recovery</desc>
+        <!-- Definitions -->
+        <defs>
+          <marker id="arrowhead" markerWidth="10" markerHeight="7" refX="9" refY="3.5" orient="auto">
+            <polygon points="0 0, 10 3.5, 0 7" class="m-default" />
+          </marker>
+          <marker id="arrowhead-emphasis" markerWidth="10" markerHeight="7" refX="9" refY="3.5" orient="auto">
+            <polygon points="0 0, 10 3.5, 0 7" class="m-emphasis" />
+          </marker>
+          <marker id="arrowhead-security" markerWidth="10" markerHeight="7" refX="9" refY="3.5" orient="auto">
+            <polygon points="0 0, 10 3.5, 0 7" class="m-security" />
+          </marker>
+          <marker id="arrowhead-dashed" markerWidth="10" markerHeight="7" refX="9" refY="3.5" orient="auto">
+            <polygon points="0 0, 10 3.5, 0 7" class="m-dashed" />
+          </marker>
+          <pattern id="grid" width="40" height="40" patternUnits="userSpaceOnUse">
+            <path d="M 40 0 L 0 0 0 40" class="c-grid" stroke-width="0.5"/>
+          </pattern>
+        </defs>
+
+        <!-- Background Grid -->
+        <rect width="100%" height="100%" fill="url(#grid)" />
+
+        <!-- Lifecycle bands -->
+        <text x="18" y="88" class="t-dim" font-size="10" font-weight="600" writing-mode="vertical-rl" text-anchor="middle">Execution rail</text>
+        <text x="18" y="272" class="t-dim" font-size="10" font-weight="600" writing-mode="vertical-rl" text-anchor="middle">Cancel &amp; wait</text>
+        <text x="18" y="456" class="t-dim" font-size="10" font-weight="600" writing-mode="vertical-rl" text-anchor="middle">Recovery &amp; retry</text>
+        <text x="18" y="644" class="t-dim" font-size="10" font-weight="600" writing-mode="vertical-rl" text-anchor="middle">Terminal exits</text>
+
+        <!-- Primary lifecycle rail -->
+
+
+        <!-- Transition paths -->
+        <g data-graph-role="automatic-crossover" style="--step:0">
+          <path data-graph-role="automatic-crossover-underlay" d="M 200 88 L 295 88" fill="none" stroke="var(--mask)" stroke-width="5.6" stroke-linecap="round" stroke-linejoin="round" pointer-events="none"/>
+          <path data-edge-from="queued" data-edge-to="running" data-edge-label="atomic claim" data-edge-key="0" data-composition-points="200,88;295,88" data-composition-crossover="halo" d="M 200 88 L 295 88" class="a-emphasis" data-animate="edge" style="--step:0" stroke-width="1.6" marker-end="url(#arrowhead-emphasis)"/>
+        </g>
+        <g data-graph-role="automatic-crossover" style="--step:1">
+          <path data-graph-role="automatic-crossover-underlay" d="M 115 120 L 115 584 Q 115 594 125 594 L 341 594 Q 350 594 350 603 L 350 612" fill="none" stroke="var(--mask)" stroke-width="5.1" stroke-linecap="round" stroke-linejoin="round" pointer-events="none"/>
+          <path data-edge-from="queued" data-edge-to="cancelled" data-edge-label="cancel before claim" data-edge-key="1" data-composition-points="115,120;115,594;350,594;350,612" data-composition-crossover="halo" d="M 115 120 L 115 584 Q 115 594 125 594 L 341 594 Q 350 594 350 603 L 350 612" class="a-security" data-animate="edge" style="--step:1" stroke-width="1.1" marker-end="url(#arrowhead-security)"/>
+        </g>
+        <g data-graph-role="automatic-crossover" style="--step:2">
+          <path data-graph-role="automatic-crossover-underlay" d="M 435 88 L 530 88" fill="none" stroke="var(--mask)" stroke-width="5.6" stroke-linecap="round" stroke-linejoin="round" pointer-events="none"/>
+          <path data-edge-from="running" data-edge-to="completed" data-edge-label="CAS complete" data-edge-key="2" data-composition-points="435,88;530,88" data-composition-crossover="halo" d="M 435 88 L 530 88" class="a-emphasis" data-animate="edge" style="--step:2" stroke-width="1.6" marker-end="url(#arrowhead-emphasis)"/>
+        </g>
+        <g data-graph-role="automatic-crossover" style="--step:3">
+          <path data-graph-role="automatic-crossover-underlay" d="M 365 120 L 365 240" fill="none" stroke="var(--mask)" stroke-width="5.1" stroke-linecap="round" stroke-linejoin="round" pointer-events="none"/>
+          <path data-edge-from="running" data-edge-to="cancel_requested" data-edge-label="cancel requested" data-edge-key="3" data-composition-points="365,120;365,240" data-composition-crossover="halo" d="M 365 120 L 365 240" class="a-security" data-animate="edge" style="--step:3" stroke-width="1.1" marker-end="url(#arrowhead-security)"/>
+        </g>
+        <g data-graph-role="automatic-crossover" style="--step:4">
+          <path data-graph-role="automatic-crossover-underlay" d="M 365 304 L 365 342 Q 365 352 355 352 L 252.5 352 Q 242.5 352 242.5 362 L 242.5 562 Q 242.5 572 252.5 572 L 370 572 Q 380 572 380 582 L 380 612" fill="none" stroke="var(--mask)" stroke-width="5.1" stroke-linecap="round" stroke-linejoin="round" pointer-events="none"/>
+          <path data-edge-from="cancel_requested" data-edge-to="cancelled" data-edge-label="checkpoint confirms" data-edge-key="4" data-composition-points="365,304;365,352;242.5,352;242.5,572;380,572;380,612" data-composition-crossover="halo" d="M 365 304 L 365 342 Q 365 352 355 352 L 252.5 352 Q 242.5 352 242.5 362 L 242.5 562 Q 242.5 572 252.5 572 L 370 572 Q 380 572 380 582 L 380 612" class="a-security" data-animate="edge" style="--step:4" stroke-width="1.1" marker-end="url(#arrowhead-security)"/>
+        </g>
+        <g data-graph-role="automatic-crossover" style="--step:5">
+          <path data-graph-role="automatic-crossover-underlay" d="M 395 120 L 395 194 Q 395 204 405 204 L 472.5 204 Q 482.5 204 482.5 214 L 482.5 518 Q 482.5 528 492.5 528 L 590 528 Q 600 528 600 538 L 600 612" fill="none" stroke="var(--mask)" stroke-width="5.1" stroke-linecap="round" stroke-linejoin="round" pointer-events="none"/>
+          <path data-edge-from="running" data-edge-to="failed" data-edge-label="pipeline error" data-edge-key="5" data-composition-points="395,120;395,204;482.5,204;482.5,528;600,528;600,612" data-composition-crossover="halo" d="M 395 120 L 395 194 Q 395 204 405 204 L 472.5 204 Q 482.5 204 482.5 214 L 482.5 518 Q 482.5 528 492.5 528 L 590 528 Q 600 528 600 538 L 600 612" class="a-security" data-animate="edge" style="--step:5" stroke-width="1.1" marker-end="url(#arrowhead-security)"/>
+        </g>
+        <g data-graph-role="automatic-crossover" style="--step:6">
+          <path data-graph-role="automatic-crossover-underlay" d="M 335 120 L 335 170 Q 335 180 325 180 L 262.5 180 Q 252.5 180 252.5 190 L 252.5 366 Q 252.5 376 262.5 376 L 355 376 Q 365 376 365 386 L 365 424" fill="none" stroke="var(--mask)" stroke-width="5.1" stroke-linecap="round" stroke-linejoin="round" pointer-events="none"/>
+          <path data-edge-from="running" data-edge-to="reaped" data-edge-label="lease expired" data-edge-key="6" data-composition-points="335,120;335,180;252.5,180;252.5,376;365,376;365,424" data-composition-crossover="halo" d="M 335 120 L 335 170 Q 335 180 325 180 L 262.5 180 Q 252.5 180 252.5 190 L 252.5 366 Q 252.5 376 262.5 376 L 355 376 Q 365 376 365 386 L 365 424" class="a-dashed" data-animate="edge" style="--step:6" stroke-width="1.1" marker-end="url(#arrowhead-dashed)"/>
+        </g>
+        <g data-graph-role="automatic-crossover" style="--step:7">
+          <path data-graph-role="automatic-crossover-underlay" d="M 365 488 L 365 540 Q 365 550 375 550 L 560 550 Q 570 550 570 560 L 570 612" fill="none" stroke="var(--mask)" stroke-width="5.1" stroke-linecap="round" stroke-linejoin="round" pointer-events="none"/>
+          <path data-edge-from="reaped" data-edge-to="failed" data-edge-label="recovery closes" data-edge-key="7" data-composition-points="365,488;365,550;570,550;570,612" data-composition-crossover="halo" d="M 365 488 L 365 540 Q 365 550 375 550 L 560 550 Q 570 550 570 560 L 570 612" class="a-dashed" data-animate="edge" style="--step:7" stroke-width="1.1" marker-end="url(#arrowhead-dashed)"/>
+        </g>
+        <g data-graph-role="automatic-crossover" style="--step:8">
+          <path data-graph-role="automatic-crossover-underlay" d="M 630 612 L 630 516 Q 630 506 620 506 L 609 506 Q 600 506 600 497 L 600 488" fill="none" stroke="var(--mask)" stroke-width="5.1" stroke-linecap="round" stroke-linejoin="round" pointer-events="none"/>
+          <path data-edge-from="failed" data-edge-to="retry" data-edge-label="retryable" data-edge-key="8" data-composition-points="630,612;630,506;600,506;600,488" data-composition-crossover="halo" d="M 630 612 L 630 516 Q 630 506 620 506 L 609 506 Q 600 506 600 497 L 600 488" class="a-dashed" data-animate="edge" style="--step:8" stroke-width="1.1" marker-end="url(#arrowhead-dashed)"/>
+        </g>
+        <g data-graph-role="automatic-crossover" style="--step:9">
+          <path data-graph-role="automatic-crossover-underlay" d="M 600 424 L 600 166 Q 600 156 590 156 L 155 156 Q 145 156 145 146 L 145 120" fill="none" stroke="var(--mask)" stroke-width="5.1" stroke-linecap="round" stroke-linejoin="round" pointer-events="none"/>
+          <path data-edge-from="retry" data-edge-to="queued" data-edge-label="attempt+1 row" data-edge-key="9" data-composition-points="600,424;600,156;145,156;145,120" data-composition-crossover="halo" d="M 600 424 L 600 166 Q 600 156 590 156 L 155 156 Q 145 156 145 146 L 145 120" class="a-dashed" data-animate="edge" style="--step:9" stroke-width="1.1" marker-end="url(#arrowhead-dashed)"/>
+        </g>
+
+        <!-- States -->
+        <g id="node-queued" data-node-id="queued" data-node-label="Queued" tabindex="0" role="button" aria-label="Focus Queued, execution row persisted, Execution rail" aria-pressed="false" data-node-kind="start" data-node-sublabel="execution row persisted" data-node-tag="awaiting worker" data-node-context="Execution rail">
+          <title>Queued · execution row persisted · Execution rail · awaiting worker</title>
+          <rect x="60" y="56" width="140" height="64" rx="7" class="c-mask"/>
+          <rect x="60" y="56" width="140" height="64" rx="7" class="c-frontend" data-animate="node" style="--step:0" stroke-width="1.5"/>
+          <g aria-hidden="true" data-lifecycle-initial-marker="">
+            <circle cx="38" cy="88" r="4.5" style="fill: var(--arrow-emphasis)"/><path d="M 42.5 88 L 53 88" class="a-emphasis" stroke-width="1.4"/><path d="M 52 84.5 L 59 88 L 52 91.5 Z" style="fill: var(--arrow-emphasis)"/>
+          </g>
+          <g aria-hidden="true" data-semantic-sigil="start" class="semantic-sigil s-frontend" transform="translate(66 62) scale(0.6875)">
+            <circle cx="8" cy="8" r="5"/>
+            <path d="m7 5.4 3.6 2.6L7 10.6Z" class="sigil-fill"/>
+          </g>
+        <text data-detail="fine" x="83" y="70" class="t-frontend" font-size="8" font-weight="700">01</text>
+          <text data-node-label="" data-detail-anchor="" x="130" y="79" class="t-primary" font-size="11" font-weight="600" text-anchor="middle">Queued</text>
+          <text data-detail="context" x="130" y="96" class="t-muted" font-size="8" text-anchor="middle">execution row persisted</text>
+        <text data-detail="fine" x="130" y="108" class="t-frontend" font-size="8" text-anchor="middle">awaiting worker</text>
+        </g>
+
+        <g id="node-running" data-node-id="running" data-node-label="Running" tabindex="0" role="button" aria-label="Focus Running, lease heartbeated, Execution rail" aria-pressed="false" data-node-kind="active" data-node-sublabel="lease heartbeated" data-node-tag="pipeline active" data-node-context="Execution rail">
+          <title>Running · lease heartbeated · Execution rail · pipeline active</title>
+          <rect x="295" y="56" width="140" height="64" rx="7" class="c-mask"/>
+          <rect x="295" y="56" width="140" height="64" rx="7" class="c-frontend" data-animate="node" style="--step:1" stroke-width="1.5"/>
+          <g aria-hidden="true" data-semantic-sigil="active" class="semantic-sigil s-frontend" transform="translate(301 62) scale(0.6875)">
+            <path d="M2 8h3l1.5-3.5L9 12l1.6-4H14"/>
+          </g>
+        <text data-detail="fine" x="318" y="70" class="t-frontend" font-size="8" font-weight="700">02</text>
+          <text data-node-label="" data-detail-anchor="" x="365" y="79" class="t-primary" font-size="11" font-weight="600" text-anchor="middle">Running</text>
+          <text data-detail="context" x="365" y="96" class="t-muted" font-size="8" text-anchor="middle">lease heartbeated</text>
+        <text data-detail="fine" x="365" y="108" class="t-frontend" font-size="8" text-anchor="middle">pipeline active</text>
+        </g>
+
+        <g id="node-completed" data-node-id="completed" data-node-label="Completed" tabindex="0" role="button" aria-label="Focus Completed, score + findings landed, Execution rail" aria-pressed="false" data-node-kind="success" data-node-sublabel="score + findings landed" data-node-tag="success" data-node-context="Execution rail">
+          <title>Completed · score + findings landed · Execution rail · success</title>
+          <rect x="530" y="56" width="140" height="64" rx="7" class="c-mask"/>
+          <rect x="530" y="56" width="140" height="64" rx="7" class="c-backend" data-animate="node" style="--step:3" stroke-width="1.5"/>
+          <rect x="533" y="59" width="134" height="58" rx="4" class="c-backend" style="fill: none" stroke-width="1"/>
+          <g aria-hidden="true" data-semantic-sigil="success" class="semantic-sigil s-backend" transform="translate(536 62) scale(0.6875)">
+            <circle cx="8" cy="8" r="5.3"/>
+            <path d="m5.2 8 1.8 1.8 3.8-4"/>
+          </g>
+        <text data-detail="fine" x="553" y="70" class="t-backend" font-size="8" font-weight="700">03</text>
+          <text data-node-label="" data-detail-anchor="" x="598.3" y="79" class="t-primary" font-size="11" font-weight="600" text-anchor="middle">Completed</text>
+          <text data-detail="context" x="600" y="96" class="t-muted" font-size="8" text-anchor="middle">score + findings landed</text>
+        <text data-detail="fine" x="600" y="108" class="t-backend" font-size="8" text-anchor="middle">success</text>
+        </g>
+
+        <g id="node-cancel_requested" data-node-id="cancel_requested" data-node-label="Cancel Requested" tabindex="0" role="button" aria-label="Focus Cancel Requested, cooperative checkpoint, Cancel &amp; wait" aria-pressed="false" data-node-kind="waiting" data-node-sublabel="cooperative checkpoint" data-node-tag="pause" data-node-context="Cancel &amp; wait">
+          <title>Cancel Requested · cooperative checkpoint · Cancel &amp; wait · pause</title>
+          <rect x="295" y="240" width="140" height="64" rx="7" class="c-mask"/>
+          <rect x="295" y="240" width="140" height="64" rx="7" class="c-cloud" data-animate="node" style="--step:4" stroke-width="1.5"/>
+          <g aria-hidden="true" data-semantic-sigil="waiting" class="semantic-sigil s-cloud" transform="translate(301 246) scale(0.6875)">
+            <path d="M4 2.5h8M4 13.5h8M5 3c0 2.8 2 3.2 3 5-1 1.8-3 2.2-3 5M11 3c0 2.8-2 3.2-3 5 1 1.8 3 2.2 3 5"/>
+          </g>
+          <text data-node-label="" data-detail-anchor="" x="366.8" y="263" class="t-primary" font-size="11" font-weight="600" text-anchor="middle">Cancel Requested</text>
+          <text data-detail="context" x="365" y="280" class="t-muted" font-size="8" text-anchor="middle">cooperative checkpoint</text>
+        <text data-detail="fine" x="365" y="292" class="t-cloud" font-size="8" text-anchor="middle">pause</text>
+        </g>
+
+        <g id="node-reaped" data-node-id="reaped" data-node-label="Lease Expired" tabindex="0" role="button" aria-label="Focus Lease Expired, worker lost · recovery, Recovery &amp; retry" aria-pressed="false" data-node-kind="waiting" data-node-sublabel="worker lost · recovery" data-node-tag="reap" data-node-context="Recovery &amp; retry">
+          <title>Lease Expired · worker lost · recovery · Recovery &amp; retry · reap</title>
+          <rect x="295" y="424" width="140" height="64" rx="7" class="c-mask"/>
+          <rect x="295" y="424" width="140" height="64" rx="7" class="c-cloud" data-animate="node" style="--step:7" stroke-width="1.5"/>
+          <g aria-hidden="true" data-semantic-sigil="waiting" class="semantic-sigil s-cloud" transform="translate(301 430) scale(0.6875)">
+            <path d="M4 2.5h8M4 13.5h8M5 3c0 2.8 2 3.2 3 5-1 1.8-3 2.2-3 5M11 3c0 2.8-2 3.2-3 5 1 1.8 3 2.2 3 5"/>
+          </g>
+          <text data-node-label="" data-detail-anchor="" x="365" y="447" class="t-primary" font-size="11" font-weight="600" text-anchor="middle">Lease Expired</text>
+          <text data-detail="context" x="365" y="464" class="t-muted" font-size="8" text-anchor="middle">worker lost · recovery</text>
+        <text data-detail="fine" x="365" y="476" class="t-cloud" font-size="8" text-anchor="middle">reap</text>
+        </g>
+
+        <g id="node-retry" data-node-id="retry" data-node-label="Retry" tabindex="0" role="button" aria-label="Focus Retry, new row · attempt+1, Recovery &amp; retry" aria-pressed="false" data-node-kind="active" data-node-sublabel="new row · attempt+1" data-node-tag="attempt+1" data-node-context="Recovery &amp; retry">
+          <title>Retry · new row · attempt+1 · Recovery &amp; retry · attempt+1</title>
+          <rect x="530" y="424" width="140" height="64" rx="7" class="c-mask"/>
+          <rect x="530" y="424" width="140" height="64" rx="7" class="c-frontend" data-animate="node" style="--step:9" stroke-width="1.5"/>
+          <g aria-hidden="true" data-semantic-sigil="active" class="semantic-sigil s-frontend" transform="translate(536 430) scale(0.6875)">
+            <path d="M2 8h3l1.5-3.5L9 12l1.6-4H14"/>
+          </g>
+          <text data-node-label="" data-detail-anchor="" x="600" y="447" class="t-primary" font-size="11" font-weight="600" text-anchor="middle">Retry</text>
+          <text data-detail="context" x="600" y="464" class="t-muted" font-size="8" text-anchor="middle">new row · attempt+1</text>
+        <text data-detail="fine" x="600" y="476" class="t-frontend" font-size="8" text-anchor="middle">attempt+1</text>
+        </g>
+
+        <g id="node-cancelled" data-node-id="cancelled" data-node-label="Cancelled" tabindex="0" role="button" aria-label="Focus Cancelled, confirmed terminal, Terminal exits" aria-pressed="false" data-node-kind="failure" data-node-sublabel="confirmed terminal" data-node-tag="terminal" data-node-context="Terminal exits">
+          <title>Cancelled · confirmed terminal · Terminal exits · terminal</title>
+          <rect x="295" y="612" width="140" height="64" rx="7" class="c-mask"/>
+          <rect x="295" y="612" width="140" height="64" rx="7" class="c-security" data-animate="node" style="--step:2" stroke-width="1.5"/>
+          <rect x="298" y="615" width="134" height="58" rx="4" class="c-security" style="fill: none" stroke-width="1"/>
+          <g aria-hidden="true" data-semantic-sigil="failure" class="semantic-sigil s-security" transform="translate(301 618) scale(0.6875)">
+            <circle cx="8" cy="8" r="5.3"/>
+            <path d="m5.7 5.7 4.6 4.6m0-4.6-4.6 4.6"/>
+          </g>
+          <text data-node-label="" data-detail-anchor="" x="365" y="635" class="t-primary" font-size="11" font-weight="600" text-anchor="middle">Cancelled</text>
+          <text data-detail="context" x="365" y="652" class="t-muted" font-size="8" text-anchor="middle">confirmed terminal</text>
+        <text data-detail="fine" x="365" y="664" class="t-security" font-size="8" text-anchor="middle">terminal</text>
+        </g>
+
+        <g id="node-failed" data-node-id="failed" data-node-label="Failed" tabindex="0" role="button" aria-label="Focus Failed, pipeline error · reaped, Terminal exits" aria-pressed="false" data-node-kind="failure" data-node-sublabel="pipeline error · reaped" data-node-tag="terminal" data-node-context="Terminal exits">
+          <title>Failed · pipeline error · reaped · Terminal exits · terminal</title>
+          <rect x="530" y="612" width="140" height="64" rx="7" class="c-mask"/>
+          <rect x="530" y="612" width="140" height="64" rx="7" class="c-security" data-animate="node" style="--step:6" stroke-width="1.5"/>
+          <g aria-hidden="true" data-semantic-sigil="failure" class="semantic-sigil s-security" transform="translate(536 618) scale(0.6875)">
+            <circle cx="8" cy="8" r="5.3"/>
+            <path d="m5.7 5.7 4.6 4.6m0-4.6-4.6 4.6"/>
+          </g>
+          <text data-node-label="" data-detail-anchor="" x="600" y="635" class="t-primary" font-size="11" font-weight="600" text-anchor="middle">Failed</text>
+          <text data-detail="context" x="600" y="652" class="t-muted" font-size="8" text-anchor="middle">pipeline error · reaped</text>
+        <text data-detail="fine" x="600" y="664" class="t-security" font-size="8" text-anchor="middle">terminal</text>
+        </g>
+
+        <!-- Transition labels -->
+        <g data-detail="context" data-edge-from="queued" data-edge-to="running" data-edge-label="atomic claim" data-edge-key="0">
+          <rect x="212.1" y="67" width="70.80000000000001" height="16" rx="4" class="c-mask"/>
+          <text x="247.5" y="78" class="t-edge-emphasis" font-size="8" text-anchor="middle">atomic claim</text>
+        </g>
+        <g data-detail="context" data-edge-from="queued" data-edge-to="cancelled" data-edge-label="cancel before claim" data-edge-key="1">
+          <rect x="3.8999999999999915" y="349" width="105.10000000000001" height="16" rx="4" class="c-mask"/>
+          <text x="56.449999999999996" y="360" class="t-edge-security" font-size="8" text-anchor="middle">cancel before claim</text>
+        </g>
+        <g data-detail="context" data-edge-from="running" data-edge-to="completed" data-edge-label="CAS complete" data-edge-key="2">
+          <rect x="447.1" y="67" width="70.80000000000001" height="16" rx="4" class="c-mask"/>
+          <text x="482.5" y="78" class="t-edge-emphasis" font-size="8" text-anchor="middle">CAS complete</text>
+        </g>
+        <g data-detail="context" data-edge-from="running" data-edge-to="cancel_requested" data-edge-label="cancel requested" data-edge-key="3">
+          <rect x="268.6" y="202" width="90.4" height="16" rx="4" class="c-mask"/>
+          <text x="313.8" y="213" class="t-edge-security" font-size="8" text-anchor="middle">cancel requested</text>
+        </g>
+        <g data-detail="context" data-edge-from="cancel_requested" data-edge-to="cancelled" data-edge-label="checkpoint confirms" data-edge-key="4">
+          <rect x="131.39999999999998" y="454" width="105.10000000000001" height="16" rx="4" class="c-mask"/>
+          <text x="183.95" y="465" class="t-edge-security" font-size="8" text-anchor="middle">checkpoint confirms</text>
+        </g>
+        <g data-detail="context" data-edge-from="running" data-edge-to="failed" data-edge-label="pipeline error" data-edge-key="5">
+          <rect x="401" y="175" width="80.60000000000001" height="16" rx="4" class="c-mask"/>
+          <text x="441.3" y="186" class="t-edge-security" font-size="8" text-anchor="middle">pipeline error</text>
+        </g>
+        <g data-detail="context" data-edge-from="running" data-edge-to="reaped" data-edge-label="lease expired" data-edge-key="6">
+          <rect x="253.29999999999998" y="127" width="75.7" height="16" rx="4" class="c-mask"/>
+          <text x="291.15" y="138" class="t-edge-dashed" font-size="8" text-anchor="middle">lease expired</text>
+        </g>
+        <g data-detail="context" data-edge-from="reaped" data-edge-to="failed" data-edge-label="recovery closes" data-edge-key="7">
+          <rect x="273.5" y="511" width="85.5" height="16" rx="4" class="c-mask"/>
+          <text x="316.25" y="522" class="t-edge-dashed" font-size="8" text-anchor="middle">recovery closes</text>
+        </g>
+        <g data-detail="context" data-edge-from="failed" data-edge-to="retry" data-edge-label="retryable" data-edge-key="8">
+          <rect x="636" y="551" width="56.1" height="16" rx="4" class="c-mask"/>
+          <text x="664.05" y="562" class="t-edge-dashed" font-size="8" text-anchor="middle">retryable</text>
+        </g>
+        <g data-detail="context" data-edge-from="retry" data-edge-to="queued" data-edge-label="attempt+1 row" data-edge-key="9">
+          <rect x="518.3" y="282" width="75.7" height="16" rx="4" class="c-mask"/>
+          <text x="556.15" y="293" class="t-edge-dashed" font-size="8" text-anchor="middle">attempt+1 row</text>
+        </g>
+
+        <!-- Legend -->
+        <g data-legend="" data-legend-bridge="">
+          <text x="40" y="716" class="t-primary" font-size="12" font-weight="650">Legend</text>
+          <g data-legend-semantic-kind="start" data-legend-kind="start" data-legend-label="initial state" data-legend-x="40" data-legend-baseline="736" data-legend-width="120">
+            <circle cx="44.5" cy="732.5" r="4.5" style="fill: var(--arrow-emphasis)"/><path d="M 49 732.5 L 58 732.5" class="a-emphasis" stroke-width="1.4"/><path d="M 57 729 L 64 732.5 L 57 736 Z" style="fill: var(--arrow-emphasis)"/>
+            <text x="74" y="736" class="t-muted" font-size="10" font-weight="500">initial state</text>
+          </g>
+          <g data-legend-semantic-kind="active" data-legend-kind="active" data-legend-label="active" data-legend-x="182" data-legend-baseline="736" data-legend-width="73">
+            <rect x="182" y="728" width="14" height="9" rx="2" class="c-frontend" stroke-width="1"/>
+            <text x="204" y="736" class="t-muted" font-size="10" font-weight="500">active</text>
+          </g>
+          <g data-legend-semantic-kind="waiting" data-legend-kind="waiting" data-legend-label="waiting" data-legend-x="277" data-legend-baseline="736" data-legend-width="78">
+            <rect x="277" y="728" width="14" height="9" rx="2" class="c-cloud" stroke-width="1"/>
+            <text x="299" y="736" class="t-muted" font-size="10" font-weight="500">waiting</text>
+          </g>
+          <g data-legend-semantic-kind="success" data-legend-kind="success" data-legend-label="success" data-legend-x="377" data-legend-baseline="736" data-legend-width="78">
+            <rect x="377" y="728" width="14" height="9" rx="2" class="c-backend" stroke-width="1"/>
+            <text x="399" y="736" class="t-muted" font-size="10" font-weight="500">success</text>
+          </g>
+          <g data-legend-semantic-kind="failure" data-legend-kind="failure" data-legend-label="failure / exit" data-legend-x="477" data-legend-baseline="736" data-legend-width="113">
+            <rect x="477" y="728" width="14" height="9" rx="2" class="c-security" stroke-width="1"/>
+            <text x="499" y="736" class="t-muted" font-size="10" font-weight="500">failure / exit</text>
+          </g>
+          <g data-legend-semantic-kind="final" data-legend-x="40" data-legend-baseline="758" data-legend-width="79">
+            <rect x="40" y="750" width="14" height="9" rx="2" class="c-external" stroke-width="1"/><rect x="42.5" y="752.5" width="9" height="4" rx="1" class="c-external" style="fill: none" stroke-width="0.8"/>
+            <text x="64" y="758" class="t-muted" font-size="10" font-weight="500">final state</text>
+          </g>
+        </g>
+      </svg>

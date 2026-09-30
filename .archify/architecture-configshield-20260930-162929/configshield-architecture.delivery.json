@@ -1,0 +1,17 @@
+{
+  "schemaVersion": 1,
+  "receiptId": "0a3ca9b7-dab9-4173-89b6-74694c77d5da",
+  "status": "current",
+  "command": "deliver",
+  "type": "architecture",
+  "input": "/Users/adarshsharma/Documents/SIH 2026/.archify/architecture-configshield-20260930-162929/candidate.json",
+  "output": "/Users/adarshsharma/Documents/SIH 2026/.archify/architecture-configshield-20260930-162929/configshield-architecture.html",
+  "specification": {
+    "sha256": "026fc7e1175105ed6247ab01e01b66acd2ae1fd766b85cea6a6f4bcf0e81fc32",
+    "bytes": 5822
+  },
+  "artifact": {
+    "sha256": "5a7d8a6add5721c9fd2ce78f0b05f6ab1b5f61dff536d7aa4dfef707e7f9515b",
+    "bytes": 775130
+  }
+}
