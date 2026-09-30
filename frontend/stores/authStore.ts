@@ -1,7 +1,7 @@
 'use client';
 
 import { create } from 'zustand';
-import { authAPI } from '@/lib/api';
+import { authAPI, getApiStatus } from '@/lib/api';
 import type { User } from '@/types';
 
 interface AuthState {
@@ -70,12 +70,21 @@ export const useAuthStore = create<AuthState>((set) => ({
     }
     set({ isLoading: true });
     try {
+      // getMe goes through the shared axios instance: an expired access
+      // token is refreshed + retried transparently by the interceptor.
       const me = await authAPI.getMe();
       set({ user: me.data, isLoading: false });
-    } catch {
-      localStorage.removeItem('access_token');
-      localStorage.removeItem('refresh_token');
-      set({ user: null, isLoading: false });
+    } catch (err) {
+      // Only true auth failures clear the session (the interceptor already
+      // attempted refresh + redirect). Transient network/server errors keep
+      // tokens so a retry can succeed without forcing re-login.
+      if (getApiStatus(err) === 401 || getApiStatus(err) === 403) {
+        localStorage.removeItem('access_token');
+        localStorage.removeItem('refresh_token');
+        set({ user: null, isLoading: false });
+      } else {
+        set({ isLoading: false });
+      }
     }
   },
 

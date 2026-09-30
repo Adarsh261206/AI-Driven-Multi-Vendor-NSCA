@@ -38,6 +38,7 @@ class BaselineState:
     NOT_CONFIGURED = "NOT_CONFIGURED"
     PENDING_VALIDATION = "PENDING_VALIDATION"
     ACTIVE = "ACTIVE"
+    REPLACED = "REPLACED"
 
 
 async def user_has_baseline_capability(user: User, capability: str) -> bool:
@@ -164,6 +165,25 @@ async def onboarding_yes_flow(
     """Process the YES flow of onboarding: upload, parse, validate, activate."""
     org = await _ensure_organization(db, user)
 
+    # Service-layer guard: one ACTIVE baseline per org. A second onboarding
+    # while a baseline is ACTIVE is a no-op (replacement has its own flow),
+    # so the partial unique index never has to fire.
+    existing = await get_active_baseline_for_organization(db, org.id)
+    if existing is not None:
+        return {
+            "status": "already_active",
+            "activation_blocked": True,
+            "reason": "Organization already has an active baseline — use replacement.",
+            "baseline": {
+                "id": str(existing.id),
+                "name": existing.name,
+                "framework": existing.framework,
+                "benchmark": existing.benchmark,
+                "control_count": len(existing.controls) if existing.controls else 0,
+                "status": existing.status,
+            },
+        }
+
     # Update organization status to PENDING_VALIDATION
     org.baseline_status = BaselineState.PENDING_VALIDATION
     org.updated_at = datetime.utcnow()
@@ -259,6 +279,88 @@ async def get_active_baseline_for_organization(
         )
     )
     return result.scalar_one_or_none()
+
+
+async def replace_baseline(
+    db,
+    user: User,
+    baseline_upload: BaselineUploadRequest,
+) -> dict[str, Any]:
+    """Atomically replace the organization's active baseline.
+
+    Lifecycle (single transaction, caller commits):
+        1. Validate the new control set — invalid input blocks immediately
+           and the current baseline is untouched.
+        2. Deactivate the current ACTIVE baseline (status → REPLACED).
+        3. Persist the new baseline as ACTIVE.
+        4. Point the organization at the new baseline.
+
+    The DB-level partial unique index (one ACTIVE per org) plus the
+    flush ordering guarantee there is never 0 or 2 active baselines:
+    the old row is deactivated before the new row is inserted.
+    """
+    org = await _ensure_organization(db, user)
+
+    current = await get_active_baseline_for_organization(db, org.id)
+    if current is None:
+        return {
+            "status": "no_active_baseline",
+            "activation_blocked": True,
+            "reason": "No active baseline exists — use baseline onboarding instead.",
+        }
+
+    validation_result = await validate_baseline_controls(baseline_upload.controls)
+    if validation_result.errors:
+        return {
+            "status": "validation_failed",
+            "validation_result": validation_result,
+            "activation_blocked": True,
+            "reason": "New baseline validation failed — current baseline unchanged.",
+        }
+
+    # 2. Deactivate current (flush first so the partial unique index on
+    #    ACTIVE rows never sees two ACTIVE baselines).
+    current.status = BaselineState.REPLACED
+    current.activated_at = None
+    await db.flush()
+
+    # 3. Persist the replacement as the new ACTIVE baseline.
+    replacement = CompanyBaseline(
+        organization_id=org.id,
+        name=baseline_upload.name,
+        framework=baseline_upload.framework,
+        benchmark=baseline_upload.benchmark,
+        status=BaselineState.ACTIVE,
+        controls=baseline_upload.controls,
+        created_by=user.email,
+        activated_at=datetime.utcnow(),
+    )
+    db.add(replacement)
+    await db.flush()
+
+    # 4. Point the organization at the replacement.
+    org.baseline_status = BaselineState.ACTIVE
+    org.active_baseline_id = replacement.id
+    org.updated_at = datetime.utcnow()
+    await db.flush()
+
+    return {
+        "status": "replaced",
+        "validation_result": validation_result,
+        "replaced_baseline": {
+            "id": str(current.id),
+            "name": current.name,
+        },
+        "baseline": {
+            "id": str(replacement.id),
+            "name": replacement.name,
+            "framework": replacement.framework,
+            "benchmark": replacement.benchmark,
+            "control_count": len(replacement.controls),
+            "status": replacement.status,
+        },
+        "activation_blocked": False,
+    }
 
 
 async def resolve_baseline_for_audit(
@@ -511,6 +613,42 @@ async def baseline_validate(
         "benchmark": request.benchmark,
         "control_count": len(request.controls),
     }
+
+
+@router.post("/replace", response_model=dict)
+async def baseline_replace(
+    request: BaselineUploadRequest,
+    db: AsyncSession = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+):
+    """Atomically replace the organization's active baseline.
+
+    The new baseline is validated first; on any validation failure the
+    current active baseline remains untouched. On success the old baseline
+    is deactivated (REPLACED) and the new one becomes ACTIVE in the same
+    transaction — never 0, never 2 active baselines.
+    """
+    has_capability = await user_has_baseline_capability(current_user, "baseline.configure")
+    if not has_capability:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Insufficient capabilities to replace baseline",
+        )
+
+    result = await replace_baseline(db, current_user, request)
+    if result["activation_blocked"]:
+        if result["status"] == "no_active_baseline":
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="No active baseline exists — use baseline onboarding instead.",
+            )
+        raise HTTPException(
+            status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+            detail=result["reason"],
+        )
+
+    await db.commit()
+    return result
 
 
 @router.get("/status", response_model=dict)

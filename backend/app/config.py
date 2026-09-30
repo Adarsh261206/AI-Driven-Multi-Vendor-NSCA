@@ -23,6 +23,16 @@ class Settings(BaseSettings):
     # Redis
     REDIS_URL: str = "redis://localhost:6379"
 
+    # Celery execution queue (STEP 7). Broker defaults to REDIS_URL when
+    # CELERY_BROKER_URL is unset. Tests force memory:// via conftest so no
+    # broker is required and tasks never auto-run there.
+    CELERY_BROKER_URL: str = ""
+    CELERY_TASK_ALWAYS_EAGER: bool = False
+    EXECUTION_MAX_ATTEMPTS: int = 3
+    EXECUTION_RETRY_BACKOFF_SECONDS: int = 30
+    EXECUTION_LEASE_MINUTES: int = 15
+    EXECUTION_VISIBILITY_TIMEOUT_SECONDS: int = 1800
+
     # AI
     OPENAI_API_KEY: str = ""
     OPENAI_MODEL: str = "gpt-4"

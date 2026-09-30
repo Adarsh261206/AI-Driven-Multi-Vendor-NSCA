@@ -1,5 +1,6 @@
 from sqlalchemy.ext.asyncio import AsyncSession, create_async_engine, async_sessionmaker
 from sqlalchemy.orm import DeclarativeBase
+from sqlalchemy.pool import NullPool
 from typing import AsyncGenerator
 
 from app.config import settings
@@ -21,6 +22,29 @@ engine = create_async_engine(
 # Create async session factory
 AsyncSessionLocal = async_sessionmaker(
     engine,
+    class_=AsyncSession,
+    expire_on_commit=False,
+)
+
+
+def _worker_engine():
+    """Dedicated engine for Celery worker tasks.
+
+    Each task body runs under its own fresh event loop (asyncio.run per
+    task), so pooled connections — bound to dead loops — break with
+    cross-loop errors. NullPool opens/closes per session instead: safe
+    across loops, at the cost of per-task connection setup. The API keeps
+    its pooled engine for throughput.
+    """
+    return create_async_engine(
+        settings.DATABASE_URL,
+        poolclass=NullPool,
+        echo=settings.DEBUG,
+    )
+
+
+WorkerSessionLocal = async_sessionmaker(
+    _worker_engine(),
     class_=AsyncSession,
     expire_on_commit=False,
 )

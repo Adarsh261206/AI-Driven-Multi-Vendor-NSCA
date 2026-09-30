@@ -57,7 +57,12 @@ export default function AuditHistoryPage() {
     >
       {error && (
         <div className="mb-6">
-          <Alert variant="error" onDismiss={() => setError(null)}>{error}</Alert>
+          <Alert variant="error" onDismiss={() => setError(null)}>{error}
+            <div className="mt-3">
+              <button className="btn-secondary text-xs px-3.5 py-2" onClick={load}>
+                Retry
+              </button>
+            </div></Alert>
         </div>
       )}
 

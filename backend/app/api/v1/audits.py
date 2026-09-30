@@ -6,11 +6,12 @@ from uuid import UUID
 from datetime import datetime
 
 from app.database import get_db
-from app.models import User, Audit, AuditConfiguration, Configuration
+from app.models import User, Audit, AuditConfiguration
 from app.models import AuditAction
 from app.repositories.audit_trail import AuditTrailRepository
 from app.schemas import AuditCreate, AuditResponse, AuditStatusResponse, AuditListResponse, AuditStatus, FindingListResponse, FindingStatus, PaginationMeta
 from app.security.auth import get_current_user
+from app.services.scope import validate_audit_scope
 from app.api.v1.findings import _to_finding_response
 
 router = APIRouter()
@@ -64,19 +65,12 @@ async def create_audit(
     current_user: User = Depends(get_current_user),
 ):
     """Create a new audit"""
-    # Validate configuration IDs exist
-    if audit.configuration_ids:
-        result = await db.execute(
-            select(Configuration.id).where(Configuration.id.in_(audit.configuration_ids))
-        )
-        existing_ids = [row[0] for row in result.all()]
-        
-        missing_ids = set(audit.configuration_ids) - set(existing_ids)
-        if missing_ids:
-            raise HTTPException(
-                status_code=status.HTTP_400_BAD_REQUEST,
-                detail=f"Configuration IDs not found: {missing_ids}"
-            )
+    # Ownership + optional device-scope boundary: EVERY requested
+    # configuration must be inside the caller's permitted scope, and when
+    # device_ids are supplied every configuration must belong to one of
+    # those devices. A single violation rejects the ENTIRE request BEFORE
+    # any audit row exists — no partial audits, ever.
+    await validate_audit_scope(db, audit.device_ids, audit.configuration_ids, current_user)
     
     # Create audit
     new_audit = Audit(
@@ -240,14 +234,54 @@ async def cancel_audit(
     if not audit:
         raise HTTPException(status_code=404, detail="Audit not found")
     
+    # STEP 7: queue-aware cancellation. The latest execution row decides:
+    # QUEUED -> revoke + CANCELLED immediately; RUNNING -> CANCEL_REQUESTED
+    # (the worker observes it at safe checkpoints); terminal rows keep the
+    # legacy 400 below. Audits without execution rows use legacy behavior.
+    from app.services import execution as exec_svc
+
+    latest = await exec_svc.latest_execution(db, audit.id)
+    if latest is not None and latest.status not in (
+        exec_svc.ExecutionStatus.QUEUED,
+        exec_svc.ExecutionStatus.RUNNING,
+    ):
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Cannot cancel audit in current status"
+        )
+
+    if latest is not None:
+        if latest.status == exec_svc.ExecutionStatus.QUEUED:
+            try:
+                from app.celery_app import celery_app
+
+                if latest.celery_task_id:
+                    celery_app.control.revoke(latest.celery_task_id, terminate=False)
+            except Exception:
+                pass
+            latest.status = exec_svc.ExecutionStatus.CANCELLED
+            latest.completed_at = datetime.utcnow()
+            latest.updated_at = datetime.utcnow()
+            await db.flush()
+        else:
+            requested = await exec_svc.request_cancel_execution(db, latest.id)
+            if requested is None:
+                raise HTTPException(
+                    status_code=status.HTTP_400_BAD_REQUEST,
+                    detail="Cannot cancel audit in current status"
+                )
+
     if audit.status not in [AuditStatus.PENDING.value, AuditStatus.PROCESSING.value]:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail="Cannot cancel audit in current status"
         )
-    
-    audit.status = AuditStatus.CANCELLED.value
-    audit.completed_at = datetime.utcnow()
+
+    # QUEUED executions (and legacy audits) close immediately; RUNNING
+    # audits stay PROCESSING until the worker observes the request.
+    if latest is None or latest.status == exec_svc.ExecutionStatus.CANCELLED:
+        audit.status = AuditStatus.CANCELLED.value
+        audit.completed_at = datetime.utcnow()
 
     await db.flush()
 
@@ -257,6 +291,11 @@ async def cancel_audit(
         action=AuditAction.AUDIT_CANCELLED,
         audit_id=str(audit.id),
         user_id=str(current_user.id),
+        details=(
+            {"execution_id": str(latest.id), "queue_state": latest.status}
+            if latest is not None
+            else None
+        ),
     )
     await db.flush()
     await db.refresh(audit)

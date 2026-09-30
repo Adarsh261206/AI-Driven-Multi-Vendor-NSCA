@@ -111,6 +111,17 @@ class DeviceResponse(BaseModel):
     notes: Optional[str]
     configuration_count: Optional[int] = 0
     last_audit_date: Optional[datetime] = None
+    # STEP 5 device lifecycle: ACTIVE/ARCHIVED. Dedicated archive endpoints
+    # own transitions; never editable via generic update.
+    is_active: bool = True
+    # STEP 4 derived inventory fields — computed per request from existing
+    # relationships, never stored. All None-able: absent data renders as
+    # "Not configured" / "Never" / "Not audited", never fabricated.
+    latest_configuration_filename: Optional[str] = None
+    latest_configuration_at: Optional[datetime] = None
+    last_audit_id: Optional[UUID] = None
+    last_audit_status: Optional[str] = None
+    last_compliance_score: Optional[float] = None
     created_at: datetime
     updated_at: datetime
 
@@ -146,6 +157,80 @@ class ConfigurationListResponse(BaseModel):
     meta: PaginationMeta
 
 
+class BulkUploadItemResult(BaseModel):
+    """Per-file result inside a bulk upload.
+
+    status is one of: stored (new snapshot), duplicate (identical content
+    replayed honestly with the existing id), invalid (per-file error in
+    `error`; siblings unaffected).
+    """
+
+    filename: str
+    status: str
+    configuration_id: Optional[UUID] = None
+    error: Optional[str] = None
+
+
+class BulkUploadSummary(BaseModel):
+    """Counts over a bulk upload response; must sum to total."""
+
+    total: int
+    stored: int
+    duplicate: int
+    invalid: int
+
+
+class BulkUploadResponse(BaseModel):
+    """Schema for bulk configuration upload response"""
+
+    items: List[BulkUploadItemResult]
+    summary: BulkUploadSummary
+
+
+class DeviceConfigurationHistoryItem(ConfigurationResponse):
+    """One immutable configuration snapshot with derived history metadata.
+
+    latest/audit_count/detection fields are DERIVED per request — never
+    stored. No raw content: content stays behind the content endpoint.
+    """
+
+    device_id: UUID
+    content_hash: str
+    latest: bool = False
+    audit_count: int = 0
+    detected_vendor: Optional[str] = None
+    detected_platform: Optional[str] = None
+    detected_hostname: Optional[str] = None
+
+
+class DeviceConfigurationHistoryResponse(BaseModel):
+    """Schema for per-device configuration history response"""
+    items: List[DeviceConfigurationHistoryItem]
+    meta: PaginationMeta
+
+
+class DeviceAuditHistoryItem(BaseModel):
+    """One audit derived through AuditConfiguration → Configuration.device_id.
+
+    Read-only projection over existing rows; no Audit.device_id column,
+    no history rewrite.
+    """
+
+    id: UUID
+    name: str
+    status: str
+    overall_score: Optional[float] = None
+    configuration_id: UUID
+    configuration_filename: str
+    created_at: datetime
+
+
+class DeviceAuditHistoryResponse(BaseModel):
+    """Schema for per-device audit history response"""
+    items: List[DeviceAuditHistoryItem]
+    meta: PaginationMeta
+
+
 # ============ Audit Schemas ============
 
 class AuditStatus(str, Enum):
@@ -163,6 +248,15 @@ class AuditCreate(BaseModel):
     configuration_ids: List[UUID]
     framework: str = "CIS"
     framework_version: Optional[str] = "2024.1"
+    device_ids: Optional[List[UUID]] = Field(
+        default=None,
+        description=(
+            "Optional execution-time device scope constraint. Every device "
+            "must be owned; every configuration must belong to one of these "
+            "devices. Never persisted as Audit.device_id — device identity "
+            "remains derivable via AuditConfiguration → Configuration."
+        ),
+    )
 
 
 class AuditResponse(BaseModel):
@@ -200,6 +294,28 @@ class AuditListResponse(BaseModel):
     """Schema for audit list response"""
     items: List[AuditResponse]
     meta: PaginationMeta
+
+
+class BulkAuditRequest(BaseModel):
+    """Schema for bulk audit execution: N independent audit items."""
+
+    items: List[AuditCreate]
+
+
+class BulkAuditItemResult(BaseModel):
+    """One created audit inside a bulk execution response."""
+
+    audit_id: UUID
+    name: str
+    status: str
+
+
+class BulkAuditResponse(BaseModel):
+    """Schema for bulk audit execution response"""
+
+    audits: List[BulkAuditItemResult]
+    total: int
+    batch_id: Optional[UUID] = None
 
 
 # ============ Compliance Schemas ============

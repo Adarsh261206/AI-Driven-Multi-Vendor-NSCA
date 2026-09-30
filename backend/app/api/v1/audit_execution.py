@@ -4,7 +4,7 @@ Audit Execution API
 Endpoints for running compliance audits and retrieving results.
 """
 
-from fastapi import APIRouter, HTTPException, Query, status, Depends, BackgroundTasks
+from fastapi import APIRouter, HTTPException, Query, status, Depends
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select, func
 from typing import Any, Optional
@@ -16,12 +16,17 @@ from app.models import (
     User, Audit, AuditConfiguration, Configuration,
     VendorIdentification, ParsedConfiguration, SemanticInterpretation,
     NormalizedConfiguration, ComplianceResult, Finding, AuditAction,
-    AuditStatus, FindingStatus, Organization, CompanyBaseline
+    AuditStatus, FindingStatus, Organization, CompanyBaseline,
+    AuditExecution, AuditBatch
 )
 from app.schemas import (
     AuditCreate, AuditResponse, FindingResponse, FindingListResponse, PaginationMeta,
+    BulkAuditRequest, BulkAuditResponse, BulkAuditItemResult,
 )
 from app.security.auth import get_current_user
+from app.config import settings
+from app.services import execution as exec_svc
+from app.services.scope import validate_audit_scope
 from app.benchmarks.selection import overall_score
 from app.engines.compliance.executor import AuditExecutor
 from app.engines.universal_model import UniversalSecurityModel
@@ -36,6 +41,10 @@ import time as _time  # noqa: E402
 audit_live_steps: dict[str, list[dict]] = {}
 audit_live_logs: dict[str, list[dict]] = {}
 audit_live_file_details: dict[str, list[dict]] = {}
+# STEP 7: audit_id -> execution_id binding, set by the worker before running
+# the pipeline. Lets checkpoints, progress sync, and outcome handling find
+# the durable execution row. Per-process by nature (same as the dicts above).
+audit_live_execution: dict[str, str] = {}
 
 PIPELINE_STEPS_DEF = [
     {"id": "validate", "label": "Validate Configuration", "desc": "Checking file integrity and syntax"},
@@ -96,6 +105,117 @@ def _current_progress(audit_id: str) -> int:
     return int((completed / len(steps) * 100) + (running * (100 / len(steps) * 0.5)))
 
 
+async def _execution_checkpoint(db, audit_id: str) -> None:
+    """Cooperative worker checkpoint: heartbeat lease, observe cancel.
+
+    No-op when the audit is not bound to an execution (legacy direct
+    runs). Raises ExecutionCancelled when cancellation was requested;
+    raises ExecutionSuperseded when the row left RUNNING for any other
+    reason (e.g. lease reaped by recovery) so the worker stops quietly
+    without touching rows it no longer owns.
+    """
+    execution_id = audit_live_execution.get(audit_id)
+    if not execution_id:
+        return
+    row = await db.execute(
+        select(AuditExecution).where(AuditExecution.id == UUID(execution_id))
+    )
+    execution = row.scalar_one_or_none()
+    if execution is None or execution.status == exec_svc.ExecutionStatus.CANCELLED:
+        raise exec_svc.ExecutionCancelled(f"execution {execution_id} gone")
+    if execution.status == exec_svc.ExecutionStatus.CANCEL_REQUESTED:
+        raise exec_svc.ExecutionCancelled(f"execution {execution_id} cancel requested")
+    if execution.status != exec_svc.ExecutionStatus.RUNNING:
+        raise exec_svc.ExecutionSuperseded(f"execution {execution_id} superseded")
+    from datetime import timedelta
+
+    execution.lease_expires_at = datetime.utcnow() + timedelta(
+        minutes=exec_svc.LEASE_MINUTES_DEFAULT
+    )
+    execution.updated_at = datetime.utcnow()
+    await db.flush()
+
+
+async def _settle_decided_execution(db, audit, audit_id: str, user_id: str) -> None:
+    """Honor an already-decided execution outcome after losing the end-CAS.
+
+    Called with a clean (rolled-back) transaction when complete/fail could
+    not claim the bound execution because it left RUNNING first:
+    - CANCEL_REQUESTED/CANCELLED -> confirm CANCELLED, mirror audit state.
+    - anything else -> recovery owns the outcome; touch nothing.
+    """
+    from app.services import execution as exec_svc
+
+    execution_id = audit_live_execution.get(audit_id)
+    if not execution_id:
+        return
+    row = await db.execute(
+        select(AuditExecution).where(AuditExecution.id == UUID(execution_id))
+    )
+    decided = row.scalar_one_or_none()
+    if decided is None:
+        return
+    if decided.status in (
+        exec_svc.ExecutionStatus.CANCEL_REQUESTED,
+        exec_svc.ExecutionStatus.CANCELLED,
+    ):
+        await exec_svc.confirm_cancelled(db, UUID(execution_id))
+        if audit is not None:
+            fresh = await db.execute(select(Audit).where(Audit.id == UUID(audit_id)))
+            live_audit = fresh.scalar_one_or_none()
+            if live_audit is not None:
+                live_audit.status = AuditStatus.CANCELLED.value
+                live_audit.completed_at = datetime.utcnow()
+                cancel_trail = AuditTrailRepository(db)
+                await cancel_trail.log_audit_event(
+                    action=AuditAction.AUDIT_CANCELLED,
+                    audit_id=audit_id,
+                    user_id=user_id,
+                    details={"observed": "completion-race"},
+                )
+        await db.commit()
+    # Superseded (reaped/failed/completed by recovery or redelivery):
+    # recovery already recorded the outcome — commit nothing.
+
+
+async def _sync_execution_progress(audit_id: str) -> None:
+    """Persist live progress/steps/logs onto the audit_progress row (best effort).
+
+    Runs on its OWN short-lived session and commits, so the API process
+    (separate from the Celery worker) sees real-time progress when it
+    polls getStatus — the worker's in-memory step dict is invisible
+    cross-process. Deliberately writes the DEDICATED audit_progress row,
+    never the audit_executions row: the pipeline's own transaction holds
+    a row lock on the execution row from its first checkpoint until the
+    final commit, so a concurrent UPDATE there would block and deadlock
+    the solo worker. Failures here must never break the audit itself.
+    """
+    try:
+        from app.database import WorkerSessionLocal as _SyncSession
+        from app.models import AuditProgress
+
+        async with _SyncSession() as sdb:
+            row = await sdb.execute(
+                select(AuditProgress).where(AuditProgress.audit_id == UUID(audit_id))
+            )
+            prog = row.scalar_one_or_none()
+            if prog is None:
+                prog = AuditProgress(audit_id=UUID(audit_id))
+                sdb.add(prog)
+            prog.progress = _current_progress(audit_id)
+            steps = audit_live_steps.get(audit_id, [])
+            running = next((s for s in steps if s.get("status") == "running"), None)
+            prog.current_step = (
+                str(running.get("id", ""))[:100] if running else None
+            )
+            prog.live_steps = steps
+            prog.live_logs = audit_live_logs.get(audit_id, [])[-30:]
+            prog.updated_at = datetime.utcnow()
+            await sdb.commit()
+    except Exception:
+        pass
+
+
 def build_compliance_result(audit_id, normalized_configuration_id,
                             framework: str, eval_result) -> "ComplianceResult":
     """Map one canonical ControlEvaluation onto its persistence row (F11).
@@ -129,15 +249,24 @@ async def run_audit_pipeline(
     config_ids: list[str],
     framework: str,
     user_id: str,
+    execution_id: str | None = None,
 ):
     """
-    Background task to run the full audit pipeline
-    
+    Run the full audit pipeline.
+
     INGEST → VALIDATE → DETECT → PARSE → NORMALIZE → EVALUATE → FINDINGS
+
+    Historically driven by BackgroundTasks; STEP 7 drives it from the
+    Celery worker with execution_id bound (checkpoints, progress
+    persistence, outcome recording). The engine path itself is unchanged.
     """
     import traceback
-    from app.database import AsyncSessionLocal
-    
+    # Worker-safe sessions: each pipeline run owns a fresh event loop, so
+    # pooled connections (bound to dead loops) break here. NullPool opens
+    # and closes per session instead. The API request path keeps the
+    # pooled factory for throughput.
+    from app.database import WorkerSessionLocal as AsyncSessionLocal
+
     async with AsyncSessionLocal() as db:
         try:
             # Update audit status
@@ -147,7 +276,27 @@ async def run_audit_pipeline(
             audit = audit_result.scalar_one_or_none()
             if not audit:
                 return
-            
+
+            # Bound executions start only from an owned RUNNING row. A
+            # missing row, or one that left RUNNING (cancelled/reaped),
+            # means this run must not proceed.
+            if execution_id is not None:
+                exec_row = await db.execute(
+                    select(AuditExecution).where(
+                        AuditExecution.id == UUID(execution_id)
+                    )
+                )
+                bound = exec_row.scalar_one_or_none()
+                if bound is None or bound.status not in (
+                    exec_svc.ExecutionStatus.RUNNING,
+                    exec_svc.ExecutionStatus.CANCEL_REQUESTED,
+                ):
+                    return
+                if bound.status == exec_svc.ExecutionStatus.CANCEL_REQUESTED:
+                    raise exec_svc.ExecutionCancelled(
+                        f"execution {execution_id} cancelled before start"
+                    )
+
             audit.status = AuditStatus.PROCESSING.value
             audit.started_at = datetime.utcnow()
             await db.flush()
@@ -191,6 +340,7 @@ async def run_audit_pipeline(
 
             # Step 0 done
             _update_step(audit_id, 0, "completed", 100, f"Validation passed — {len(config_ids)} file(s) valid")
+            await _sync_execution_progress(audit_id)
 
             # Step 1 — Detect (real ML)
             _update_step(audit_id, 1, "running", 30, "Detecting vendor & device type with ML (TF-IDF + LogisticRegression)...")
@@ -210,24 +360,31 @@ async def run_audit_pipeline(
             except Exception:
                 pass
             _update_step(audit_id, 1, "completed", 100, "Vendor detection complete")
+            await _sync_execution_progress(audit_id)
             await _asyncio.sleep(0.2)
 
             # Step 2 — Parse
             _update_step(audit_id, 2, "running", 20, "Parsing configurations — building syntax trees...")
             await _asyncio.sleep(0.6)
             _update_step(audit_id, 2, "completed", 100, "Parse complete — syntax trees built")
+            await _sync_execution_progress(audit_id)
             await _asyncio.sleep(0.2)
 
             # Step 3 — Normalize
             _update_step(audit_id, 3, "running", 20, "Normalizing to Common Security Model (28 universal paths)...")
             await _asyncio.sleep(0.5)
             _update_step(audit_id, 3, "completed", 100, "Normalization complete — universal model ready")
+            await _sync_execution_progress(audit_id)
             await _asyncio.sleep(0.2)
 
             # Step 4 — Evaluate (real work happens here, per config)
             _update_step(audit_id, 4, "running", 10, f"Evaluating controls per file (framework={framework}) × {len(config_ids)} file(s)...")
 
             for config_id in config_ids:
+                # Cooperative worker checkpoint: heartbeat the execution
+                # lease and observe cancellation at this safe file boundary.
+                await _execution_checkpoint(db, audit_id)
+                await _sync_execution_progress(audit_id)
                 # Get configuration
                 config_result = await db.execute(
                     select(Configuration).where(Configuration.id == UUID(config_id))
@@ -500,19 +657,32 @@ async def run_audit_pipeline(
                     all_findings.append(db_finding)
                 
                 # Resolve the organization's active Company Baseline once per
-                # audit. The org is derived from the authenticated user's
-                # server-side identity (never client-supplied). The resolved
-                # baseline is logged to the audit trail; company-scope metrics
-                # are projected over the stored CIS results at report time —
-                # the baseline never modifies CIS evaluation itself.
+                # audit. The org is derived from the pipeline user's
+                # server-side identity: user_id → users.organization_id
+                # (never client-supplied). The resolved baseline is
+                # SNAPSHOTTED onto the audit row so a later baseline
+                # replacement never rewrites historical audit context; the
+                # resolution is logged via the audit-trail repository.
+                # Company-scope metrics are projected over the stored CIS
+                # results at report time — the baseline never modifies CIS
+                # evaluation itself.
                 try:
-                    org_result = await db.execute(
-                        select(Organization).where(
-                            Organization.id == user_id
+                    from app.repositories.audit_trail import AuditTrailRepository
+                    trail = AuditTrailRepository(db)
+                    user_row = await db.execute(
+                        select(User.organization_id).where(
+                            User.id == UUID(user_id)
                         )
                     )
-                    org = org_result.scalar_one_or_none()
+                    user_org_id = user_row.scalar_one_or_none()
+                    org_result = await db.execute(
+                        select(Organization).where(
+                            Organization.id == user_org_id
+                        )
+                    ) if user_org_id else None
+                    org = org_result.scalar_one_or_none() if org_result else None
                     baseline_info: Optional[dict] = None
+                    snapshot_controls: Optional[list] = None
                     if org and org.baseline_status == "ACTIVE":
                         bl_result = await db.execute(
                             select(CompanyBaseline).where(
@@ -522,21 +692,40 @@ async def run_audit_pipeline(
                         )
                         active_baseline = bl_result.scalar_one_or_none()
                         if active_baseline:
+                            controls_data = active_baseline.controls
+                            if isinstance(controls_data, str):
+                                snapshot_controls = [
+                                    c.strip() for c in controls_data.split(",") if c.strip()
+                                ]
+                            else:
+                                snapshot_controls = [str(c) for c in controls_data]
                             baseline_info = {
                                 "baseline_id": str(active_baseline.id),
                                 "baseline_name": active_baseline.name,
                                 "framework": active_baseline.framework,
                                 "benchmark": active_baseline.benchmark,
                                 "in_scope_control_count": (
-                                    len(active_baseline.controls)
-                                    if active_baseline.controls else 0
+                                    len(snapshot_controls)
+                                    if snapshot_controls else 0
                                 ),
                             }
-                    db.add(AuditAction(
-                        audit_id=UUID(audit_id),
-                        action="BASELINE_RESOLVED",
+                    await trail.log(
+                        action=AuditAction.BASELINE_RESOLVED,
+                        entity_type="audit",
+                        entity_id=audit_id,
+                        user_id=user_id,
                         details=baseline_info or {"has_baseline": False},
-                    ))
+                    )
+                    audit = await db.get(Audit, UUID(audit_id))
+                    if audit:
+                        if baseline_info:
+                            audit.baseline_id = UUID(baseline_info["baseline_id"])
+                            audit.baseline_name = baseline_info["baseline_name"]
+                            audit.baseline_controls = snapshot_controls or []
+                        else:
+                            audit.baseline_id = None
+                            audit.baseline_name = None
+                            audit.baseline_controls = []
                 except Exception:
                     # Baseline resolution must never break the audit itself.
                     pass
@@ -564,17 +753,27 @@ async def run_audit_pipeline(
                     }
                     audit_config.parsed_configuration_id = parsed_config.id
             
+            # Checkpoint before the finalize phase (last safe boundary
+            # before findings persistence + summary commit).
+            await _execution_checkpoint(db, audit_id)
+            await _sync_execution_progress(audit_id)
+
             # Complete remaining steps with realistic timing — so frontend feels real, not fake instant
             _update_step(audit_id, 4, "completed", 100, f"Evaluation complete — {total_controls} controls checked, {passed} pass, {failed} fail, {review} review")
+            await _sync_execution_progress(audit_id)
             await _asyncio.sleep(0.4)
             _update_step(audit_id, 5, "running", 40, f"Generating {len(all_findings)} findings with risk scoring...")
+            await _sync_execution_progress(audit_id)
             await _asyncio.sleep(0.7)
             _update_step(audit_id, 5, "completed", 100, f"Findings generated — {len(all_findings)} findings, risk scored")
+            await _sync_execution_progress(audit_id)
             await _asyncio.sleep(0.3)
             _update_step(audit_id, 6, "running", 50, "Generating PDF report — per-device breakdown, ConfigShield header...")
+            await _sync_execution_progress(audit_id)
             await _asyncio.sleep(0.9)
             _update_step(audit_id, 6, "completed", 100, "Report ready — PDF built")
             audit_live_logs.setdefault(audit_id, []).append({"ts": _time.time(), "step": "done", "level": "info", "msg": f"Audit completed — score {overall_score(passed, total_controls):.1f}%"})
+            await _sync_execution_progress(audit_id)
 
             # Update audit summary (F5: the single canonical overall_score —
             # passed over ALL evaluated controls, REVIEW counts as non-pass).
@@ -614,8 +813,57 @@ async def run_audit_pipeline(
                 },
             )
 
+            # STEP 7: close the bound execution (progress 100). The CAS
+            # inside complete_execution is the atomic decider of the
+            # complete-vs-cancel race: if the execution left RUNNING (a
+            # cancel won, or recovery reaped it), its None return means
+            # this completion must NOT land — roll everything back and
+            # honor the decided outcome instead. Audit-row updates above
+            # stay verbatim for backward compatibility.
+            bound_execution_id = audit_live_execution.get(audit_id)
+            if bound_execution_id is not None:
+                completed_row = await exec_svc.complete_execution(
+                    db, UUID(bound_execution_id)
+                )
+                if completed_row is None:
+                    await db.rollback()
+                    await _settle_decided_execution(db, audit, audit_id, user_id)
+                    return
+
             await db.commit()
-            
+
+        except exec_svc.ExecutionCancelled:
+            # Cooperative cancellation observed at a checkpoint: confirm
+            # CANCELLED, mirror audit state, close lifecycle. No raise —
+            # cancellation is an outcome, not an error.
+            try:
+                bound_execution_id = audit_live_execution.get(audit_id)
+                if bound_execution_id is not None:
+                    await exec_svc.confirm_cancelled(db, UUID(bound_execution_id))
+                if audit:
+                    audit.status = AuditStatus.CANCELLED.value
+                    audit.completed_at = datetime.utcnow()
+                    cancel_trail = AuditTrailRepository(db)
+                    await cancel_trail.log_audit_event(
+                        action=AuditAction.AUDIT_CANCELLED,
+                        audit_id=audit_id,
+                        user_id=user_id,
+                        details={"observed": "pipeline-checkpoint"},
+                    )
+                await db.commit()
+            except Exception:
+                try:
+                    await db.rollback()
+                except Exception:
+                    pass
+        except exec_svc.ExecutionSuperseded:
+            # Lease reaped by recovery while running: recovery already owns
+            # the outcome (FAILED + replacement queued). Stop quietly —
+            # touch nothing, raise nothing.
+            try:
+                await db.rollback()
+            except Exception:
+                pass
         except Exception as e:
             # Mark audit as failed
             import traceback
@@ -630,6 +878,66 @@ async def run_audit_pipeline(
                 audit_live_logs.setdefault(audit_id, []).append({"ts": _time.time(), "step": "error", "level": "error", "msg": str(e)[:300]})
             except Exception:
                 pass
+            # STEP 7: bound executions classify the failure. Retryable
+            # failures with attempts left requeue as a NEW execution row
+            # (history preserved) and leave the audit PROCESSING; anything
+            # else follows the legacy terminal path below unchanged.
+            bound_execution_id = audit_live_execution.get(audit_id)
+            if bound_execution_id is not None:
+                try:
+                    category, retryable, message = exec_svc.classify_failure(e)
+                    exec_row = await db.execute(
+                        select(AuditExecution).where(
+                            AuditExecution.id == UUID(bound_execution_id)
+                        )
+                    )
+                    bound_row = exec_row.scalar_one_or_none()
+                    if (
+                        bound_row is not None
+                        and bound_row.status == exec_svc.ExecutionStatus.RUNNING
+                        and retryable
+                        and bound_row.attempt < bound_row.max_attempts
+                    ):
+                        await exec_svc.fail_execution(
+                            db, bound_row.id, category, message, retryable
+                        )
+                        retried = await exec_svc.create_execution(
+                            db,
+                            bound_row.audit_id,
+                            attempt=bound_row.attempt + 1,
+                            max_attempts=bound_row.max_attempts,
+                            framework=bound_row.framework,
+                            framework_version=bound_row.framework_version,
+                        )
+                        await db.flush()
+                        from app.tasks import execute_audit_task
+
+                        execute_audit_task.apply_async(
+                            args=[str(retried.id)],
+                            countdown=exec_svc.backoff_seconds(
+                                retried.attempt,
+                                settings.EXECUTION_RETRY_BACKOFF_SECONDS,
+                            ),
+                        )
+                        await db.commit()
+                        return
+                    if bound_row is not None and bound_row.status == (
+                        exec_svc.ExecutionStatus.RUNNING
+                    ):
+                        # The fail-CAS is the atomic decider: only a win
+                        # records the terminal audit state below. A loss
+                        # means cancel/recovery decided first — honor it.
+                        failed_row = await exec_svc.fail_execution(
+                            db, bound_row.id, category, message, retryable
+                        )
+                        if failed_row is None:
+                            await db.rollback()
+                            await _settle_decided_execution(
+                                db, audit, audit_id, user_id
+                            )
+                            return
+                except Exception:
+                    pass
             if audit:
                 audit.status = AuditStatus.FAILED.value
                 audit.completed_at = datetime.utcnow()
@@ -648,39 +956,55 @@ async def run_audit_pipeline(
                 except Exception:
                     pass
                 await db.commit()
-            
-            raise
+
+            # Legacy direct runs (no bound execution) propagate; worker-bound
+            # runs already recorded everything above and must not raise.
+            if bound_execution_id is None:
+                raise
 
 
-@router.post("/execute", response_model=AuditResponse, status_code=status.HTTP_202_ACCEPTED)
-async def execute_audit(
+MAX_BULK_AUDITS = 20
+
+
+async def _enqueue_execution(db: AsyncSession, execution_id: UUID) -> str:
+    """Publish an execution to the Celery queue; returns the task id.
+
+    Raises on broker failure AFTER flushing (the caller’s commit then
+    rolls everything back) so a job never references an uncommitted row
+    and a committed row is never left unscheduled.
+    """
+    from app.tasks import execute_audit_task
+
+    result = execute_audit_task.delay(str(execution_id))
+    row = await db.execute(
+        select(AuditExecution).where(AuditExecution.id == execution_id)
+    )
+    execution = row.scalar_one()
+    execution.celery_task_id = result.id
+    await db.flush()
+    return result.id
+
+
+async def _create_audit(
+    db: AsyncSession,
+    current_user: User,
     audit: AuditCreate,
-    background_tasks: BackgroundTasks,
-    db: AsyncSession = Depends(get_db),
-    current_user: User = Depends(get_current_user),
-):
+) -> Audit:
+    """Create one audit row + associations + trail, enqueue its execution.
+
+    Shared by single and bulk execution so both paths run identical logic.
+    Scope validation (ownership, archived, device linkage) runs FIRST and
+    raises BEFORE any row exists — callers must not create partial state
+    on validation failure. STEP 7: execution runs on the Celery queue via
+    a durable execution row (not in-process BackgroundTasks).
     """
-    Create and execute a compliance audit
-    
-    Runs the full pipeline:
-    INGEST → VALIDATE → DETECT → PARSE → NORMALIZE → EVALUATE → FINDINGS
-    
-    Returns immediately with audit ID. Results available via status endpoint.
-    """
-    # Validate configuration IDs exist
-    if audit.configuration_ids:
-        result = await db.execute(
-            select(Configuration.id).where(Configuration.id.in_(audit.configuration_ids))
-        )
-        existing_ids = [row[0] for row in result.all()]
-        
-        missing_ids = set(audit.configuration_ids) - set(existing_ids)
-        if missing_ids:
-            raise HTTPException(
-                status_code=status.HTTP_400_BAD_REQUEST,
-                detail=f"Configuration IDs not found: {missing_ids}"
-            )
-    
+    # Ownership + optional device-scope boundary: EVERY requested
+    # configuration must be inside the caller's permitted scope, and when
+    # device_ids are supplied every configuration must belong to one of
+    # those devices. A single violation rejects the ENTIRE request BEFORE
+    # any audit row exists — no partial audits, ever.
+    await validate_audit_scope(db, audit.device_ids, audit.configuration_ids, current_user)
+
     # Create audit
     new_audit = Audit(
         id=uuid4(),
@@ -690,9 +1014,9 @@ async def execute_audit(
         status=AuditStatus.PENDING.value,
         configuration_count=len(audit.configuration_ids),
     )
-    
+
     db.add(new_audit)
-    
+
     # Create audit-configuration associations
     for config_id in audit.configuration_ids:
         audit_config = AuditConfiguration(
@@ -700,7 +1024,7 @@ async def execute_audit(
             configuration_id=config_id,
         )
         db.add(audit_config)
-    
+
     await db.flush()
     await db.refresh(new_audit)
 
@@ -719,16 +1043,249 @@ async def execute_audit(
     )
     await db.flush()
 
-    # Start audit pipeline in background
-    background_tasks.add_task(
-        run_audit_pipeline,
-        audit_id=str(new_audit.id),
-        config_ids=[str(cid) for cid in audit.configuration_ids],
+    # STEP 7: durable execution row + queue publish. The worker (not
+    # this request) runs run_audit_pipeline. Enqueue failure raises before
+    # commit, so no phantom audit is ever left unscheduled.
+    execution = await exec_svc.create_execution(
+        db,
+        new_audit.id,
+        attempt=1,
+        max_attempts=settings.EXECUTION_MAX_ATTEMPTS,
         framework=audit.framework or "CIS",
-        user_id=str(current_user.id),
+        framework_version=audit.framework_version,
     )
-    
+    await _enqueue_execution(db, execution.id)
+
+    return new_audit
+
+
+@router.post("/execute", response_model=AuditResponse, status_code=status.HTTP_202_ACCEPTED)
+async def execute_audit(
+    audit: AuditCreate,
+    db: AsyncSession = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+):
+    """
+    Create and queue a compliance audit for worker execution.
+
+    Validates scope, persists the audit + a QUEUED execution row, and
+    publishes to the Celery queue. A Celery worker runs the full pipeline:
+    INGEST → VALIDATE → DETECT → PARSE → NORMALIZE → EVALUATE → FINDINGS
+
+    Returns immediately with audit ID. Results available via status endpoint.
+    """
+    new_audit = await _create_audit(db, current_user, audit)
     return AuditResponse.from_orm(new_audit)
+
+
+@router.post("/bulk", response_model=BulkAuditResponse, status_code=status.HTTP_202_ACCEPTED)
+async def bulk_execute_audits(
+    body: BulkAuditRequest,
+    db: AsyncSession = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+):
+    """Queue many independent audits in one request (STEP 6 bulk, STEP 7 queue).
+
+    Two-phase semantics:
+      1. VALIDATION (atomic): every item's scope is validated up front.
+         ANY violation rejects the WHOLE batch with ZERO audits created.
+      2. EXECUTION (per-item): each item runs the identical single-audit
+         creation path (same rows, same trail, same queue scheduling).
+         Each audit keeps its own status, baseline snapshot, findings,
+         and report — bulk is orchestration only. A persistent batch row
+         records the item audit IDs so progress survives refresh.
+
+    No shared transaction across items, no baseline in the request (the
+    worker resolves organization.active_baseline per audit).
+    """
+    items = body.items or []
+    if not items:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="At least one audit item is required",
+        )
+    if len(items) > MAX_BULK_AUDITS:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=f"At most {MAX_BULK_AUDITS} audits per bulk execution",
+        )
+
+    # Phase 1 — atomic validation across the whole batch.
+    for item in items:
+        await validate_audit_scope(
+            db, item.device_ids, item.configuration_ids, current_user
+        )
+
+    # Phase 2 — per-item creation through the shared single-audit path.
+    results: list[BulkAuditItemResult] = []
+    created_ids: list[UUID] = []
+    for item in items:
+        created = await _create_audit(db, current_user, item)
+        created_ids.append(created.id)
+        results.append(
+            BulkAuditItemResult(
+                audit_id=created.id, name=created.name, status=created.status
+            )
+        )
+
+    batch = AuditBatch(
+        user_id=current_user.id,
+        name=f"Bulk audit ({len(results)} items)",
+        audit_ids=[str(audit_id) for audit_id in created_ids],
+    )
+    db.add(batch)
+    await db.flush()
+    await db.refresh(batch)
+
+    response = BulkAuditResponse(audits=results, total=len(results))
+    response.batch_id = batch.id
+    return response
+
+
+@router.post("/{audit_id}/retry", status_code=status.HTTP_202_ACCEPTED)
+async def retry_audit_execution(
+    audit_id: UUID,
+    db: AsyncSession = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+):
+    """Manually retry a failed, retryable audit execution (STEP 7).
+
+    Creates a NEW execution row (attempt+1) so the failed attempt's
+    history is preserved, and enqueues it. Rejected unless the latest
+    execution is FAILED and marked retryable: COMPLETED, CANCELLED,
+    QUEUED, and RUNNING executions cannot be retried through this path,
+    and non-retryable failure categories stay terminal.
+    """
+    audit_result = await db.execute(
+        select(Audit).where(
+            Audit.id == audit_id,
+            Audit.user_id == current_user.id,
+        )
+    )
+    audit = audit_result.scalar_one_or_none()
+    if not audit:
+        raise HTTPException(status_code=404, detail="Audit not found")
+
+    latest = await exec_svc.latest_execution(db, audit.id)
+    if latest is None or latest.status != exec_svc.ExecutionStatus.FAILED:
+        raise HTTPException(
+            status_code=status.HTTP_409_CONFLICT,
+            detail="Only failed executions can be retried",
+        )
+    if not latest.retryable:
+        raise HTTPException(
+            status_code=status.HTTP_409_CONFLICT,
+            detail=(
+                f"Failure is not retryable: {latest.error_category or 'unknown'}. "
+                "Fix the underlying cause and start a new audit."
+            ),
+        )
+    if latest.attempt >= latest.max_attempts:
+        raise HTTPException(
+            status_code=status.HTTP_409_CONFLICT,
+            detail="Retry limit exhausted for this audit",
+        )
+
+    # The retry re-resolves scope at execution time (worker re-validates),
+    # but fail fast here on obviously broken scope.
+    retried = await exec_svc.create_execution(
+        db,
+        audit.id,
+        attempt=latest.attempt + 1,
+        max_attempts=latest.max_attempts,
+        framework=getattr(latest, "framework", "CIS") or "CIS",
+        framework_version=getattr(latest, "framework_version", None),
+    )
+    await _enqueue_execution(db, retried.id)
+
+    trail = AuditTrailRepository(db)
+    await trail.log_audit_event(
+        action=AuditAction.AUDIT_STARTED,
+        audit_id=str(audit.id),
+        user_id=str(current_user.id),
+        details={
+            "retry_of_attempt": latest.attempt,
+            "execution_id": str(retried.id),
+        },
+    )
+    await db.flush()
+
+    return {
+        "audit_id": str(audit.id),
+        "execution": exec_svc.describe_execution(retried),
+    }
+
+
+@router.get("/batches/{batch_id}")
+async def get_audit_batch(
+    batch_id: UUID,
+    db: AsyncSession = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+):
+    """Load a persistent bulk-execution batch with live per-item states.
+
+    Survives refresh/navigation: the item audit IDs come from the stored
+    batch row; each item's state is read from its latest execution row
+    (falling back to the audit row for pre-STEP-7 audits).
+    """
+    batch_result = await db.execute(
+        select(AuditBatch).where(
+            AuditBatch.id == batch_id,
+            AuditBatch.user_id == current_user.id,
+        )
+    )
+    batch = batch_result.scalar_one_or_none()
+    if not batch:
+        raise HTTPException(status_code=404, detail="Batch not found")
+
+    items = []
+    for raw_audit_id in batch.audit_ids or []:
+        try:
+            item_audit_id = UUID(str(raw_audit_id))
+        except (ValueError, AttributeError):
+            continue
+        audit_row = await db.execute(
+            select(Audit).where(
+                Audit.id == item_audit_id,
+                Audit.user_id == current_user.id,
+            )
+        )
+        audit = audit_row.scalar_one_or_none()
+        if audit is None:
+            continue
+        latest = await exec_svc.latest_execution(db, audit.id)
+        state = latest.status if latest else audit.status
+        items.append(
+            {
+                "audit_id": str(audit.id),
+                "name": audit.name,
+                "status": audit.status,
+                "execution_status": state,
+                "execution": (
+                    exec_svc.describe_execution(latest) if latest else None
+                ),
+                "overall_score": audit.overall_score,
+            }
+        )
+
+    counts: dict[str, int] = {}
+    for item in items:
+        state = str(item["execution_status"] or item["status"] or "pending").lower()
+        if state not in (
+            "queued", "running", "completed", "failed",
+            "cancel_requested", "cancelled",
+        ):
+            state = "pending"
+        counts[state] = counts.get(state, 0) + 1
+
+    return {
+        "batch_id": str(batch.id),
+        "name": batch.name,
+        "total": len(items),
+        "counts": counts,
+        "items": items,
+        "created_at": batch.created_at.isoformat() if batch.created_at else None,
+    }
 
 
 @router.get("/{audit_id}/status")
@@ -748,10 +1305,42 @@ async def get_audit_execution_status(
     
     if not audit:
         raise HTTPException(status_code=404, detail="Audit not found")
-    
+
+    # STEP 7: durable execution state. When an execution row exists it is
+    # authoritative for queue lifecycle (queued/running/failed/cancelled);
+    # otherwise the legacy memory/DB fallback below applies unchanged.
+    execution_block: dict | None = None
+    try:
+        latest_execution = await exec_svc.latest_execution(db, audit.id)
+        if latest_execution is not None:
+            execution_block = exec_svc.describe_execution(latest_execution)
+    except Exception:
+        latest_execution = None
+
     # Live steps — real backend progress, not fake
     steps = audit_live_steps.get(str(audit_id))
     logs = audit_live_logs.get(str(audit_id), [])[-30:]
+    persisted_progress_row = None
+    if steps is None:
+        # Cross-process: the Celery worker commits step/log/progress
+        # snapshots onto the dedicated audit_progress row; the API process
+        # cannot see the worker's in-memory dict, so surface them here.
+        try:
+            from app.models import AuditProgress as _AP
+
+            pr = await db.execute(
+                select(_AP).where(_AP.audit_id == audit_id)
+            )
+            persisted_progress_row = pr.scalar_one_or_none()
+            if persisted_progress_row is not None:
+                persisted_steps = persisted_progress_row.live_steps
+                if isinstance(persisted_steps, list) and persisted_steps:
+                    steps = persisted_steps
+                persisted_logs = persisted_progress_row.live_logs
+                if isinstance(persisted_logs, list) and persisted_logs:
+                    logs = persisted_logs
+        except Exception:
+            persisted_progress_row = None
     if steps is not None:
         progress = _current_progress(str(audit_id))
         if audit.status == "completed":
@@ -831,6 +1420,25 @@ async def get_audit_execution_status(
                 current_step = s.get("id")
                 break
 
+    # STEP 7: persisted progress overrides the in-memory computation when
+    # an execution/progress row exists (cross-process + restart safe).
+    # The audit_progress row is authoritative when present; the execution
+    # row's persisted progress is the fallback for older runs. Queued
+    # executions report 0 — never fabricated.
+    if execution_block is not None:
+        exec_status = execution_block.get("status")
+        if exec_status == exec_svc.ExecutionStatus.RUNNING:
+            if persisted_progress_row is not None:
+                progress = int(persisted_progress_row.progress or 0)
+                if persisted_progress_row.current_step:
+                    current_step = persisted_progress_row.current_step
+            else:
+                progress = int(execution_block.get("progress") or 0)
+                if execution_block.get("current_step"):
+                    current_step = execution_block.get("current_step")
+        elif exec_status == exec_svc.ExecutionStatus.QUEUED:
+            progress = 0
+
     return {
         "id": str(audit.id),
         "name": audit.name,
@@ -840,6 +1448,7 @@ async def get_audit_execution_status(
         "steps": steps,
         "logs": logs,
         "file_details": file_details,
+        "execution": execution_block,
         "overall_score": audit.overall_score,
         "findings_count": audit.findings_count,
         "critical_findings": audit.critical_findings,
@@ -976,7 +1585,7 @@ async def get_audit_summary(
     # baseline; verdicts come from the stored CIS results. OUT_OF_SCOPE
     # controls never enter PASS/FAIL/REVIEW or the company denominator.
     company_baseline = await _compute_company_baseline_projection(
-        db, audit_id, getattr(current_user, "organization_id", None)
+        db, audit, getattr(current_user, "organization_id", None)
     )
 
     return {
@@ -996,9 +1605,15 @@ async def get_audit_summary(
 
 
 async def _compute_company_baseline_projection(
-    db, audit_id: UUID, org_id: Optional[str]
+    db, audit, org_id: Optional[str]
 ) -> dict[str, Any]:
-    """Project the org's active baseline over this audit's stored results.
+    """Project the company baseline over this audit's stored results.
+
+    Scope resolution order:
+      1. The audit's own snapshot (baseline_controls) — set once at audit
+         time, so a later baseline replacement never rewrites historical
+         audit context.
+      2. Fallback: the org's current active baseline (pre-snapshot audits).
 
     Returns the company baseline block for the audit summary: in-scope
     metrics computed ONLY from baseline-selected controls, plus the
@@ -1016,32 +1631,50 @@ async def _compute_company_baseline_projection(
         "score": None,
         "control_ids": [],
     }
-    if not org_id:
-        return empty
-    org_result = await db.execute(
-        select(Organization).where(Organization.id == org_id)
-    )
-    org = org_result.scalar_one_or_none()
-    if not org or org.baseline_status != "ACTIVE":
-        return empty
-    bl_result = await db.execute(
-        select(CompanyBaseline).where(
-            CompanyBaseline.organization_id == org.id,
-            CompanyBaseline.status == "ACTIVE",
-        )
-    )
-    active_baseline = bl_result.scalar_one_or_none()
-    if not active_baseline or not active_baseline.controls:
-        return empty
-    controls_data = active_baseline.controls
-    if isinstance(controls_data, str):
-        in_scope = [c.strip() for c in controls_data.split(",") if c.strip()]
+
+    snapshot_controls = audit.baseline_controls if audit is not None else None
+    snapshot_name = audit.baseline_name if audit is not None else None
+    snapshot_id = audit.baseline_id if audit is not None else None
+
+    if snapshot_controls is not None:
+        if not snapshot_controls:
+            return empty
+        in_scope = [str(c) for c in snapshot_controls]
+        name = snapshot_name or "Company Baseline"
+        baseline_meta = {"name": name}
     else:
-        in_scope = [str(c) for c in controls_data]
+        # Pre-snapshot audit: fall back to the org's current active baseline.
+        if not org_id:
+            return empty
+        org_result = await db.execute(
+            select(Organization).where(Organization.id == org_id)
+        )
+        org = org_result.scalar_one_or_none()
+        if not org or org.baseline_status != "ACTIVE":
+            return empty
+        bl_result = await db.execute(
+            select(CompanyBaseline).where(
+                CompanyBaseline.organization_id == org.id,
+                CompanyBaseline.status == "ACTIVE",
+            )
+        )
+        active_baseline = bl_result.scalar_one_or_none()
+        if not active_baseline or not active_baseline.controls:
+            return empty
+        controls_data = active_baseline.controls
+        if isinstance(controls_data, str):
+            in_scope = [c.strip() for c in controls_data.split(",") if c.strip()]
+        else:
+            in_scope = [str(c) for c in controls_data]
+        baseline_meta = {
+            "name": active_baseline.name,
+            "framework": active_baseline.framework,
+            "benchmark": active_baseline.benchmark,
+        }
 
     cr_rows = await db.execute(
         select(ComplianceResult.control_id, ComplianceResult.result)
-        .where(ComplianceResult.audit_id == audit_id)
+        .where(ComplianceResult.audit_id == audit.id)
     )
     result_lookup = {
         cid: (res or "").upper() for cid, res in cr_rows.all()
@@ -1070,9 +1703,10 @@ async def _compute_company_baseline_projection(
     return {
         "configured": True,
         "has_baseline": True,
-        "name": active_baseline.name,
-        "framework": active_baseline.framework,
-        "benchmark": active_baseline.benchmark,
+        "baseline_id": str(snapshot_id) if snapshot_id else None,
+        "name": baseline_meta.get("name", "Company Baseline"),
+        "framework": baseline_meta.get("framework", "CIS"),
+        "benchmark": baseline_meta.get("benchmark", ""),
         "in_scope_count": len(in_scope),
         "passed": passed,
         "failed": failed,

@@ -230,36 +230,44 @@ async def get_audit_report(
             slot["review"] += 1
 
     # --- Company Baseline Resolution ---
-    # Query the organization's active baseline control IDs
+    # Scope resolution order:
+    #   1. The audit's own snapshot (set at audit time) — a later baseline
+    #      replacement never rewrites historical audit reports.
+    #   2. Fallback: the org's current active baseline (pre-snapshot audits).
     baseline_control_ids: List[str] = []
     comparison_data: List[dict[str, str]] = []
 
-    org_id = getattr(current_user, "organization_id", None)
-    if org_id:
-        from app.models import Organization, CompanyBaseline
-        org_result = await db.execute(
-            select(Organization).where(Organization.id == org_id)
-        )
-        org = org_result.scalar_one_or_none()
-        if org and org.baseline_status == "ACTIVE":
-            baseline_result = await db.execute(
-                select(CompanyBaseline).where(
-                    CompanyBaseline.organization_id == org.id,
-                    CompanyBaseline.status == "ACTIVE",
-                )
+    audit_snapshot = getattr(audit, "baseline_controls", None)
+    if audit_snapshot is not None:
+        if audit_snapshot:
+            baseline_control_ids = [str(c) for c in audit_snapshot]
+    else:
+        org_id = getattr(current_user, "organization_id", None)
+        if org_id:
+            from app.models import Organization, CompanyBaseline
+            org_result = await db.execute(
+                select(Organization).where(Organization.id == org_id)
             )
-            baseline = baseline_result.scalar_one_or_none()
-            if baseline and baseline.controls:
-                controls_data = baseline.controls
-                if isinstance(controls_data, str):
-                    baseline_control_ids = [
-                        c.strip() for c in controls_data.split(",") 
-                        if c.strip()
-                    ]
-                elif isinstance(controls_data, list):
-                    baseline_control_ids = [str(c) for c in controls_data]
-                else:
-                    baseline_control_ids = []
+            org = org_result.scalar_one_or_none()
+            if org and org.baseline_status == "ACTIVE":
+                baseline_result = await db.execute(
+                    select(CompanyBaseline).where(
+                        CompanyBaseline.organization_id == org.id,
+                        CompanyBaseline.status == "ACTIVE",
+                    )
+                )
+                baseline = baseline_result.scalar_one_or_none()
+                if baseline and baseline.controls:
+                    controls_data = baseline.controls
+                    if isinstance(controls_data, str):
+                        baseline_control_ids = [
+                            c.strip() for c in controls_data.split(",") 
+                            if c.strip()
+                        ]
+                    elif isinstance(controls_data, list):
+                        baseline_control_ids = [str(c) for c in controls_data]
+                    else:
+                        baseline_control_ids = []
 
     # Generate side-by-side comparison data
     if baseline_control_ids:

@@ -449,6 +449,9 @@ def generate_audit_report(
     # === Full CIS Summary ===
     # Conditional like the company baseline block: an empty audit carries
     # neither section (V11-10: empty audit stays a single page).
+    # Row percentages are share-of-total (cis_total). Only the CIS *score*
+    # uses the decisive denominator (PASS+FAIL), per §15 scoring separation:
+    # REVIEW is never a pass, but it IS part of the evaluated total.
     if compliance_results:
         cis_passed = sum(1 for cr in compliance_results if (cr.get("result") or "").upper() == "PASS")
         cis_failed = sum(1 for cr in compliance_results if (cr.get("result") or "").upper() == "FAIL")
@@ -463,9 +466,9 @@ def generate_audit_report(
                 Paragraph("<b>Value</b>", styles["cell_header"]),
             ],
             ["Total Controls", str(cis_total)],
-            ["PASS", f"{cis_passed} ({round(cis_passed / cis_decisive * 100, 1) if cis_decisive else '—'}%)"],
-            ["FAIL", f"{cis_failed} ({round(cis_failed / cis_decisive * 100, 1) if cis_decisive else '—'}%)"],
-            ["REVIEW", f"{cis_review} ({round(cis_review / cis_decisive * 100, 1) if cis_decisive else '—'}%)"],
+            ["PASS", f"{cis_passed} ({round(cis_passed / cis_total * 100, 1) if cis_total else '—'}%)"],
+            ["FAIL", f"{cis_failed} ({round(cis_failed / cis_total * 100, 1) if cis_total else '—'}%)"],
+            ["REVIEW", f"{cis_review} ({round(cis_review / cis_total * 100, 1) if cis_total else '—'}%)"],
             ["CIS Score", f"{cis_score}%"],
         ]
         cis_summary_table = Table(cis_summary_data, colWidths=[5 * cm, 10 * cm])

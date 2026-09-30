@@ -7,6 +7,7 @@ import {
   FileJson,
   Layers,
   ListChecks,
+  RefreshCw,
   ShieldCheck,
   UploadCloud,
   XCircle,
@@ -56,6 +57,9 @@ export default function CompanyBaselinePage() {
 
   // Configuration flow state
   const [configOpen, setConfigOpen] = useState(false);
+  const [replaceMode, setReplaceMode] = useState(false);
+  const [replaceConfirmOpen, setReplaceConfirmOpen] = useState(false);
+  const [replacedMessage, setReplacedMessage] = useState<string | null>(null);
   const [step, setStep] = useState<ConfigStep>('source');
   const [name, setName] = useState('Company Security Baseline');
   const [framework, setFramework] = useState(DEFAULT_FRAMEWORK);
@@ -88,8 +92,10 @@ export default function CompanyBaselinePage() {
     if (!authLoading) loadStatus();
   }, [authLoading, loadStatus]);
 
-  const openConfig = () => {
+  const openConfig = (replace: boolean) => {
     setActionError(null);
+    setReplaceMode(replace);
+    setReplacedMessage(null);
     setStep('source');
     setValidation(null);
     setFileError(null);
@@ -99,6 +105,16 @@ export default function CompanyBaselinePage() {
     setFramework(DEFAULT_FRAMEWORK);
     setBenchmark(DEFAULT_BENCHMARK);
     setConfigOpen(true);
+  };
+
+  const openReplaceConfirm = () => {
+    setActionError(null);
+    setReplaceConfirmOpen(true);
+  };
+
+  const startReplace = () => {
+    setReplaceConfirmOpen(false);
+    openConfig(true);
   };
 
   const handleFile = async (file: File | undefined) => {
@@ -166,8 +182,8 @@ export default function CompanyBaselinePage() {
     setStep('activating');
     try {
       const res = await request(
-        () => baselinesAPI.onboarding(payload),
-        'Baseline activation failed'
+        () => (replaceMode ? baselinesAPI.replace(payload) : baselinesAPI.onboarding(payload)),
+        replaceMode ? 'Baseline replacement failed' : 'Baseline activation failed'
       );
       if (res.activation_blocked) {
         setActionError(
@@ -177,6 +193,11 @@ export default function CompanyBaselinePage() {
         return;
       }
       setConfigOpen(false);
+      setReplacedMessage(
+        replaceMode
+          ? `Company Baseline updated successfully — ${res.baseline?.control_count ?? controls.length} controls in scope.`
+          : 'Company Baseline activated successfully.'
+      );
       await loadStatus();
     } catch (err) {
       setActionError(err instanceof Error ? err.message : 'Baseline activation failed');
@@ -241,6 +262,14 @@ export default function CompanyBaselinePage() {
         <div className="mb-6">
           <Alert variant="error" title="Action failed" onDismiss={() => setActionError(null)}>
             {actionError}
+          </Alert>
+        </div>
+      )}
+
+      {replacedMessage && (
+        <div className="mb-6">
+          <Alert variant="success" title="Company Baseline updated" onDismiss={() => setReplacedMessage(null)}>
+            {replacedMessage}
           </Alert>
         </div>
       )}
@@ -313,6 +342,12 @@ export default function CompanyBaselinePage() {
                     <ListChecks className="h-4 w-4" />
                     {showControls ? 'Hide Controls' : 'View Controls'}
                   </Button>
+                  {canConfigure && (
+                    <Button variant="navy" size="sm" onClick={openReplaceConfirm}>
+                      <RefreshCw className="h-4 w-4" />
+                      Replace Baseline
+                    </Button>
+                  )}
                 </div>
                 {showControls && (
                   <div className="rounded-xl border border-surface-200 bg-surface-50 p-5">
@@ -358,7 +393,7 @@ export default function CompanyBaselinePage() {
                   </li>
                 </ul>
                 <div className="flex flex-wrap items-center gap-3 pt-1">
-                  <Button onClick={openConfig} disabled={!canConfigure}>
+                  <Button onClick={() => openConfig(false)} disabled={!canConfigure}>
                     <UploadCloud className="h-4 w-4" />
                     Configure Company Baseline
                   </Button>
@@ -429,12 +464,16 @@ export default function CompanyBaselinePage() {
         </div>
       </div>
 
-      {/* Configuration modal — multi-step flow */}
+      {/* Configuration modal — multi-step flow (shared by onboarding + replace) */}
       <Modal
         open={configOpen}
         onClose={() => setConfigOpen(false)}
-        title="Configure Company Baseline"
-        description="Define the CIS controls in your organization's compliance scope"
+        title={replaceMode ? 'Replace Company Baseline' : 'Configure Company Baseline'}
+        description={
+          replaceMode
+            ? 'Upload the replacement baseline — it takes effect only after explicit activation'
+            : 'Define the CIS controls in your organization&apos;s compliance scope'
+        }
         size="lg"
       >
         <div className="space-y-5">
@@ -608,6 +647,22 @@ export default function CompanyBaselinePage() {
               <div className="rounded-xl border border-surface-200 bg-surface-50 p-5">
                 <p className="mb-3 text-xs font-semibold uppercase tracking-wider text-ink-400">Review</p>
                 <dl className="space-y-3 text-sm">
+                  {replaceMode && status?.baseline && (
+                    <div className="flex items-center justify-between gap-4 rounded-lg border border-amber-200 bg-amber-50 px-4 py-3">
+                      <dt className="font-medium text-amber-800">
+                        Current baseline · {status.baseline.name}
+                      </dt>
+                      <dd className="font-semibold text-amber-800">
+                        {status.baseline.control_count} controls
+                      </dd>
+                    </div>
+                  )}
+                  <div className="flex items-center justify-between gap-4">
+                    <dt className="text-ink-400">
+                      {replaceMode ? 'New baseline' : 'Baseline'}
+                    </dt>
+                    <dd className="font-medium text-ink-100">{validation.name}</dd>
+                  </div>
                   <div className="flex items-center justify-between gap-4">
                     <dt className="text-ink-400">Framework</dt>
                     <dd className="font-medium text-ink-100">{validation.framework}</dd>
@@ -631,9 +686,9 @@ export default function CompanyBaselinePage() {
               </div>
 
               <p className="text-xs leading-relaxed text-ink-400">
-                Activating this baseline changes the organization&apos;s CIS compliance scope for future
-                audits. The underlying CIS benchmark is not modified — Full CIS results remain
-                available in every audit report.
+                {replaceMode
+                  ? 'Activating the replacement changes the compliance scope used for future audits. Completed historical audits will not be modified.'
+                  : 'Activating this baseline changes the organization&apos;s CIS compliance scope for future audits. The underlying CIS benchmark is not modified — Full CIS results remain available in every audit report.'}
               </p>
             </div>
           )}
@@ -654,7 +709,7 @@ export default function CompanyBaselinePage() {
               )}
               {step === 'review' && validation?.status === 'valid' && (
                 <Button variant="success" onClick={activate} disabled={!canConfigure}>
-                  Activate Baseline
+                  {replaceMode ? 'Activate New Baseline' : 'Activate Baseline'}
                 </Button>
               )}
               {step === 'review' && validation?.status !== 'valid' && (
@@ -664,6 +719,51 @@ export default function CompanyBaselinePage() {
               )}
             </div>
           </div>
+        </div>
+      </Modal>
+
+      {/* Replace confirmation — current baseline stays ACTIVE until the new one is confirmed */}
+      <Modal
+        open={replaceConfirmOpen}
+        onClose={() => setReplaceConfirmOpen(false)}
+        title="Replace Company Baseline"
+        size="md"
+        footer={
+          <>
+            <Button variant="ghost" onClick={() => setReplaceConfirmOpen(false)}>
+              Cancel
+            </Button>
+            <Button onClick={startReplace}>
+              Continue
+              <ChevronLeft className="h-4 w-4 rotate-180" />
+            </Button>
+          </>
+        }
+      >
+        <div className="space-y-4 text-sm leading-relaxed text-ink-300">
+          <p>
+            Your current baseline ({status?.baseline?.name ?? 'Company Baseline'} ·{' '}
+            {status?.baseline?.control_count ?? 0} controls) is active and automatically applied
+            to future device audits.
+          </p>
+          <ul className="space-y-2.5 text-ink-400">
+            <li className="flex items-start gap-2.5">
+              <CheckCircle2 className="mt-0.5 h-4 w-4 shrink-0 text-emerald-600" />
+              The new baseline will be validated before anything can change.
+            </li>
+            <li className="flex items-start gap-2.5">
+              <CheckCircle2 className="mt-0.5 h-4 w-4 shrink-0 text-emerald-600" />
+              Replacing it changes the compliance scope used for future audits.
+            </li>
+            <li className="flex items-start gap-2.5">
+              <CheckCircle2 className="mt-0.5 h-4 w-4 shrink-0 text-emerald-600" />
+              Completed historical audits will not be modified.
+            </li>
+          </ul>
+          <p className="text-xs text-ink-400">
+            The current baseline stays ACTIVE through upload, validation and review — the
+            replacement only takes effect after your explicit confirmation.
+          </p>
         </div>
       </Modal>
     </AppShell>

@@ -60,6 +60,17 @@ export interface Device {
   last_audit_date: string | null;
   created_at: string;
   updated_at: string;
+  /** STEP 5 device lifecycle: true = active inventory, false = archived.
+   * Archive preserves all history; never edited via generic update. */
+  is_active: boolean;
+  /** STEP 4 derived inventory fields — computed server-side per request,
+   * never stored. Null means absent data (render "Not configured" /
+   * "Never" / "Not audited", never fabricate). */
+  latest_configuration_filename?: string | null;
+  latest_configuration_at?: string | null;
+  last_audit_id?: string | null;
+  last_audit_status?: string | null;
+  last_compliance_score?: number | null;
 }
 
 export interface DeviceCreate {
@@ -115,6 +126,9 @@ export interface AuditCreate {
   configuration_ids: string[];
   framework: string;
   framework_version?: string;
+  /** Optional execution-time device scope constraint. Never persisted as
+   * Audit.device_id — device identity stays derivable via associations. */
+  device_ids?: string[];
 }
 
 export interface AuditStatusResponse {
@@ -139,6 +153,7 @@ export interface AuditExecutionStatus {
   low_findings: number;
   started_at: string | null;
   completed_at: string | null;
+  execution?: ExecutionInfo | null;
 }
 
 export interface AuditExecutionSummary {
@@ -175,11 +190,15 @@ export interface EvidenceChain {
   actual_value: unknown | null;
   operator: string;
   result: string; // lowercase: pass | fail | review
-  result_reasoning: string;
+  reasoning: string;
   overall_confidence: number;
   vendor: string;
   platform: string;
   vendor_specific_syntax: string;
+  hostname?: string | null;
+  device_type?: string | null;
+  review_code?: string | null;
+  evaluation_method?: string | null;
 }
 
 export interface Remediation {
@@ -213,6 +232,10 @@ export interface Finding {
   created_at: string | null;
   updated_at: string | null;
 }
+// NOTE (STEP 7.5 audit): backend FindingResponse carries additional
+// control-identity and scoring fields that stay untyped here because
+// frozen V09-87 pins no such surface in frontend sources. No component
+// reads them today; type them in the milestone that renders them.
 
 // ---------------------------------------------------------------------------
 // Compliance frameworks
@@ -266,7 +289,8 @@ export interface MappingVersion {
   raw_syntax: string;
   semantic_meaning: string;
   universal_model_path: string | null;
-  changed_by: string;
+  confidence: number | null;
+  changed_by: string | null;
   changed_at: string;
   change_reason: string | null;
 }
@@ -429,4 +453,141 @@ export interface CompanyBaselineProjection {
     full_cis_result: 'PASS' | 'FAIL' | 'REVIEW';
     in_scope: boolean;
   }>;
+}
+
+// ---------------------------------------------------------------------------
+// Device configuration history
+// ---------------------------------------------------------------------------
+
+export interface DeviceConfigurationHistoryItem {
+  id: string;
+  filename: string;
+  content_type: string;
+  size_bytes: number;
+  line_count: number;
+  uploaded_at: string;
+  device_id: string;
+  content_hash: string;
+  latest: boolean;
+  audit_count: number;
+  detected_vendor: string | null;
+  detected_platform: string | null;
+  detected_hostname: string | null;
+}
+
+export interface DeviceConfigurationHistoryResponse {
+  items: DeviceConfigurationHistoryItem[];
+  meta: PaginationMeta;
+}
+
+export interface DeviceAuditHistoryItem {
+  id: string;
+  name: string;
+  status: string;
+  overall_score: number | null;
+  configuration_id: string;
+  configuration_filename: string;
+  created_at: string;
+}
+
+export interface DeviceAuditHistoryResponse {
+  items: DeviceAuditHistoryItem[];
+  meta: PaginationMeta;
+}
+
+// ---------------------------------------------------------------------------
+// Bulk operations (STEP 6)
+// ---------------------------------------------------------------------------
+
+export type BulkUploadItemStatus = 'stored' | 'duplicate' | 'invalid';
+
+export interface BulkUploadItemResult {
+  filename: string;
+  status: BulkUploadItemStatus;
+  configuration_id: string | null;
+  error: string | null;
+}
+
+export interface BulkUploadSummary {
+  total: number;
+  stored: number;
+  duplicate: number;
+  invalid: number;
+}
+
+export interface BulkUploadResponse {
+  items: BulkUploadItemResult[];
+  summary: BulkUploadSummary;
+}
+
+export interface BulkAuditItemInput {
+  name: string;
+  description?: string;
+  configuration_ids: string[];
+  device_ids?: string[];
+  framework?: string;
+  framework_version?: string;
+}
+
+export interface BulkAuditItemResult {
+  audit_id: string;
+  name: string;
+  status: string;
+}
+
+export interface BulkAuditResponse {
+  audits: BulkAuditItemResult[];
+  total: number;
+  batch_id?: string | null;
+}
+
+// ---------------------------------------------------------------------------
+// Durable execution (STEP 7)
+// ---------------------------------------------------------------------------
+
+export type ExecutionStatusValue =
+  | 'queued'
+  | 'running'
+  | 'completed'
+  | 'failed'
+  | 'cancel_requested'
+  | 'cancelled';
+
+export interface ExecutionInfo {
+  id: string;
+  audit_id: string;
+  attempt: number;
+  max_attempts: number;
+  status: ExecutionStatusValue;
+  error_category: string | null;
+  error_message: string | null;
+  retryable: boolean;
+  progress: number;
+  current_step: string | null;
+  queued_at: string | null;
+  started_at: string | null;
+  completed_at: string | null;
+}
+
+export interface RetryExecutionResponse {
+  audit_id: string;
+  execution: ExecutionInfo;
+}
+
+export interface BatchAuditItem {
+  audit_id: string;
+  name: string;
+  status: string;
+  execution_status: string;
+  execution: ExecutionInfo | null;
+  overall_score: number | null;
+}
+
+export interface AuditBatchResponse {
+  batch_id: string;
+  name: string;
+  total: number;
+  counts: Partial<Record<string, number>>;
+  items: BatchAuditItem[];
+  created_at: string | null;
 }

@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from sqlalchemy import Column, String, Boolean, DateTime, ForeignKey, Text, Integer, Float, Index, Numeric, UniqueConstraint
+from sqlalchemy import Column, String, Boolean, DateTime, ForeignKey, Text, Integer, Float, Index, Numeric, UniqueConstraint, text
 from sqlalchemy.dialects.postgresql import UUID, JSONB
 from sqlalchemy.orm import relationship, validates
 from datetime import datetime
@@ -59,6 +59,9 @@ class AuditAction(str, enum.Enum):
     
     # Compliance
     COMPLIANCE_EVALUATED = "compliance_evaluated"
+
+    # Company Baseline
+    BASELINE_RESOLVED = "baseline_resolved"
     
     # Findings
     FINDING_CREATED = "finding_created"
@@ -93,6 +96,7 @@ class User(Base):
     # Relationships
     devices = relationship("Device", back_populates="user", cascade="all, delete-orphan")
     audits = relationship("Audit", back_populates="user", cascade="all, delete-orphan")
+    audit_batches = relationship("AuditBatch", back_populates="user", cascade="all, delete-orphan")
     organization = relationship("Organization", back_populates="users")
 
 
@@ -140,6 +144,9 @@ class Device(Base):
     firmware_version = Column(String(50), nullable=True)
     ip_address = Column(String(45), nullable=True)
     notes = Column(Text, nullable=True)
+    # Device lifecycle (STEP 5): ACTIVE/ARCHIVED. Archive preserves all
+    # history; it never deletes. Separate from audit execution state.
+    is_active = Column(Boolean, nullable=False, default=True)
     created_at = Column(DateTime, nullable=False, default=datetime.utcnow)
     updated_at = Column(DateTime, nullable=False, default=datetime.utcnow, onupdate=datetime.utcnow)
 
@@ -169,11 +176,23 @@ class Configuration(Base):
     vendor_identifications = relationship("VendorIdentification", back_populates="configuration", cascade="all, delete-orphan")
     parsed_configurations = relationship("ParsedConfiguration", back_populates="configuration", cascade="all, delete-orphan")
 
-    # content_hash is the canonical duplicate key: the UNIQUE index is
-    # the authoritative race guard for duplicate detection (E01 N5),
-    # mirrored by migration 004.
+    # Duplicate identity is scoped to (device_id, content_hash): the same
+    # bytes may legitimately live on many devices (fleet-wide golden
+    # configs on 100 identical switches), but re-uploading identical bytes
+    # to the SAME device is idempotent. Two indexes share race-guard duty
+    # (E01 N5) so EVERY scope is DB-enforced, never pre-check-only:
+    #   - composite UNIQUE (device_id, content_hash) for device-bound rows
+    #   - partial UNIQUE (content_hash) WHERE device_id IS NULL for
+    #     device-less rows (Postgres NULLs are otherwise distinct and
+    #     would leave the unlinked scope with a pre-check race window).
     __table_args__ = (
-        Index("uq_configurations_content_hash", "content_hash", unique=True),
+        Index("uq_configurations_device_content_hash", "device_id", "content_hash", unique=True),
+        Index(
+            "uq_configurations_content_hash_unlinked",
+            "content_hash",
+            unique=True,
+            postgresql_where=text("device_id IS NULL"),
+        ),
     )
 
 
@@ -198,8 +217,15 @@ class Audit(Base):
     created_at = Column(DateTime, nullable=False, default=datetime.utcnow)
     updated_at = Column(DateTime, nullable=False, default=datetime.utcnow, onupdate=datetime.utcnow)
 
+    # Company Baseline snapshot — resolved once at audit time so historical
+    # audits keep their original baseline context after a replacement.
+    baseline_id = Column(UUID(as_uuid=True), nullable=True)
+    baseline_name = Column(String(255), nullable=True)
+    baseline_controls = Column(JSONB, nullable=True)
+
     # Relationships
     user = relationship("User", back_populates="audits")
+    executions = relationship("AuditExecution", back_populates="audit", cascade="all, delete-orphan")
     audit_configurations = relationship("AuditConfiguration", back_populates="audit", cascade="all, delete-orphan")
     compliance_results = relationship("ComplianceResult", back_populates="audit", cascade="all, delete-orphan")
     findings = relationship("Finding", back_populates="audit", cascade="all, delete-orphan")
@@ -432,3 +458,87 @@ class AuditTrail(Base):
     ip_address = Column(String(45), nullable=True)
     user_agent = Column(String(500), nullable=True)
     created_at = Column(DateTime, nullable=False, default=datetime.utcnow)
+
+
+class AuditExecution(Base):
+    """Durable audit execution record (STEP 7 queue state machine).
+
+    Execution state is OPERATIONAL and separate from the compliance result:
+    an execution can be RUNNING while no score exists, and COMPLETED only
+    mirrors into Audit.status once results persist. One row per attempt —
+    retries create new rows (attempt+1) so failure history is never
+    overwritten. No configuration contents, findings, or scores live here;
+    those remain in their existing tables.
+    """
+
+    __tablename__ = "audit_executions"
+
+    id = Column(UUID(as_uuid=True), primary_key=True, default=uuid4)
+    audit_id = Column(UUID(as_uuid=True), ForeignKey("audits.id", ondelete="CASCADE"), nullable=False, index=True)
+    attempt = Column(Integer, nullable=False, default=1)
+    framework = Column(String(50), nullable=False, default="CIS")
+    framework_version = Column(String(50), nullable=True)
+    status = Column(String(20), nullable=False, default="queued")
+    max_attempts = Column(Integer, nullable=False, default=3)
+    error_category = Column(String(50), nullable=True)
+    error_message = Column(String(500), nullable=True)
+    retryable = Column(Boolean, nullable=False, default=False)
+    progress = Column(Integer, nullable=False, default=0)
+    current_step = Column(String(100), nullable=True)
+    celery_task_id = Column(String(255), nullable=True)
+    lease_expires_at = Column(DateTime, nullable=True)
+    queued_at = Column(DateTime, nullable=False, default=datetime.utcnow)
+    started_at = Column(DateTime, nullable=True)
+    completed_at = Column(DateTime, nullable=True)
+    created_at = Column(DateTime, nullable=False, default=datetime.utcnow)
+    updated_at = Column(DateTime, nullable=False, default=datetime.utcnow, onupdate=datetime.utcnow)
+
+    # Relationships
+    audit = relationship("Audit", back_populates="executions")
+
+
+class AuditProgress(Base):
+    """Live pipeline progress for one audit (STEP 7, cross-process).
+
+    Written ONLY by the lightweight progress-sync session inside the
+    Celery worker, never by the pipeline's own transaction — the pipeline
+    holds a row lock on the execution row from its first checkpoint until
+    the final commit, so touching that row from another session would
+    deadlock the solo worker. One row per audit; status endpoint reads it
+    to render real-time steps/logs/progress across worker/API processes.
+    """
+
+    __tablename__ = "audit_progress"
+
+    audit_id = Column(
+        UUID(as_uuid=True),
+        ForeignKey("audits.id", ondelete="CASCADE"),
+        primary_key=True,
+    )
+    progress = Column(Integer, nullable=False, default=0)
+    current_step = Column(String(100), nullable=True)
+    live_steps = Column(JSONB, nullable=True)
+    live_logs = Column(JSONB, nullable=True)
+    updated_at = Column(
+        DateTime, nullable=False, default=datetime.utcnow, onupdate=datetime.utcnow
+    )
+
+
+class AuditBatch(Base):
+    """Persistent bulk-execution record (STEP 7).
+
+    Lets the bulk progress view survive refresh/navigation: the item audit
+    IDs are stored once at creation; per-item states are read live from
+    each audit's latest execution. No execution logic lives here.
+    """
+
+    __tablename__ = "audit_batches"
+
+    id = Column(UUID(as_uuid=True), primary_key=True, default=uuid4)
+    user_id = Column(UUID(as_uuid=True), ForeignKey("users.id", ondelete="CASCADE"), nullable=False)
+    name = Column(String(255), nullable=False, default="Bulk audit")
+    audit_ids = Column(JSONB, nullable=False, default=[])
+    created_at = Column(DateTime, nullable=False, default=datetime.utcnow)
+
+    # Relationships
+    user = relationship("User", back_populates="audit_batches")

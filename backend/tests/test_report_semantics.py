@@ -153,3 +153,75 @@ class TestManualControls:
                   "evidence": {**ev, "evaluation_method": "manual"}}],
                 [], {"verified_rate": 0.0})
             assert not any("traceable evidence lines" in w for w in warns), warns
+
+
+class TestFullCISDisplayPercentages:
+    """Full CIS summary rows are share-of-total; only CIS Score is decisive.
+
+    Regression: REVIEW 31/53 was rendered as 140.9% (31/22, decisive
+    denominator). Row percentages must use the Full CIS total (53):
+    14/53 = 26.4%, 8/53 = 15.1%, 31/53 = 58.5%. CIS Score stays
+    decisive-based (14/22 = 63.6%). Counts and verdicts are unchanged.
+    """
+
+    def _report_text(self, compliance_results, baseline_ids=None):
+        from io import BytesIO
+
+        from pypdf import PdfReader
+
+        from app.engines.reporting import generate_audit_report
+
+        audit = {"audit_id": "x", "audit_name": "Pct Audit", "framework": "CIS",
+                 "status": "completed", "overall_score": 63.6,
+                 "configuration_count": 1}
+        pdf = generate_audit_report(
+            audit, [], compliance_results,
+            baseline_control_ids=baseline_ids,
+        )
+        assert pdf.startswith(b"%PDF")
+        reader = PdfReader(BytesIO(pdf))
+        return "\n".join(page.extract_text() or "" for page in reader.pages)
+
+    def _rows(self):
+        rows = []
+        for i in range(14):
+            rows.append({"control_id": f"9.9.{i}", "result": "PASS"})
+        for i in range(8):
+            rows.append({"control_id": f"9.8.{i}", "result": "FAIL"})
+        for i in range(31):
+            rows.append({"control_id": f"9.7.{i}", "result": "REVIEW"})
+        return rows
+
+    def test_full_cis_rows_use_total_denominator(self):
+        text = self._report_text(self._rows())
+        assert "14 (26.4%)" in text
+        assert "8 (15.1%)" in text
+        assert "31 (58.5%)" in text
+
+    def test_no_impossible_percentage(self):
+        text = self._report_text(self._rows())
+        # 31/22 = 140.9% was the reported bug: a row percentage can never
+        # exceed 100% when computed over the evaluated total.
+        assert "140.9%" not in text
+        # The only decisive-based figure is the CIS Score row itself.
+        assert "CIS Score" in text
+
+    def test_cis_score_stays_decisive(self):
+        text = self._report_text(self._rows())
+        # 14/22 decisive = 63.6% — the score contract is unchanged.
+        assert "63.6%" in text
+
+    def test_company_rows_use_baseline_total(self):
+        rows = (
+            [{"control_id": f"8.8.{i}", "result": "PASS"} for i in range(3)]
+            + [{"control_id": f"8.7.{i}", "result": "FAIL"} for i in range(4)]
+            + [{"control_id": f"8.6.{i}", "result": "REVIEW"} for i in range(10)]
+        )
+        baseline_ids = [f"8.8.{i}" for i in range(3)] + \
+            [f"8.7.{i}" for i in range(4)] + [f"8.6.{i}" for i in range(10)]
+        text = self._report_text(rows, baseline_ids=baseline_ids)
+        # 3/17 = 17.6%, 4/17 = 23.5%, 10/17 = 58.8%; score 3/7 = 42.9%.
+        assert "3 (17.6%)" in text
+        assert "4 (23.5%)" in text
+        assert "10 (58.8%)" in text
+        assert "42.9%" in text

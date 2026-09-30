@@ -57,10 +57,19 @@ class BaselineValidationService:
 
         Every control is checked against the canonical CIS control registry.
         Unknown controls, duplicates, and malformed IDs are reported.
+
+        The registry universe is AUTOMATED + MANUAL controls: manual controls
+        (e.g. 2.1.6 "Set SSH VRF") are legitimate baseline members — the
+        audit pipeline evaluates them as REVIEW (execution.py), and the
+        company projection already handles REVIEW in scope. Reporting them
+        as "unknown" would wrongly exclude real CIS controls.
         """
 
-        all_controls = self._registry.get_automated_controls()  # type: ignore[attr-defined]
-        all_control_ids: Set[str] = {c.control_id for c in all_controls}
+        automated = self._registry.get_automated_controls()  # type: ignore[attr-defined]
+        manual = self._registry.get_manual_controls()  # type: ignore[attr-defined]
+        all_control_ids: Set[str] = {c.control_id for c in automated} | {
+            c.control_id for c in manual
+        }
 
         if not controls or len(controls) == 0:
             raise BaselineValidationError(

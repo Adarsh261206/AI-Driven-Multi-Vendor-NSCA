@@ -464,10 +464,7 @@ export default function DashboardPage() {
                   <p className="text-xs text-ink-400">{data.recentCriticalFindings.length} critical issues requiring attention</p>
                 </div>
               </div>
-              <Link href="/findings?severity=CRITICAL" className="hidden items-center gap-1 text-xs font-semibold text-brand-600 hover:text-brand-700 sm:inline-flex">
-                <Eye className="h-3.5 w-3.5" />
-                View all
-              </Link>
+              {/* No /findings index route exists — per-finding links below are the navigation. */}
             </div>
 
             <div className="px-6 py-6">

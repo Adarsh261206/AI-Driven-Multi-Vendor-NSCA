@@ -1,7 +1,7 @@
 'use client';
 
-import { useEffect, useState } from 'react';
-import { useRouter } from 'next/navigation';
+import { Suspense, useEffect, useState } from 'react';
+import { useRouter, useSearchParams } from 'next/navigation';
 import { ShieldCheck, Activity, BookOpenCheck, BrainCircuit, ArrowRight } from 'lucide-react';
 import { useAuthStore } from '@/stores/authStore';
 import { Button } from '@/components/ui/Button';
@@ -9,7 +9,17 @@ import { Alert } from '@/components/ui/Alert';
 import { Field, Input } from '@/components/ui/Field';
 
 export default function LoginPage() {
+  return (
+    <Suspense fallback={<div className="flex min-h-screen items-center justify-center text-sm text-ink-500">Loading…</div>}>
+      <LoginForm />
+    </Suspense>
+  );
+}
+
+function LoginForm() {
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const sessionExpired = searchParams.get('session') === 'expired';
   const { login, register, error, isLoading, clearError, user } = useAuthStore();
   const [mode, setMode] = useState<'login' | 'register'>('login');
   const [email, setEmail] = useState('');
@@ -42,18 +52,18 @@ export default function LoginPage() {
             <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-brand-600 text-white shadow-odoo">
               <ShieldCheck className="h-5 w-5" strokeWidth={2} />
             </div>
-            <p className="text-lg font-bold tracking-tight text-ink-800">ConfigShield</p>
+            <p className="text-lg font-bold tracking-tight text-ink-100">ConfigShield</p>
           </div>
         </div>
 
         <div className="space-y-12">
           <div>
-            <h1 className="text-4xl font-extrabold leading-tight tracking-tight text-ink-800">
+            <h1 className="text-4xl font-extrabold leading-tight tracking-tight text-ink-100">
               AI-driven security compliance
               <br />
               for multi-vendor networks.
             </h1>
-            <p className="mt-4 max-w-md text-sm leading-relaxed text-ink-500">
+            <p className="mt-4 max-w-md text-sm leading-relaxed text-ink-300">
               Deterministic benchmarks, normalized security model and Human-in-the-Loop learning — built for enterprise governance.
             </p>
           </div>
@@ -81,8 +91,8 @@ export default function LoginPage() {
                   {f.icon}
                 </div>
                 <div>
-                  <p className="text-sm font-semibold text-ink-800">{f.title}</p>
-                  <p className="mt-1.5 text-sm leading-relaxed text-ink-500">{f.body}</p>
+                  <p className="text-sm font-semibold text-ink-100">{f.title}</p>
+                  <p className="mt-1.5 text-sm leading-relaxed text-ink-300">{f.body}</p>
                 </div>
               </div>
             ))}
@@ -102,16 +112,16 @@ export default function LoginPage() {
             <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-brand-600 text-white shadow-odoo">
               <ShieldCheck className="h-4 w-4" strokeWidth={2} />
             </div>
-            <p className="text-sm font-bold tracking-tight text-ink-800">ConfigShield</p>
+            <p className="text-sm font-bold tracking-tight text-ink-100">ConfigShield</p>
           </div>
 
           <div className="card overflow-hidden">
             <div className="px-8 py-8">
               <div>
-                <h2 className="text-2xl font-extrabold tracking-tight text-ink-800">
+                <h2 className="text-2xl font-extrabold tracking-tight text-ink-100">
                   {mode === 'login' ? 'Sign in' : 'Create account'}
                 </h2>
-                <p className="mt-2 text-sm leading-relaxed text-ink-500">
+                <p className="mt-2 text-sm leading-relaxed text-ink-300">
                   {mode === 'login'
                     ? 'Welcome back — access the compliance console.'
                     : 'Register to start auditing network configurations.'}
@@ -122,6 +132,14 @@ export default function LoginPage() {
                 <div className="mt-6">
                   <Alert variant="error" title="Sign in failed" onDismiss={clearError}>
                     {error}
+                  </Alert>
+                </div>
+              )}
+              {!error && sessionExpired && (
+                <div className="mt-6">
+                  <Alert variant="info" title="Session expired">
+                    Your session expired after a period of inactivity. Please sign in again —
+                    your devices, configurations, and audit history are preserved.
                   </Alert>
                 </div>
               )}
@@ -181,7 +199,7 @@ export default function LoginPage() {
                 </button>
               </form>
 
-              <p className="mt-6 text-center text-sm text-ink-500">
+              <p className="mt-6 text-center text-sm text-ink-400">
                 {mode === 'login' ? (
                   <>
                     No account?{' '}

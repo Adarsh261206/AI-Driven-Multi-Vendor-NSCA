@@ -1,7 +1,7 @@
 'use client';
 
 import { Suspense, useCallback, useEffect, useMemo, useState } from 'react';
-import { useRouter } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
 import {
   ArrowRight,
   Check,
@@ -10,6 +10,7 @@ import {
   FileText,
   ListChecks,
   PlayCircle,
+  Server,
   ShieldCheck,
   UploadCloud,
   X,
@@ -19,10 +20,17 @@ import { useRequireAuth } from '@/hooks/useAuth';
 import { AppShell } from '@/components/layout/AppShell';
 import { Alert } from '@/components/ui/Alert';
 import { PageLoader } from '@/components/ui/Progress';
-import { configurationsAPI, auditExecutionAPI, request } from '@/lib/api';
+import { Button } from '@/components/ui/Button';
+import { Skeleton } from '@/components/ui/Progress';
+import { configurationsAPI, auditExecutionAPI, baselinesAPI, devicesAPI, request } from '@/lib/api';
 import { cn } from '@/lib/utils';
-import { formatBytes } from '@/lib/format';
-import type { Configuration } from '@/types';
+import { formatBytes, formatDateTime } from '@/lib/format';
+import type {
+  BaselineStatusResponse,
+  Configuration,
+  Device,
+  DeviceConfigurationHistoryItem,
+} from '@/types';
 
 const STEPS = [
   { id: 'upload', label: 'Upload', icon: UploadCloud },
@@ -32,7 +40,10 @@ const STEPS = [
 
 const MAX_UPLOAD_MB = 10;
 const ACCEPTED = '.txt,.cfg,.conf,.zip';
-const SESSION_KEY = 'guardian_pending_configs';
+// Bumped after the fleet-rule change: v1 pending items may reference
+// device-less (unlinked) configurations, which auditors can no longer
+// audit. v2 starts clean; new freestyle uploads bind to an owned device.
+const SESSION_KEY = 'guardian_pending_configs_v2';
 
 export default function NewAuditPage() {
   return (
@@ -43,8 +54,10 @@ export default function NewAuditPage() {
 }
 
 function NewAuditWizard() {
-  const { isLoading: authLoading } = useRequireAuth();
+  const { isLoading: authLoading, user } = useRequireAuth();
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const deviceParam = searchParams.get('device');
 
   const [step, setStep] = useState(0);
   const [configs, setConfigs] = useState<Configuration[]>([]);
@@ -54,9 +67,47 @@ function NewAuditWizard() {
 
   const [uploading, setUploading] = useState(false);
   const [uploadError, setUploadError] = useState<string | null>(null);
+  const [uploadNotice, setUploadNotice] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [executing, setExecuting] = useState(false);
   const [dragOver, setDragOver] = useState(false);
+
+  // Device-aware mode (STEP 3): ?device=<id> selects exactly one device
+  // and exactly one of its configuration snapshots. Generic multi-file
+  // flow below is untouched when no device param is present.
+  const [device, setDevice] = useState<Device | null>(null);
+  const [deviceConfigs, setDeviceConfigs] = useState<DeviceConfigurationHistoryItem[]>([]);
+  const [selectedDeviceConfig, setSelectedDeviceConfig] = useState<string | null>(null);
+  const [deviceLoading, setDeviceLoading] = useState(false);
+  const [deviceError, setDeviceError] = useState<string | null>(null);
+  const [baseline, setBaseline] = useState<BaselineStatusResponse | null>(null);
+
+  const deviceMode = deviceParam !== null && deviceParam !== '';
+  // Ownership rule (server-enforced, mirrored here): a non-admin can only
+  // audit configurations linked to a device they own. Freestyle uploads
+  // must therefore bind to one of the user's devices so the audit can
+  // access them; admins may audit device-less configs.
+  const isAdmin = user?.role === 'admin';
+  const needsBind = !deviceMode && !isAdmin;
+  const [userDevices, setUserDevices] = useState<Device[]>([]);
+  const [bindDevice, setBindDevice] = useState<Device | null>(null);
+
+  useEffect(() => {
+    if (authLoading || deviceMode || isAdmin) return;
+    let cancelled = false;
+    devicesAPI
+      .list({ per_page: 100 })
+      .then((res) => {
+        if (cancelled) return;
+        const active = (res.data.items || []).filter((d) => d.is_active !== false);
+        setUserDevices(active);
+        setBindDevice((prev) => prev ?? active[0] ?? null);
+      })
+      .catch(() => {});
+    return () => {
+      cancelled = true;
+    };
+  }, [authLoading, deviceMode, isAdmin]);
 
   useEffect(() => {
     try {
@@ -64,6 +115,40 @@ function NewAuditWizard() {
       if (raw) setConfigs(JSON.parse(raw) as Configuration[]);
     } catch {}
   }, []);
+
+  const loadDeviceContext = useCallback(async () => {
+    if (!deviceParam) return;
+    setDeviceLoading(true);
+    setDeviceError(null);
+    try {
+      const [deviceRes, configsRes, baselineRes] = await Promise.all([
+        request(() => devicesAPI.get(deviceParam), 'Device not found'),
+        request(
+          () => devicesAPI.listConfigurations(deviceParam, { per_page: 50 }),
+          'Unable to load device configurations.'
+        ),
+        request(() => baselinesAPI.status(), 'Unable to load Company Baseline.'),
+      ]);
+      setDevice(deviceRes);
+      const items = configsRes.items || [];
+      setDeviceConfigs(items);
+      // Default: latest snapshot. An explicit user choice afterwards wins.
+      const latest = items.find((c) => c.latest) ?? items[0] ?? null;
+      setSelectedDeviceConfig(latest ? latest.id : null);
+      setBaseline(baselineRes);
+    } catch (err) {
+      setDeviceError(err instanceof Error ? err.message : 'Unable to load device context.');
+      setDevice(null);
+      setDeviceConfigs([]);
+      setSelectedDeviceConfig(null);
+    } finally {
+      setDeviceLoading(false);
+    }
+  }, [deviceParam]);
+
+  useEffect(() => {
+    if (!authLoading && deviceParam) loadDeviceContext();
+  }, [authLoading, deviceParam, loadDeviceContext]);
 
   const persistConfigs = useCallback((next: Configuration[]) => {
     setConfigs(next);
@@ -79,6 +164,20 @@ function NewAuditWizard() {
     if (files.length === 0) return;
     setUploading(true);
     setUploadError(null);
+    setUploadNotice(null);
+    // Device mode: uploads bind to the selected device server-side.
+    // Freestyle: non-admins must bind to an owned device (backend 403s
+    // device-less configs for non-admin audit requests).
+    const bindDeviceId = deviceMode
+      ? device?.id
+      : needsBind
+        ? bindDevice?.id
+        : undefined;
+    if (needsBind && !bindDeviceId) {
+      setUploading(false);
+      setUploadError('Select a device to bind this upload to — audits require configurations linked to your devices.');
+      return;
+    }
     let added: Configuration[] = [];
     for (const file of files) {
       if (!ACCEPTED.split(',').some((ext) => file.name.toLowerCase().endsWith(ext.trim()))) {
@@ -90,17 +189,28 @@ function NewAuditWizard() {
         continue;
       }
       try {
-        const res = await request(() => configurationsAPI.upload(file), `Upload of ${file.name} failed`);
+        const res = await request(() => configurationsAPI.upload(file, bindDeviceId), `Upload of ${file.name} failed`);
         added.push(res as unknown as Configuration);
       } catch (err) {
         setUploadError(err instanceof Error ? err.message : `Upload of ${file.name} failed`);
       }
     }
     if (added.length > 0) {
-      const seen = new Set(configs.map((c) => c.id));
-      const merged = [...configs, ...added.filter((c) => !seen.has(c.id))];
-      persistConfigs(merged);
-      setSelectedConfigs((prev) => [...prev, ...added.map((c) => c.id)]);
+      if (deviceMode) {
+        // Refresh device snapshots, then select the resulting snapshot.
+        // Dedup may return a pre-existing snapshot honestly — select it.
+        await loadDeviceContext();
+        const lastAdded = added[added.length - 1];
+        setSelectedDeviceConfig(lastAdded.id);
+        setUploadNotice(
+          `"${lastAdded.filename}" ready — selected for this audit. History is never overwritten.`
+        );
+      } else {
+        const seen = new Set(configs.map((c) => c.id));
+        const merged = [...configs, ...added.filter((c) => !seen.has(c.id))];
+        persistConfigs(merged);
+        setSelectedConfigs((prev) => [...prev, ...added.map((c) => c.id)]);
+      }
     }
     setUploading(false);
   };
@@ -123,7 +233,16 @@ function NewAuditWizard() {
   };
 
   const canContinue = (): boolean => {
-    if (step === 0) return selectedConfigs.length > 0;
+    if (step === 0) {
+      // Device mode: exactly one device snapshot must be selected, and
+      // archived devices cannot start audits (server enforces this too).
+      if (deviceMode) {
+        return (
+          selectedDeviceConfig !== null && device !== null && device.is_active !== false
+        );
+      }
+      return selectedConfigs.length > 0;
+    }
     if (step === 1) return auditName.trim().length > 0;
     return true;
   };
@@ -132,14 +251,24 @@ function NewAuditWizard() {
     setExecuting(true);
     setError(null);
     try {
+      const payload = deviceMode && device && selectedDeviceConfig
+        ? {
+            name: auditName.trim(),
+            description: auditDescription.trim() || undefined,
+            configuration_ids: [selectedDeviceConfig],
+            framework: 'CIS',
+            framework_version: '2024.1',
+            device_ids: [device.id],
+          }
+        : {
+            name: auditName.trim(),
+            description: auditDescription.trim() || undefined,
+            configuration_ids: selectedConfigs,
+            framework: 'CIS',
+            framework_version: '2024.1',
+          };
       const audit = await request(
-        () => auditExecutionAPI.execute({
-          name: auditName.trim(),
-          description: auditDescription.trim() || undefined,
-          configuration_ids: selectedConfigs,
-          framework: 'CIS',
-          framework_version: '2024.1',
-        }),
+        () => auditExecutionAPI.execute(payload),
         'Failed to start audit'
       );
       sessionStorage.removeItem(SESSION_KEY);
@@ -220,8 +349,161 @@ function NewAuditWizard() {
 
       {/* ── STEP CONTENT ── */}
       <div className="max-w-3xl">
-        {/* STEP 0 — Upload */}
-        {step === 0 && (
+        {/* STEP 0 — Upload (generic) or Select snapshot (device mode) */}
+        {step === 0 && deviceMode && (
+          <div className="space-y-6">
+            <div>
+              <h2 className="page-title">Audit device</h2>
+              <p className="page-subtitle mt-2 max-w-2xl">
+                Select exactly one configuration snapshot for this device — or upload a new one.
+              </p>
+            </div>
+
+            {device && !device.is_active && (
+              <Alert variant="warning" title="This device is archived">
+                Archived devices cannot start new audits. Unarchive the device from its detail
+                page to resume operations — history is preserved.
+              </Alert>
+            )}
+
+            {deviceLoading ? (
+              <div className="card px-6 py-5">
+                <div className="flex items-center gap-4">
+                  <Skeleton className="h-10 w-10 rounded-xl" />
+                  <div className="flex-1 space-y-2">
+                    <Skeleton className="h-5 w-1/3" />
+                    <Skeleton className="h-4 w-1/2" />
+                  </div>
+                </div>
+              </div>
+            ) : deviceError || !device ? (
+              <Alert variant="error" title="Unable to load device context">
+                {deviceError ?? 'This device could not be loaded. It may not exist or you may not have access to it.'}
+                <div className="mt-3">
+                  <Button variant="secondary" size="sm" onClick={loadDeviceContext}>
+                    Retry
+                  </Button>
+                </div>
+              </Alert>
+            ) : (
+              <>
+                {/* Device context card */}
+                <div className="card overflow-hidden">
+                  <div className="card-header">
+                    <div className="flex items-center gap-3">
+                      <span className="flex h-10 w-10 items-center justify-center rounded-xl bg-brand-50 text-brand-600 ring-1 ring-brand-100">
+                        <Server className="h-5 w-5" />
+                      </span>
+                      <div>
+                        <p className="label">AUDIT DEVICE</p>
+                        <h3 className="section-title">{device.name}</h3>
+                      </div>
+                    </div>
+                    <span className="badge-info">
+                      {[device.vendor, device.platform].filter(Boolean).join(' · ') || 'Unknown vendor'}
+                    </span>
+                  </div>
+                  <div className="px-6 py-4 text-sm text-ink-400">
+                    {deviceConfigs.length === 0
+                      ? 'No configuration snapshots on record for this device yet.'
+                      : `${deviceConfigs.length} snapshot${deviceConfigs.length === 1 ? '' : 's'} on record — select exactly one to audit.`}
+                  </div>
+                </div>
+
+                {device.is_active !== false && (
+                  <>
+                {/* Snapshot radio list */}
+                {deviceConfigs.length > 0 && (
+                  <div className="card overflow-hidden">
+                    <div className="card-header">
+                      <h3 className="section-title">Configuration snapshot</h3>
+                      <span className="badge-info">one snapshot</span>
+                    </div>
+                    <div className="space-y-3 bg-surface-50/30 p-4">
+                      {deviceConfigs.map((cfg) => (
+                        <label
+                          key={cfg.id}
+                          className={cn('select-card cursor-pointer', selectedDeviceConfig === cfg.id ? '!border-brand-300 !bg-brand-50/60 shadow-odoo' : '')}
+                        >
+                          <input
+                            type="radio"
+                            name="device-snapshot"
+                            checked={selectedDeviceConfig === cfg.id}
+                            onChange={() => setSelectedDeviceConfig(cfg.id)}
+                            className="sr-only peer"
+                          />
+                          <span className="mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded-full border-2 border-surface-300 bg-white transition-all peer-checked:border-brand-600 peer-checked:bg-brand-600 [&>span]:opacity-0 peer-checked:[&>span]:opacity-100">
+                            <span className="h-2 w-2 rounded-full bg-white transition-opacity" />
+                          </span>
+                          <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg border border-surface-200 bg-surface-100 text-ink-400">
+                            <FileText className="h-4.5 w-4.5" />
+                          </span>
+                          <div className="min-w-0 flex-1">
+                            <p className="flex items-center gap-2 truncate text-sm font-semibold text-ink-100">
+                              <span className="truncate font-mono" title={cfg.filename}>{cfg.filename}</span>
+                              {cfg.latest && <span className="badge-pass shrink-0">LATEST</span>}
+                            </p>
+                            <p className="mt-1 text-xs text-ink-400">
+                              {formatDateTime(cfg.uploaded_at)} · {formatBytes(cfg.size_bytes)}
+                              {cfg.audit_count > 0 && ` · ${cfg.audit_count} audit${cfg.audit_count === 1 ? '' : 's'}`}
+                            </p>
+                          </div>
+                        </label>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
+                {uploadNotice && (
+                  <Alert variant="success" onDismiss={() => setUploadNotice(null)}>
+                    {uploadNotice}
+                  </Alert>
+                )}
+                {uploadError && (
+                  <Alert variant="warning" title="Upload issues" onDismiss={() => setUploadError(null)}>
+                    {uploadError}
+                  </Alert>
+                )}
+
+                {/* Upload-new affordance (bound to this device server-side) */}
+                <div
+                  role="button"
+                  tabIndex={0}
+                  aria-label="Upload a new configuration for this device"
+                  onDragOver={(e) => { e.preventDefault(); setDragOver(true); }}
+                  onDragLeave={() => setDragOver(false)}
+                  onDrop={onDrop}
+                  onClick={() => document.getElementById('config-file-input')?.click()}
+                  onKeyDown={(e) => e.key === 'Enter' && document.getElementById('config-file-input')?.click()}
+                  className={cn(
+                    'card cursor-pointer border-2 border-dashed p-8 text-center transition-all duration-200',
+                    dragOver ? 'border-brand-400 bg-brand-50 shadow-odoo' : 'border-surface-300 bg-surface-50/40 hover:border-brand-300 hover:bg-brand-50/30 hover:shadow-odoo'
+                  )}
+                >
+                  <input id="config-file-input" type="file" multiple accept={ACCEPTED} onChange={onFileInput} className="hidden" disabled={uploading} />
+                  <div className="mx-auto mb-4 flex h-12 w-12 items-center justify-center rounded-2xl bg-white border border-surface-200 text-brand-600 shadow-odoo">
+                    <UploadCloud className="h-6 w-6" strokeWidth={1.6} />
+                  </div>
+                  <p className="text-sm font-semibold text-ink-100">
+                    {uploading ? 'Uploading…' : 'Upload new configuration for this device'}
+                  </p>
+                  <p className="mt-1 text-xs text-ink-400">
+                    Bound to {device.name} server-side · history is never overwritten
+                  </p>
+                </div>
+
+                {deviceConfigs.length === 0 && !uploading && (
+                  <Alert variant="info" title="No configurations yet">
+                    Upload a configuration snapshot before running this device audit.
+                  </Alert>
+                )}
+                  </>
+                )}
+              </>
+            )}
+          </div>
+        )}
+        {step === 0 && !deviceMode && (
           <div className="space-y-6">
             <div>
               <h2 className="page-title">Upload configuration</h2>
@@ -229,6 +511,45 @@ function NewAuditWizard() {
                 Drop your network device config — Cisco, Juniper, Fortinet, Palo Alto, or any CLI. Vendor and framework are auto-detected.
               </p>
             </div>
+
+            {needsBind && (
+              <div className="card overflow-hidden">
+                <div className="card-header">
+                  <div>
+                    <h3 className="section-title">Bind uploads to a device</h3>
+                    <p className="text-sm text-ink-400 mt-1">
+                      Audits can only run configurations linked to your devices. Uploads below bind to the selected device — same content on another device is stored separately.
+                    </p>
+                  </div>
+                  <span className="badge-info">required for auditors</span>
+                </div>
+                <div className="card-body">
+                  {userDevices.length === 0 ? (
+                    <Alert variant="warning" title="No devices available">
+                      You have no active devices. Create a device first, or run the audit from a device detail page.
+                    </Alert>
+                  ) : (
+                    <div className="flex flex-wrap items-center gap-2">
+                      {userDevices.map((d) => (
+                        <button
+                          key={d.id}
+                          onClick={() => setBindDevice(d)}
+                          className={cn(
+                            'rounded-lg border px-3 py-2 text-sm font-medium transition-all',
+                            bindDevice?.id === d.id
+                              ? 'border-brand-300 bg-brand-50 text-brand-700 shadow-odoo'
+                              : 'border-surface-200 bg-white text-ink-400 hover:border-brand-200'
+                          )}
+                        >
+                          {d.name}
+                          {d.vendor ? ` · ${d.vendor}` : ''}
+                        </button>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              </div>
+            )}
 
             <div
               role="button"
@@ -254,7 +575,11 @@ function NewAuditWizard() {
               <p className="mt-1.5 text-sm text-ink-400">Accepted: {ACCEPTED} · Max {MAX_UPLOAD_MB} MB · Any vendor</p>
               <div className="mt-4 inline-flex items-center gap-2 rounded-full bg-white border border-surface-200 px-4 py-1.5 text-xs font-medium text-ink-400 shadow-xs">
                 <ShieldCheck className="h-3.5 w-3.5 text-brand-500" />
-                Vendor + framework auto-detected on next step
+                {needsBind
+                  ? bindDevice
+                    ? `Uploads bind to ${bindDevice.name}`
+                    : 'Select a device to bind uploads'
+                  : 'Vendor + framework auto-detected on next step'}
               </div>
             </div>
 
@@ -330,6 +655,61 @@ function NewAuditWizard() {
               <p className="page-subtitle mt-2">Name your audit. Everything else is automatic.</p>
             </div>
 
+            {deviceMode && device && (() => {
+              const selected = deviceConfigs.find((c) => c.id === selectedDeviceConfig) ?? null;
+              return (
+                <div className="card overflow-hidden">
+                  <div className="card-header">
+                    <h3 className="section-title">Audit scope</h3>
+                    <span className="badge-info">device-aware</span>
+                  </div>
+                  <div className="card-body">
+                    <dl className="grid grid-cols-2 gap-x-6 gap-y-4 text-sm">
+                      <div>
+                        <dt className="label mb-1">Device</dt>
+                        <dd className="font-semibold text-ink-100">{device.name}</dd>
+                        <dd className="mt-0.5 text-xs text-ink-400">
+                          {[device.vendor, device.platform].filter(Boolean).join(' · ') || 'Unknown vendor'}
+                          {device.firmware_version ? ` · ${device.firmware_version}` : ''}
+                        </dd>
+                      </div>
+                      <div>
+                        <dt className="label mb-1">Configuration</dt>
+                        <dd className="truncate font-mono font-semibold text-ink-100" title={selected?.filename ?? ''}>
+                          {selected?.filename ?? '—'}
+                        </dd>
+                        <dd className="mt-0.5 text-xs text-ink-400">
+                          {selected ? `Snapshot ${formatDateTime(selected.uploaded_at)}` : 'No snapshot selected'}
+                          {selected?.latest ? ' · LATEST' : ''}
+                        </dd>
+                      </div>
+                      <div>
+                        <dt className="label mb-1">Framework</dt>
+                        <dd className="font-semibold text-ink-100">CIS</dd>
+                        <dd className="mt-0.5 text-xs text-ink-400">CIS Cisco IOS XE 17.x Benchmark</dd>
+                      </div>
+                      <div>
+                        <dt className="label mb-1">Company Baseline</dt>
+                        {baseline?.baseline_status === 'ACTIVE' && baseline.baseline ? (
+                          <>
+                            <dd className="font-semibold text-ink-100">{baseline.baseline.name}</dd>
+                            <dd className="mt-0.5 text-xs text-ink-400">
+                              {baseline.baseline.control_count} controls in scope · Applied automatically
+                            </dd>
+                          </>
+                        ) : (
+                          <>
+                            <dd className="font-semibold text-ink-100">Not configured</dd>
+                            <dd className="mt-0.5 text-xs text-ink-400">Full CIS auditing — resolved server-side</dd>
+                          </>
+                        )}
+                      </div>
+                    </dl>
+                  </div>
+                </div>
+              );
+            })()}
+
             <div className="space-y-6">
               <div className="card overflow-hidden">
                 <div className="card-header">
@@ -378,8 +758,14 @@ function NewAuditWizard() {
                     </div>
                     <div className="rounded-xl bg-surface-50 border border-surface-200 p-4">
                       <p className="label mb-1.5">Files</p>
-                      <p className="text-sm font-semibold text-ink-100">{selectedConfigs.length} file(s)</p>
-                      <p className="text-xs text-ink-400 mt-1">{formatBytes(uploadedBytes)}</p>
+                      <p className="text-sm font-semibold text-ink-100">
+                        {deviceMode ? '1 file' : `${selectedConfigs.length} file(s)`}
+                      </p>
+                      <p className="text-xs text-ink-400 mt-1">
+                        {deviceMode
+                          ? 'device snapshot'
+                          : formatBytes(uploadedBytes)}
+                      </p>
                     </div>
                   </div>
                   {selectedConfigs.length > 0 && (

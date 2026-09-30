@@ -48,6 +48,7 @@ export default function FindingDetailPage() {
   const [finding, setFinding] = useState<Finding | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [notice, setNotice] = useState<string | null>(null);
   const [updating, setUpdating] = useState(false);
 
   const load = useCallback(async () => {
@@ -73,6 +74,7 @@ export default function FindingDetailPage() {
     setError(null);
     try {
       await request(() => findingsAPI.updateStatus(finding.id, status), 'Failed to update status');
+      setNotice(`Finding marked as ${status.replace('_', ' ')}.`);
       await load();
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to update status');
@@ -179,8 +181,8 @@ export default function FindingDetailPage() {
           body: (
             <div className="space-y-2.5">
               <ResultBadge result={e.result} />
-              {e.result_reasoning && (
-                <p className="text-xs leading-relaxed text-ink-400 italic">{e.result_reasoning}</p>
+              {e.reasoning && (
+                <p className="text-xs leading-relaxed text-ink-400 italic">{e.reasoning}</p>
               )}
             </div>
           ),
@@ -205,6 +207,13 @@ export default function FindingDetailPage() {
         <div className="mb-6">
           <Alert variant="error" onDismiss={() => setError(null)}>
             {error}
+          </Alert>
+        </div>
+      )}
+      {notice && (
+        <div className="mb-6">
+          <Alert variant="success" onDismiss={() => setNotice(null)}>
+            {notice}
           </Alert>
         </div>
       )}

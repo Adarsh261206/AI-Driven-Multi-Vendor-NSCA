@@ -16,17 +16,23 @@ Covers:
 from __future__ import annotations
 
 import asyncio
+from typing import Any
 import uuid as uuidlib
 
 import pytest
 
 from sqlalchemy import select, delete
-from sqlalchemy.ext.asyncio import async_sessionmaker, create_async_engine
 
-from app.config import settings
 from app.models import (
+    Audit,
+    AuditStatus,
     CompanyBaseline,
+    ComplianceResult,
+    Configuration,
+    NormalizedConfiguration,
     Organization,
+    ParsedConfiguration,
+    SemanticInterpretation,
     User,
 )
 from app.security.auth import hash_password
@@ -36,12 +42,14 @@ from app.services.baseline import (
     validate_baseline_controls,
 )
 from app.api.v1.baseline import (
+    BaselineState,
     check_organization_baseline,
     evaluate_company_baseline,
     generate_comparison_data,
     get_active_baseline_for_organization,
     onboarding_no_flow,
     onboarding_yes_flow,
+    replace_baseline,
     resolve_baseline_for_audit,
     user_has_baseline_capability,
 )
@@ -53,9 +61,17 @@ from app.api.v1.baseline import (
 
 @pytest.fixture()
 async def db():
-    """Fresh engine per test — avoids asyncpg cross-event-loop reuse."""
-    engine = create_async_engine(settings.DATABASE_URL, pool_pre_ping=True)
-    factory = async_sessionmaker(engine, expire_on_commit=False)
+    """Throwaway-DB session with a fresh engine per test.
+
+    MUST use dbutil (engine_validation_test), never settings.DATABASE_URL:
+    pointing at the real database leaks test rows into it (STEP 7.6).
+    """
+    import scripts.engine_validation.dbutil as dbutil
+
+    if not await dbutil.schema_available():
+        pytest.skip("throwaway database engine_validation_test not provisioned")
+
+    db_engine, factory = dbutil.make_session_factory()
     session = factory()
     try:
         yield session
@@ -65,7 +81,7 @@ async def db():
         except Exception:
             pass
         await session.close()
-        await engine.dispose()
+        await db_engine.dispose()
 
 
 # ---------------------------------------------------------------------------
@@ -103,9 +119,10 @@ async def _cleanup(email_prefix: str, db=None) -> None:
 
 
 def _make_session():
-    from sqlalchemy.ext.asyncio import async_sessionmaker, create_async_engine
-    engine = create_async_engine(settings.DATABASE_URL, pool_pre_ping=True)
-    return async_sessionmaker(engine, expire_on_commit=False)()
+    import scripts.engine_validation.dbutil as dbutil
+
+    _, factory = dbutil.make_session_factory()
+    return factory()
 
 
 def _unique(prefix: str) -> str:
@@ -171,6 +188,37 @@ class TestBaselineValidation:
         service = BaselineValidationService()
         result = service.validate(["6.1.2", "AC-2(1)"])
         assert result["valid_count"] == 2
+
+    def test_manual_control_is_valid_baseline_member(self):
+        # Regression: 2.1.6 "Set SSH VRF" is AssessmentStatus.MANUAL.
+        # Manual controls are legitimate CIS controls — the audit pipeline
+        # evaluates them as REVIEW, and the company projection handles
+        # REVIEW in scope. Validation must accept them, not report UNKNOWN.
+        service = BaselineValidationService()
+        result = service.validate(["2.1.6"])
+        assert result["valid_count"] == 1
+        assert result["errors"] == []
+        assert "2.1.6" in result["valid_controls"]
+
+    def test_unimplemented_control_stays_unknown(self):
+        # 2.3.5 exists in no ConfigShield benchmark registry (the Cisco
+        # registry implements 2.3.1-2.3.4, then moves to 2.4.1). It must
+        # stay UNKNOWN — never silently dropped, never invented.
+        service = BaselineValidationService()
+        with pytest.raises(BaselineValidationError) as exc_info:
+            service.validate(["2.3.5"])
+        assert exc_info.value.errors == [
+            {"control_id": "2.3.5", "reason": "unknown"}
+        ]
+
+    def test_manual_and_unknown_mixed_reports_only_unknown(self):
+        # One valid (manual) + one genuinely unsupported: exactly one error.
+        service = BaselineValidationService()
+        with pytest.raises(BaselineValidationError) as exc_info:
+            service.validate(["2.1.6", "2.3.5"])
+        assert exc_info.value.errors == [
+            {"control_id": "2.3.5", "reason": "unknown"}
+        ]
 
 
 # ---------------------------------------------------------------------------
@@ -571,3 +619,368 @@ class TestNoBaselineRegression:
         # NIST control untouched by the company projection
         assert combined["AC-2(1)"]["result"] == "FAIL"
         assert combined["AC-2(1)"]["framework"] == "NIST"
+
+# ---------------------------------------------------------------------------
+# 7. Replacement lifecycle (update/replace active baseline)
+# ---------------------------------------------------------------------------
+
+def _req(name: str, controls: list) -> Any:
+    return type(
+        "Req",
+        (),
+        {
+            "name": name,
+            "framework": "CIS",
+            "benchmark": "CIS Cisco IOS XE 17.x",
+            "controls": controls,
+        },
+    )()
+
+
+class TestBaselineReplacement:
+    """Atomic replacement: A ACTIVE → B ACTIVE, exactly one active at all times."""
+
+    @pytest.mark.asyncio
+    async def test_replace_with_new_baseline(self, db):
+        """A ACTIVE → Replace → Upload B → Validate B → Review → Activate B."""
+        prefix = _unique("baseline-replace")
+        email = f"{prefix}@test.com"
+        try:
+            user = _make_user(email)
+            db.add(user)
+            await db.flush()
+
+            # Baseline A: 5 controls
+            await onboarding_yes_flow(
+                db, user, _req("Baseline A", ["1.1.1", "1.1.5", "1.5.2", "1.2.8", "1.3.1"])
+            )
+            await db.commit()
+            baseline_a, status_a = await check_organization_baseline(db, user.organization_id)
+            assert status_a == "ACTIVE"
+            baseline_a_id = baseline_a.id
+
+            # Baseline B: 3 controls
+            result = await replace_baseline(
+                db, user, _req("Baseline B", ["1.1.1", "1.1.5", "6.1.2"])
+            )
+            await db.commit()
+
+            assert result["status"] == "replaced"
+            assert result["activation_blocked"] is False
+            assert result["baseline"]["name"] == "Baseline B"
+            assert result["replaced_baseline"]["id"] == str(baseline_a_id)
+
+            # Exactly one ACTIVE baseline: A REPLACED, B ACTIVE
+            rows = await db.execute(
+                select(CompanyBaseline).where(
+                    CompanyBaseline.organization_id == user.organization_id,
+                    CompanyBaseline.status == BaselineState.ACTIVE,
+                )
+            )
+            active = rows.scalars().all()
+            assert len(active) == 1
+            assert active[0].name == "Baseline B"
+
+            old_row = await db.execute(
+                select(CompanyBaseline).where(CompanyBaseline.id == baseline_a_id)
+            )
+            assert old_row.scalar_one().status == BaselineState.REPLACED
+
+            # Org points at B; resolution uses B
+            resolved = await resolve_baseline_for_audit(db, user.organization_id)
+            assert set(resolved["in_scope_controls"]) == {"1.1.1", "1.1.5", "6.1.2"}
+        finally:
+            await _cleanup(prefix)
+
+    @pytest.mark.asyncio
+    async def test_invalid_replacement_keeps_active_baseline(self, db):
+        """A ACTIVE + invalid B uploads → B rejected, A remains ACTIVE."""
+        prefix = _unique("baseline-rep-invalid")
+        email = f"{prefix}@test.com"
+        try:
+            user = _make_user(email)
+            db.add(user)
+            await db.flush()
+
+            await onboarding_yes_flow(
+                db, user, _req("Baseline A", ["1.1.1", "1.1.5", "1.5.2", "1.2.8"])
+            )
+            await db.commit()
+            org_id = user.organization_id  # capture before rollback expires state
+
+            result = await replace_baseline(
+                db, user, _req("Bad B", ["1.1.1", "99.99.99", "1.1.1"])
+            )
+            await db.rollback()
+
+            assert result["activation_blocked"] is True
+            assert result["status"] == "validation_failed"
+
+            # A untouched: still ACTIVE with all 4 controls
+            baseline, status = await check_organization_baseline(db, org_id)
+            assert status == "ACTIVE"
+            assert baseline.name == "Baseline A"
+            assert baseline.controls == ["1.1.1", "1.1.5", "1.5.2", "1.2.8"]
+
+            rows = await db.execute(
+                select(CompanyBaseline).where(
+                    CompanyBaseline.organization_id == org_id,
+                    CompanyBaseline.status == BaselineState.ACTIVE,
+                )
+            )
+            assert len(rows.scalars().all()) == 1
+        finally:
+            await _cleanup(prefix)
+
+    @pytest.mark.asyncio
+    async def test_replace_without_active_baseline_refused(self, db):
+        """Replace with no active baseline → caller goes through onboarding."""
+        prefix = _unique("baseline-rep-none")
+        email = f"{prefix}@test.com"
+        try:
+            user = _make_user(email)
+            db.add(user)
+            await db.flush()
+
+            result = await replace_baseline(
+                db, user, _req("B", ["1.1.1", "1.1.5"])
+            )
+            await db.rollback()
+            assert result["status"] == "no_active_baseline"
+            assert result["activation_blocked"] is True
+        finally:
+            await _cleanup(prefix)
+
+    @pytest.mark.asyncio
+    async def test_failed_replacement_rolls_back(self, db):
+        """Simulated failure mid-replacement → A remains ACTIVE, no B residue."""
+        prefix = _unique("baseline-rep-fail")
+        email = f"{prefix}@test.com"
+        try:
+            user = _make_user(email)
+            db.add(user)
+            await db.flush()
+
+            await onboarding_yes_flow(
+                db, user, _req("Baseline A", ["1.1.1", "1.1.5"])
+            )
+            await db.commit()
+            org_id_fail = user.organization_id  # capture before rollback expires state
+
+            # Simulate a crash before commit: deactivate A, create B, roll back
+            current = await get_active_baseline_for_organization(db, org_id_fail)
+            current.status = BaselineState.REPLACED
+            db.add(
+                CompanyBaseline(
+                    organization_id=org_id_fail,
+                    name="Crashed B",
+                    framework="CIS",
+                    benchmark="CIS Cisco IOS XE 17.x",
+                    status=BaselineState.ACTIVE,
+                    controls=["1.1.1"],
+                    created_by=user.email,
+                )
+            )
+            await db.rollback()
+
+            baseline, status = await check_organization_baseline(db, org_id_fail)
+            assert status == "ACTIVE"
+            assert baseline.name == "Baseline A"
+            rows = await db.execute(
+                select(CompanyBaseline).where(
+                    CompanyBaseline.organization_id == org_id_fail,
+                    CompanyBaseline.status == BaselineState.ACTIVE,
+                )
+            )
+            assert len(rows.scalars().all()) == 1
+        finally:
+            await _cleanup(prefix)
+
+    @pytest.mark.asyncio
+    async def test_replace_is_organization_isolated(self, db):
+        """Company B can never replace or read Company A's baseline."""
+        prefix_a = _unique("baseline-repa")
+        prefix_b = _unique("baseline-repb")
+        email_a = f"{prefix_a}@test.com"
+        email_b = f"{prefix_b}@test.com"
+        try:
+            user_a = _make_user(email_a)
+            user_b = _make_user(email_b)
+            db.add_all([user_a, user_b])
+            await db.flush()
+
+            await onboarding_yes_flow(
+                db, user_a, _req("Baseline A", ["1.1.1", "1.1.5"])
+            )
+            await db.commit()
+
+            # B has no baseline context for A — resolving via B's org
+            # returns nothing of A's.
+            resolved_b = await resolve_baseline_for_audit(db, user_b.organization_id)
+            assert resolved_b["has_baseline"] is False
+
+            # B cannot reach A's rows by any org-scoped query
+            a_rows = await db.execute(
+                select(CompanyBaseline).where(
+                    CompanyBaseline.organization_id == user_a.organization_id
+                )
+            )
+            assert {r.name for r in a_rows.scalars().all()} == {"Baseline A"}
+        finally:
+            await _cleanup(prefix_a)
+            await _cleanup(prefix_b)
+
+
+# ---------------------------------------------------------------------------
+# 8. Historical audit protection (snapshot survives replacement)
+# ---------------------------------------------------------------------------
+
+async def _make_audit_with_results(
+    db, user, name, baseline_name, baseline_controls, results
+) -> Audit:
+    """Minimal persisted audit + full evidence chain + compliance rows.
+
+    Mirrors what run_audit_pipeline persists so the company projection can
+    be exercised against real stored rows instead of fixtures.
+    """
+    audit = Audit(
+        user_id=user.id,
+        name=name,
+        status=AuditStatus.COMPLETED.value,
+        baseline_name=baseline_name,
+        baseline_controls=list(baseline_controls),
+    )
+    db.add(audit)
+    await db.flush()
+
+    cfg = Configuration(
+        filename=f"{name}-{uuidlib.uuid4().hex[:8]}.cfg",
+        content_hash=f"hash-{uuidlib.uuid4().hex}",
+        raw_content="hostname TEST\n",
+        content_type="text/plain",
+        size_bytes=14,
+        line_count=1,
+    )
+    db.add(cfg)
+    await db.flush()
+
+    parsed = ParsedConfiguration(
+        configuration_id=cfg.id,
+        vendor="cisco",
+        platform="ios_xe",
+        parse_tree={},
+    )
+    db.add(parsed)
+    await db.flush()
+
+    sem = SemanticInterpretation(parsed_configuration_id=parsed.id)
+    db.add(sem)
+    await db.flush()
+
+    norm = NormalizedConfiguration(
+        semantic_interpretation_id=sem.id,
+        universal_model_version="1.0",
+    )
+    db.add(norm)
+    await db.flush()
+
+    for cid, res in results:
+        db.add(ComplianceResult(
+            audit_id=audit.id,
+            normalized_configuration_id=norm.id,
+            framework="CIS",
+            control_id=cid,
+            control_name=cid,
+            control_description="",
+            result=res,
+            confidence=0.9,
+            severity="MEDIUM",
+            evidence={},
+        ))
+    await db.commit()
+    return audit
+
+
+class TestHistoricalAuditProtection:
+    """Old audits keep their original baseline context after replacement."""
+
+    @pytest.mark.asyncio
+    async def test_projection_prefers_audit_snapshot(self, db):
+        from app.api.v1.audit_execution import _compute_company_baseline_projection
+
+        prefix = _unique("baseline-hist")
+        email = f"{prefix}@test.com"
+        try:
+            user = _make_user(email)
+            db.add(user)
+            await db.flush()
+
+            # A ACTIVE: 4 controls; audit snapshot taken at audit time
+            await onboarding_yes_flow(
+                db, user, _req("Baseline A", ["1.1.1", "1.1.5", "1.5.2", "1.2.8"])
+            )
+            await db.commit()
+
+            audit = await _make_audit_with_results(
+                db, user, "Old Audit", "Baseline A",
+                ["1.1.1", "1.1.5", "1.5.2", "1.2.8"],
+                [("1.1.1", "PASS"), ("1.1.5", "REVIEW"),
+                 ("1.5.2", "FAIL"), ("1.2.8", "FAIL")],
+            )
+
+            # Replace: B becomes active (12-style: 2 controls)
+            await replace_baseline(db, user, _req("Baseline B", ["1.1.1", "6.1.2"]))
+            await db.commit()
+
+            # Org now resolves B — but the OLD audit still projects A
+            resolved = await resolve_baseline_for_audit(db, user.organization_id)
+            assert set(resolved["in_scope_controls"]) == {"1.1.1", "6.1.2"}
+
+            projection = await _compute_company_baseline_projection(
+                db, audit, user.organization_id
+            )
+            assert projection["has_baseline"] is True
+            assert projection["name"] == "Baseline A"           # snapshot, not B
+            assert projection["in_scope_count"] == 4              # A, not 2
+            assert projection["passed"] == 1
+            assert projection["failed"] == 2
+            assert projection["review"] == 1
+
+            # The new/future audit gets B automatically
+            new_audit = await _make_audit_with_results(
+                db, user, "New Audit", "Baseline B", ["1.1.1", "6.1.2"],
+                [("1.1.1", "PASS"), ("6.1.2", "PASS")],
+            )
+            projection_new = await _compute_company_baseline_projection(
+                db, new_audit, user.organization_id
+            )
+            assert projection_new["name"] == "Baseline B"
+            assert projection_new["in_scope_count"] == 2
+        finally:
+            await _cleanup(prefix)
+
+    @pytest.mark.asyncio
+    async def test_replacement_changes_only_scope_metrics(self, db):
+        """Same config, two baselines → CIS constant, company scope changes."""
+        prefix = _unique("baseline-hscope")
+        try:
+            stored = {
+                "1.1.1": {"result": "PASS"},
+                "1.1.5": {"result": "REVIEW"},
+                "1.5.2": {"result": "FAIL"},
+            }
+            res_a = await evaluate_company_baseline(
+                stored, ["1.1.1", "1.1.5", "1.5.2"]
+            )
+            res_b = await evaluate_company_baseline(
+                stored, ["1.1.1"]
+            )
+            assert res_a["denominator"] == 3
+            assert res_b["denominator"] == 1
+            # Underlying verdicts identical in both projections
+            assert res_a["in_scope_results"]["1.5.2"]["result"] == "FAIL"
+            assert res_b["in_scope_results"]["1.5.2"]["result"] == "FAIL"
+            assert res_b["in_scope_results"]["1.5.2"]["company_result"] == "OUT_OF_SCOPE"
+        finally:
+            await _cleanup(prefix)
+

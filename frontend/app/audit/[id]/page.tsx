@@ -68,6 +68,9 @@ export default function AuditDetailPage() {
   const [downloading, setDownloading] = useState(false);
   const [severityFilter, setSeverityFilter] = useState('');
   const [statusFilter, setStatusFilter] = useState('');
+  const [cancelling, setCancelling] = useState(false);
+  const [retrying, setRetrying] = useState(false);
+  const [actionNotice, setActionNotice] = useState<string | null>(null);
 
   const load = useCallback(async () => {
     try {
@@ -107,14 +110,44 @@ export default function AuditDetailPage() {
   const updateFindingStatus = async (finding: Finding, status: string) => {
     try {
       await request(() => findingsAPI.updateStatus(finding.id, status), 'Failed to update status');
+      setActionNotice(`Finding marked as ${status.replace('_', ' ')}.`);
       await load();
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to update finding status');
     }
   };
 
-  const downloadPdf = async () => {
-    setDownloading(true);
+  const cancelAudit = async () => {
+    setCancelling(true);
+    setError(null);
+    setActionNotice(null);
+    try {
+      await request(() => auditsAPI.cancel(auditId), 'Failed to cancel audit');
+      setActionNotice('Cancellation requested — the worker stops at the next safe checkpoint.');
+      await load();
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Failed to cancel audit');
+    } finally {
+      setCancelling(false);
+    }
+  };
+
+  const retryAudit = async () => {
+    setRetrying(true);
+    setError(null);
+    setActionNotice(null);
+    try {
+      await request(() => auditExecutionAPI.retry(auditId), 'Failed to retry audit');
+      setActionNotice('Retry queued as a new execution attempt — history is preserved.');
+      await load();
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Failed to retry audit');
+    } finally {
+      setRetrying(false);
+    }
+  };
+
+  const downloadPdf = async () => {    setDownloading(true);
     setError(null);
     try {
       const { default: api } = await import('@/lib/api');
@@ -150,6 +183,11 @@ export default function AuditDetailPage() {
   }
 
   const running = audit.status === 'pending' || audit.status === 'processing';
+  const execution = execStatus?.execution ?? null;
+  const execState = execution?.status ?? null;
+  const canCancel =
+    running || execState === 'queued' || execState === 'running' || execState === 'cancel_requested';
+  const canRetry = execState === 'failed' && execution?.retryable === true;
   const filteredFindings = findings.filter(
     (f) =>
       (!severityFilter || f.severity === severityFilter) &&
@@ -170,6 +208,18 @@ export default function AuditDetailPage() {
               PDF Report
             </Button>
           )}
+          {canCancel && (
+            <Button variant="secondary" onClick={cancelAudit} loading={cancelling}>
+              <XCircle className="h-4 w-4" />
+              Cancel
+            </Button>
+          )}
+          {canRetry && (
+            <Button variant="secondary" onClick={retryAudit} loading={retrying}>
+              <RefreshCw className="h-4 w-4" />
+              Retry
+            </Button>
+          )}
           <Button variant="ghost" onClick={load} aria-label="Refresh">
             <RefreshCw className="h-4 w-4" />
           </Button>
@@ -180,6 +230,59 @@ export default function AuditDetailPage() {
         <div className="mb-6">
           <Alert variant="error" onDismiss={() => setError(null)}>
             {error}
+          </Alert>
+        </div>
+      )}
+      {actionNotice && (
+        <div className="mb-6">
+          <Alert variant="info" onDismiss={() => setActionNotice(null)}>
+            {actionNotice}
+          </Alert>
+        </div>
+      )}
+      {execState === 'queued' && (
+        <div className="mb-6">
+          <Alert variant="info" title="Queued for worker execution">
+            Attempt {execution?.attempt} of {execution?.max_attempts} — a worker picks this audit
+            up automatically. No browser tab needs to stay open.
+          </Alert>
+        </div>
+      )}
+      {execState === 'cancel_requested' && (
+        <div className="mb-6">
+          <Alert variant="warning" title="Cancellation requested">
+            The worker stops at the next safe checkpoint — running work is never killed mid-write.
+          </Alert>
+        </div>
+      )}
+      {audit.status === 'failed' && (
+        <div className="mb-6">
+          <Alert
+            variant="error"
+            title={execution?.error_category ? `Audit failed — ${execution.error_category}` : 'Audit failed'}
+          >
+            {execution?.error_message ?? 'The audit pipeline reported a failure.'}
+            {execution && !execution.retryable && execution.error_category && (
+              <p className="mt-2 text-sm">
+                This failure is not retryable ({execution.error_category}). Fix the underlying
+                cause and start a new audit.
+              </p>
+            )}
+            {canRetry && (
+              <div className="mt-3">
+                <Button variant="secondary" size="sm" onClick={retryAudit} loading={retrying}>
+                  <RefreshCw className="h-4 w-4" />
+                  Retry as attempt {(execution?.attempt ?? 1) + 1}
+                </Button>
+              </div>
+            )}
+          </Alert>
+        </div>
+      )}
+      {audit.status === 'cancelled' && (
+        <div className="mb-6">
+          <Alert variant="warning" title="Audit cancelled">
+            This audit was cancelled. Its partial state is preserved; start a new audit to re-run.
           </Alert>
         </div>
       )}

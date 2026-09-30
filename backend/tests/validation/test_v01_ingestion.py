@@ -2069,11 +2069,11 @@ async def test_v01_51_stale_precheck_race_typed(db_env, recorder: Recorder):
     real_check = eng._check_duplicates
     calls = {"n": 0}
 
-    async def stale_once(content_hash):
+    async def stale_once(content_hash, device_id=None):
         calls["n"] += 1
         if calls["n"] == 1:
             return None
-        return await real_check(content_hash)
+        return await real_check(content_hash, device_id)
 
     outcome, cfg_id = "", None
     eng._check_duplicates = stale_once
@@ -2158,11 +2158,11 @@ async def test_v01_52_cross_session_duplicate_race(db_env, recorder: Recorder):
         real_check = eng_b._check_duplicates
         calls = {"n": 0}
 
-        async def stale_once(content_hash):
+        async def stale_once(content_hash, device_id=None):
             calls["n"] += 1
             if calls["n"] == 1:
                 return None
-            return await real_check(content_hash)
+            return await real_check(content_hash, device_id)
 
         eng_b._check_duplicates = stale_once
         try:
@@ -2268,9 +2268,11 @@ async def test_v01_56_flush_rollback_commit_semantics(
 # ---------------------------------------------------------------------------
 
 async def test_v01_53_historical_duplicate_rows(db_env, recorder: Recorder):
-    """E01 FIX (N5/N1): with the unique index temporarily absent and
+    """E01 FIX (N5/N1): with the dedup indexes temporarily absent and
     historical duplicate rows present, the pre-check returns ONE winner
-    (no MultipleResultsFound) and ingest still fails typed."""
+    (no MultipleResultsFound) and ingest still fails typed. Restores the
+    SCOPED indexes (composite + unlinked partial) — never the legacy
+    global one — so later tests observe the fleet-rule schema."""
     from uuid import uuid4
 
     from sqlalchemy import delete, text
@@ -2289,6 +2291,14 @@ async def test_v01_53_historical_duplicate_rows(db_env, recorder: Recorder):
     ids = []
     dropped = restored = False
     try:
+        await session.execute(
+            text("DROP INDEX IF EXISTS uq_configurations_device_content_hash")
+        )
+        await session.execute(
+            text("DROP INDEX IF EXISTS uq_configurations_content_hash_unlinked")
+        )
+        # Belt-and-braces for stale schemas: the legacy global index
+        # must also be gone before legacy duplicate rows can exist.
         await session.execute(
             text("DROP INDEX IF EXISTS uq_configurations_content_hash")
         )
@@ -2330,9 +2340,18 @@ async def test_v01_53_historical_duplicate_rows(db_env, recorder: Recorder):
             delete(Configuration).where(Configuration.content_hash == content_hash)
         )
         await session.commit()
+        # Restore the SCOPED race guards (never the legacy global
+        # index — leaving it behind would re-impose global dedup on
+        # every later test in this session).
         await session.execute(text(
-            "CREATE UNIQUE INDEX IF NOT EXISTS uq_configurations_content_hash "
-            "ON configurations (content_hash)"
+            "CREATE UNIQUE INDEX IF NOT EXISTS "
+            "uq_configurations_device_content_hash "
+            "ON configurations (device_id, content_hash)"
+        ))
+        await session.execute(text(
+            "CREATE UNIQUE INDEX IF NOT EXISTS "
+            "uq_configurations_content_hash_unlinked "
+            "ON configurations (content_hash) WHERE device_id IS NULL"
         ))
         await session.commit()
         restored = True
@@ -2344,10 +2363,10 @@ async def test_v01_53_historical_duplicate_rows(db_env, recorder: Recorder):
         "multi-row historical duplicates: pre-check returns a single "
         "winner UUID (scalars().first, no MultipleResultsFound) and "
         "ingest raises DuplicateConfigurationError before inserting",
-        "index dropped; 2 rows sharing one content_hash; then ingest the "
-        "same bytes again",
+        "scoped indexes dropped; 2 rows sharing one content_hash; then "
+        "ingest the same bytes again",
         "pre-check -> one of the two ids; ingest -> "
-        "DuplicateConfigurationError; index restored in finally",
+        "DuplicateConfigurationError; scoped indexes restored in finally",
         f"pre={pre_outcome} ingest={outcome} cfg_is_legacy="
         f"{cfg_id in ids} dropped={dropped} restored={restored}",
         "PASS" if ok else "FAIL", "CONFIRMED BEHAVIOR",
@@ -2361,8 +2380,9 @@ async def test_v01_53_historical_duplicate_rows(db_env, recorder: Recorder):
 
 
 async def test_v01_54_unique_content_hash_index(db_env, recorder: Recorder):
-    """E01 FIX (N5): the duplicate key is enforced by the database —
-    unique pg_index, single pg_indexes entry, matching model metadata."""
+    """E01 FIX (N5) as rescoped: the duplicate key is enforced by the
+    database as the composite UNIQUE (device_id, content_hash) — same
+    bytes may live on many devices, same device+bytes collide."""
     from sqlalchemy import text
 
     from app.models import Configuration
@@ -2379,29 +2399,55 @@ async def test_v01_54_unique_content_hash_index(db_env, recorder: Recorder):
         "SELECT indexname FROM pg_indexes WHERE tablename = 'configurations' "
         "AND indexname LIKE '%content_hash%'"
     ))).scalars().all()
+    pg_def_composite = (await session.execute(text(
+        "SELECT indexdef FROM pg_indexes WHERE tablename = 'configurations' "
+        "AND indexname = 'uq_configurations_device_content_hash'"
+    ))).scalars().first() or ""
+    pg_def_unlinked = (await session.execute(text(
+        "SELECT indexdef FROM pg_indexes WHERE tablename = 'configurations' "
+        "AND indexname = 'uq_configurations_content_hash_unlinked'"
+    ))).scalars().first() or ""
     model_indexes = sorted(i.name for i in Configuration.__table__.indexes)
 
     checks = {
-        "pg_unique": pg_rows == [("uq_configurations_content_hash", True)],
-        "pg_single": pg_names == ["uq_configurations_content_hash"],
-        "model_has_uq": "uq_configurations_content_hash" in model_indexes,
+        "pg_unique": pg_rows == [
+            ("uq_configurations_content_hash_unlinked", True),
+            ("uq_configurations_device_content_hash", True),
+        ] or pg_rows == [
+            ("uq_configurations_device_content_hash", True),
+            ("uq_configurations_content_hash_unlinked", True),
+        ],
+        "pg_single": sorted(pg_names) == sorted([
+            "uq_configurations_content_hash_unlinked",
+            "uq_configurations_device_content_hash",
+        ]),
+        "pg_composite": "device_id" in pg_def_composite and "content_hash" in pg_def_composite,
+        "pg_partial": "WHERE" in pg_def_unlinked.upper() and "device_id IS NULL" in pg_def_unlinked,
+        "model_has_both": (
+            "uq_configurations_device_content_hash" in model_indexes
+            and "uq_configurations_content_hash_unlinked" in model_indexes
+        ),
+        "no_global_uq": "uq_configurations_content_hash" not in model_indexes
+            and "uq_configurations_content_hash" not in pg_names,
         "no_legacy_ix": "ix_configurations_content_hash" not in model_indexes,
     }
     ok = all(checks.values())
     recorder.add(
         "V01-54", "C",
-        "uq_configurations_content_hash exists as a UNIQUE pg_index and "
-        "the only content_hash index; model metadata matches",
+        "scoped dedup pair exists as UNIQUE pg_indexes (composite for "
+        "device-bound rows, partial for unlinked rows) with no legacy "
+        "global index; model metadata matches",
         "pg_index/pg_indexes introspection + Configuration.__table__",
-        "[('uq_configurations_content_hash', True)] / single index / "
-        "model carries uq only",
+        "composite + partial unique / legacy global absent / model "
+        "carries the scoped pair only",
         f"pg={pg_rows} pg_indexes={pg_names} model={model_indexes} "
         f"checks={checks}",
         "PASS" if ok else "FAIL", "CONFIRMED BEHAVIOR",
-        "models/__init__.py line 140 Index('uq_configurations_content_hash', "
-        "'content_hash', unique=True); alembic 004 drops the legacy "
-        "ix_configurations_content_hash before creating the unique index",
-        "Fixed (E01 N5).",
+        "models/__init__.py Index('uq_configurations_device_content_hash', "
+        "('device_id', 'content_hash'), unique=True); alembic 013 replaces "
+        "the global 004 unique index (fleet rule: identical bytes allowed "
+        "across devices, idempotent per device)",
+        "Fixed (E01 N5, rescoped).",
     )
     assert ok
 

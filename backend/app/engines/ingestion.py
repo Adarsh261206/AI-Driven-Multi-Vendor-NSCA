@@ -217,6 +217,8 @@ class IngestionEngine:
             InvalidContentTypeError: content_type malformed or >50 chars
             FileDecodeError: neither UTF-8 nor cp-1252 decodes the bytes
             DuplicateConfigurationError: identical bytes already stored
+                in this device scope (same device, or any row for a
+                device-less upload)
             InvalidDeviceError: device_id invalid or nonexistent
 
         Transaction contract: this method flushes (so constraint and
@@ -231,13 +233,17 @@ class IngestionEngine:
                                       device_id)
         )
 
-        # Duplicate identity: SHA-256 over the raw bytes (N6 decision).
+        # Duplicate identity: SHA-256 over the raw bytes (N6 decision),
+        # scoped to the target device. The same bytes may legitimately
+        # live on many devices (fleet-wide golden configs), so only a
+        # same-scope hit is a duplicate. Device-less uploads keep the
+        # historical global behavior (any same-hash row replays).
         content_hash = self._calculate_hash(content)
 
-        # Friendly duplicate pre-check. The UNIQUE index is the
+        # Friendly duplicate pre-check. The composite UNIQUE index is the
         # authoritative race guard (N5); this only supplies a nicer
         # message with the existing id.
-        existing_id = await self._check_duplicates(content_hash)
+        existing_id = await self._check_duplicates(content_hash, device_id)
         if existing_id is not None:
             raise DuplicateConfigurationError(
                 f"Configuration with same content already exists "
@@ -455,18 +461,27 @@ class IngestionEngine:
         """Calculate SHA-256 hash of the raw file bytes"""
         return hashlib.sha256(content).hexdigest()
 
-    async def _check_duplicates(self, content_hash: str) -> Optional[UUID]:
-        """Return the id of an existing row with this hash, or None.
+    async def _check_duplicates(
+        self, content_hash: str, device_id: Optional[UUID] = None
+    ) -> Optional[UUID]:
+        """Return the id of an existing row with this hash in scope, or None.
+
+        Scope rule: a device-bound upload only collides with the same
+        bytes on the SAME device (idempotent retry). A device-less upload
+        collides with any same-hash row (historical behavior). Different
+        devices never collide — fleet-wide identical configs are stored
+        once per device.
 
         Uses a limited projection so a database corrupted with
         historical duplicate rows can never raise MultipleResultsFound;
         the caller decides how to surface the hit (N5).
         """
-        result = await self.db.execute(
-            select(Configuration.id)
-            .where(Configuration.content_hash == content_hash)
-            .limit(1)
+        stmt = select(Configuration.id).where(
+            Configuration.content_hash == content_hash
         )
+        if device_id is not None:
+            stmt = stmt.where(Configuration.device_id == device_id)
+        result = await self.db.execute(stmt.limit(1))
         return result.scalars().first()
 
     async def _device_exists(self, device_id: UUID) -> bool:
@@ -492,7 +507,7 @@ class IngestionEngine:
         detail = str(orig if orig is not None else exc).lower()
 
         if sqlstate == "23505" or "content_hash" in detail:
-            winner = await self._check_duplicates(content_hash)
+            winner = await self._check_duplicates(content_hash, device_id)
             if winner is not None:
                 return DuplicateConfigurationError(
                     f"Configuration with same content already exists "

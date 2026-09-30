@@ -63,12 +63,11 @@ export default function TrainingPage() {
   const [saving, setSaving] = useState(false);
   const [savedMapping, setSavedMapping] = useState<TrainingMapping | null>(null);
 
-  const [reanalyzeOpen, setReanalyzeOpen] = useState(false);
+
   const [reanalyzeFile, setReanalyzeFile] = useState<File | null>(null);
   const [analyzing2, setAnalyzing2] = useState(false);
   const [beforeReviews, setBeforeReviews] = useState<number | null>(null);
-  const [afterReviews, setAfterReviews] = useState<number | null>(null);
-  const [reanalyzeAudit, setReanalyzeAudit] = useState<Audit | null>(null);
+
 
   const [mappings, setMappings] = useState<TrainingMapping[]>([]);
   const [mappingsLoading, setMappingsLoading] = useState(true);
@@ -143,22 +142,13 @@ export default function TrainingPage() {
     }
   };
 
-  const reject = async () => {
+  const reject = () => {
+    // A hypothesis is pre-persistence (no mapping ID exists yet), so
+    // "reject" dismisses the suggestion locally. The previous code fired
+    // rejectMapping('none', ...) — a fabricated ID the backend rejects.
     if (!hypothesis) return;
-    setSaving(true);
-    setError(null);
-    try {
-      await request(
-        () => trainingAPI.rejectMapping('none', 'Rejected by administrator'),
-        'Failed to reject'
-      );
-      setHypothesis(null);
-      setRawSyntax('');
-    } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to reject');
-    } finally {
-      setSaving(false);
-    }
+    setHypothesis(null);
+    setRawSyntax('');
   };
 
   const openVersions = async (mapping: TrainingMapping) => {
@@ -214,10 +204,6 @@ export default function TrainingPage() {
     }
   };
 
-  const startReanalyze = async () => {
-    setError(null);
-    setReanalyzeOpen(true);
-  };
 
   if (authLoading) return <PageLoader label="Loading" />;
 
@@ -422,7 +408,7 @@ export default function TrainingPage() {
                   Re-analyze a configuration
                 </p>
                 <p className="mt-2 text-xs leading-relaxed text-ink-400">
-                  Run a real audit against a config and compare REVIEW counts before/after teaching.
+                  Run a real audit against a config and count REVIEW findings.
                 </p>
                 <div className="mt-4 flex flex-wrap items-center gap-3">
                   <input
@@ -441,8 +427,6 @@ export default function TrainingPage() {
                       try {
                         const count = await runReanalyze();
                         setBeforeReviews(count);
-                        setAfterReviews(null);
-                        setReanalyzeAudit(null);
                       } catch (err) {
                         setError(err instanceof Error ? err.message : 'Re-analysis failed');
                       } finally {
@@ -455,17 +439,12 @@ export default function TrainingPage() {
                   </button>
                 </div>
                 {beforeReviews != null && (
-                  <div className="mt-5 grid grid-cols-2 gap-4">
-                    <div className="rounded-xl border border-surface-200 bg-white px-5 py-4">
-                      <p className="label mb-1">Before training</p>
-                      <p className="font-mono text-lg font-bold text-amber-600">{beforeReviews} REVIEW</p>
-                    </div>
-                    <div className="rounded-xl border border-surface-200 bg-white px-5 py-4">
-                      <p className="label mb-1">After confirmation</p>
-                      <p className="font-mono text-lg font-bold text-ink-300">
-                        {afterReviews ?? '—'} REVIEW
-                      </p>
-                    </div>
+                  <div className="mt-5 rounded-xl border border-surface-200 bg-white px-5 py-4">
+                    <p className="label mb-1">Review findings in fresh audit</p>
+                    <p className="font-mono text-lg font-bold text-amber-600">{beforeReviews} REVIEW</p>
+                    <p className="mt-1 text-xs text-ink-400">
+                      Confirm a mapping above, then re-run to compare.
+                    </p>
                   </div>
                 )}
               </div>
