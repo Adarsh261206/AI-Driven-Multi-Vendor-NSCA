@@ -104,7 +104,11 @@ interface GigabitEthernet0/1
         config = """hostname Router1
 some-unknown-command value"""
         result = self.parser.parse(config)
-        assert len(result.parse_tree) == 2
+        # E04 F2: unrecognised commands are flagged as unknown sections,
+        # not silently accepted as tree nodes.
+        assert len(result.parse_tree) == 1
+        assert len(result.unknown_sections) == 1
+        assert result.unknown_sections[0].raw_text == "some-unknown-command value"
     
     def test_parse_errors_empty(self):
         config = """hostname Router1"""

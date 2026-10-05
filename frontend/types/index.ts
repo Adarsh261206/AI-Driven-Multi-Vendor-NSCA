@@ -321,3 +321,91 @@ export interface ReportJSON {
     framework: string;
   }[];
 }
+
+// ---------------------------------------------------------------------------
+// Audit ledger (read-only; mirrors backend AuditTrailResponse)
+// ---------------------------------------------------------------------------
+
+export interface AuditTrailEntry {
+  id: string;
+  action: string;
+  entity_type: string;
+  entity_id: string | null;
+  user_id: string | null;
+  details: Record<string, unknown> | null;
+  ip_address: string | null;
+  user_agent: string | null;
+  created_at: string;
+  // Hash-chained ledger era. NULL explicitly means "pre-chain audit era".
+  seq: number | null;
+  previous_hash: string | null;
+  event_hash: string | null;
+}
+
+// ---------------------------------------------------------------------------
+// Remediation plans (plan-first workflow; mirrors backend plan to_dict)
+// ---------------------------------------------------------------------------
+
+export interface PlanChange {
+  context: string;
+  commands: string[];
+}
+
+export interface PlanPrecondition {
+  name: string;
+  passed: boolean;
+  severity: string;
+  message: string;
+}
+
+export interface PlanParam {
+  name: string;
+  type: string;
+  required: boolean;
+  supplied: boolean;
+  redacted: boolean;
+}
+
+export interface RemediationPlan {
+  plan_id: string;
+  finding_id: string;
+  control_id: string;
+  device: {
+    name: string;
+    vendor: string;
+    platform: string;
+    model: string | null;
+    version: string | null;
+  };
+  finding: { title: string; severity: string; confidence: number };
+  preconditions: PlanPrecondition[];
+  changes: { add: string[]; remove: string[]; contexts: PlanChange[] };
+  diff: { before: string[]; after: string[]; add: string[]; remove: string[] };
+  rollback: PlanChange[];
+  verification: string[];
+  risk_flags: string[];
+  params: PlanParam[];
+  safety_class: string;
+  safe_to_apply: boolean;
+  requires_approval: boolean;
+  status: string;
+  configuration_id: string | null;
+  configuration_hash_before: string | null;
+}
+
+export interface RemediationPlanRecord {
+  id: string;
+  plan_id: string;
+  finding_id: string;
+  control_id: string | null;
+  status: string;
+  plan: RemediationPlan;
+  configuration_id: string | null;
+  configuration_hash_before: string | null;
+  approved_by: string | null;
+  approved_at: string | null;
+  rejection_reason: string | null;
+  failure_info: Record<string, unknown> | null;
+  created_at: string;
+  updated_at: string;
+}

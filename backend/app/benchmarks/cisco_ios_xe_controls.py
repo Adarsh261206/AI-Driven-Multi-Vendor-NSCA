@@ -563,13 +563,21 @@ def get_all_controls() -> list[BenchmarkControl]:
 
 
 def get_registry() -> BenchmarkRegistry:
-    """Build and return the complete Cisco IOS XE benchmark registry."""
+    """Build and return the complete Cisco IOS XE benchmark registry.
+
+    Authoritative attribution (F3): every control in this module is DEFINED
+    by CIS, so framework/version/rule-confidence are stamped here from the
+    defining benchmark — never inferred downstream.
+    """
+    from app.benchmarks.selection import assign_control_metadata
+
+    controls = [assign_control_metadata(c, "CIS") for c in get_all_controls()]
     registry = BenchmarkRegistry(
         benchmark_id=BENCHMARK_ID,
         benchmark_name=BENCHMARK_NAME,
         benchmark_version=BENCHMARK_VERSION,
         vendor=VENDOR,
         platform=PLATFORM,
-        controls=get_all_controls(),
+        controls=controls,
     )
     return registry

@@ -50,10 +50,10 @@ class SecurityConcept:
 class UniversalSecurityModel:
     """
     Universal Security Model
-    
+
     A hierarchical model of security concepts that vendor configurations
     are normalized into. This enables cross-vendor compliance evaluation.
-    
+
     Structure:
     - device: Device-level information
     - management: Management access configuration
@@ -62,10 +62,21 @@ class UniversalSecurityModel:
     - audit: Audit and logging settings
     - network: Network security settings
     - crypto: Cryptographic settings
+
+    The model is versioned (spec §11.3). The authoritative version is
+    UniversalSecurityModel.VERSION; every NormalizedConfiguration produced
+    against this schema carries it as universal_model_version.
     """
-    
+
+    # Spec §11.3 model version (major.minor.patch). Bump on schema change:
+    # MAJOR for removed/renamed paths, MINOR for added paths, PATCH for
+    # description/default clarifications.
+    VERSION = "1.0.0"
+
     def __init__(self):
         self.concepts: dict[str, SecurityConcept] = {}
+        # Instance-level alias so hasattr(model, "version") holds.
+        self.version: str = type(self).VERSION
         self._initialize_model()
     
     def _initialize_model(self) -> None:
@@ -239,7 +250,7 @@ class UniversalSecurityModel:
         self._add_concept(SecurityConcept(
             path="management.ssh.timeout",
             name="SSH Timeout",
-            description="SSH session timeout in minutes",
+            description="SSH-related session timeout in seconds (exec-timeout derived)",
             relevance=SecurityRelevance.MEDIUM,
             data_type="integer",
             default_value=5,
@@ -874,6 +885,169 @@ class UniversalSecurityModel:
             default_value=False,
             parent_path="interfaces",
         ))
+
+        # ============ E05 ADDITIONS ============
+        # Spec §11.1 concepts that were absent (V05-02), control-referenced
+        # leaves the model did not define (V05-55, V07-05), and diagnostic
+        # leaves for evidence the normalizer produces and the benchmark
+        # engine consumes (conflict/multi-block structures). Diagnostic
+        # leaves are structural evidence, not security state.
+
+        self._add_concept(SecurityConcept(
+            path="management.http.secure_only",
+            name="HTTP Secure Only",
+            description="Management access is served over HTTPS with plain HTTP "
+                        "not evidenced (spec §11.1)",
+            relevance=SecurityRelevance.HIGH,
+            data_type="boolean",
+            default_value=None,
+            parent_path="management.http",
+        ))
+
+        self._add_concept(SecurityConcept(
+            path="management.https.certificate_valid",
+            name="HTTPS Certificate Valid",
+            description="Whether the HTTPS management certificate is valid "
+                        "(spec §11.1; no vendor syntax observed — unsupported)",
+            relevance=SecurityRelevance.HIGH,
+            data_type="boolean",
+            default_value=None,
+            parent_path="management.https",
+        ))
+
+        self._add_concept(SecurityConcept(
+            path="management.ssh.key_size",
+            name="SSH Key Size",
+            description="SSH host key size in bits (spec §11.1)",
+            relevance=SecurityRelevance.HIGH,
+            data_type="integer",
+            default_value=None,
+            parent_path="management.ssh",
+        ))
+
+        self._add_concept(SecurityConcept(
+            path="management.ssh.session_timeout",
+            name="SSH Session Timeout",
+            description="SSH session negotiation timeout in seconds "
+                        "(ip ssh timeout derived; referenced by CIS 1.2.x controls)",
+            relevance=SecurityRelevance.MEDIUM,
+            data_type="integer",
+            default_value=None,
+            parent_path="management.ssh",
+        ))
+
+        self._add_concept(SecurityConcept(
+            path="management.vty.console_timeout",
+            name="Console Timeout",
+            description="Exec timeout of console line blocks in seconds "
+                        "(referenced by CIS 1.2.6/2.1.3 controls)",
+            relevance=SecurityRelevance.MEDIUM,
+            data_type="integer",
+            default_value=None,
+            parent_path="management.vty",
+        ))
+
+        self._add_concept(SecurityConcept(
+            path="management.vty.aux_timeout",
+            name="Aux Timeout",
+            description="Exec timeout of aux line blocks in seconds "
+                        "(referenced by CIS 1.2.7 controls)",
+            relevance=SecurityRelevance.MEDIUM,
+            data_type="integer",
+            default_value=None,
+            parent_path="management.vty",
+        ))
+
+        self._add_concept(SecurityConcept(
+            path="management.vty.vty_timeout",
+            name="VTY Timeout",
+            description="Exec timeout of vty line blocks in seconds "
+                        "(referenced by CIS 1.2.8 and NIST controls)",
+            relevance=SecurityRelevance.MEDIUM,
+            data_type="integer",
+            default_value=None,
+            parent_path="management.vty",
+        ))
+
+        self._add_concept(SecurityConcept(
+            path="services.dns",
+            name="DNS",
+            description="DNS service configuration (spec §11.1)",
+            relevance=SecurityRelevance.MEDIUM,
+            data_type="object",
+            parent_path="services",
+        ))
+
+        self._add_concept(SecurityConcept(
+            path="services.dns.configured",
+            name="DNS Configured",
+            description="Whether DNS name resolution is configured (spec §11.1)",
+            relevance=SecurityRelevance.MEDIUM,
+            data_type="boolean",
+            default_value=None,
+            parent_path="services.dns",
+        ))
+
+        self._add_concept(SecurityConcept(
+            path="services.dhcp",
+            name="DHCP",
+            description="DHCP service configuration (spec §11.1)",
+            relevance=SecurityRelevance.MEDIUM,
+            data_type="object",
+            parent_path="services",
+        ))
+
+        self._add_concept(SecurityConcept(
+            path="services.dhcp.enabled",
+            name="DHCP Enabled",
+            description="Whether a DHCP service is enabled (spec §11.1)",
+            relevance=SecurityRelevance.MEDIUM,
+            data_type="boolean",
+            default_value=None,
+            parent_path="services.dhcp",
+        ))
+
+        self._add_concept(SecurityConcept(
+            path="config",
+            name="Config Diagnostics",
+            description="Parser/normalizer diagnostic structures (not security state)",
+            relevance=SecurityRelevance.NONE,
+            data_type="object",
+        ))
+
+        self._add_concept(SecurityConcept(
+            path="config.conflicts",
+            name="Configuration Conflicts",
+            description="Conflicting duplicate settings detected during "
+                        "normalization (diagnostic evidence consumed by the "
+                        "benchmark engine)",
+            relevance=SecurityRelevance.NONE,
+            data_type="list",
+            default_value=None,
+            parent_path="config",
+        ))
+
+        self._add_concept(SecurityConcept(
+            path="management.vty.conflicts",
+            name="VTY Conflicts",
+            description="Conflicting duplicate settings across line blocks "
+                        "(diagnostic evidence consumed by the benchmark engine)",
+            relevance=SecurityRelevance.NONE,
+            data_type="list",
+            default_value=None,
+            parent_path="management.vty",
+        ))
+
+        self._add_concept(SecurityConcept(
+            path="management.vty.exec_timeouts",
+            name="Per-Block Exec Timeouts",
+            description="Exec-timeout evidence per line block (diagnostic "
+                        "evidence consumed by multi-block control evaluation)",
+            relevance=SecurityRelevance.NONE,
+            data_type="list",
+            default_value=None,
+            parent_path="management.vty",
+        ))
     
     def _add_concept(self, concept: SecurityConcept) -> None:
         """Add a concept to the model"""
@@ -906,3 +1080,18 @@ class UniversalSecurityModel:
             path for path, concept in self.concepts.items()
             if concept.relevance == SecurityRelevance.HIGH
         ]
+
+    def is_valid_path(self, path: str) -> bool:
+        """A path is valid only if it names an actual model node.
+
+        No prefix-based acceptance: the model's own path set is the source
+        of truth for mapper output, control targets and AI output paths.
+        """
+        return isinstance(path, str) and path in self.concepts
+
+    def leaf_paths(self) -> list[str]:
+        """All leaf paths (concepts with no children), sorted."""
+        return sorted(
+            p for p in self.concepts
+            if not self.get_children(p)
+        )

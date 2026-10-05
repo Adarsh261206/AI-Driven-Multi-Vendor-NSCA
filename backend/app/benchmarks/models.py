@@ -35,6 +35,22 @@ class BenchmarkControl(BaseModel):
     benchmark_name: str = Field(..., description="Human-readable benchmark name")
     benchmark_version: str = Field(..., description="Benchmark version string")
 
+    # Authoritative framework attribution (F3): the benchmark family that
+    # DEFINES this control. Assigned at inventory build time from the
+    # defining module — never inferred from control-id shape, the audit
+    # request, filenames or list order.
+    framework: str = Field(default="", description="Authoritative framework: CIS or NIST")
+    framework_version: str = Field(default="", description="Authoritative framework version from the defining benchmark")
+    # Rule confidence input for §13.3 step 4 composition (F7): derived from
+    # the control's own evaluability at inventory build time.
+    rule_confidence: float = Field(default=1.0, ge=0.0, le=1.0,
+                                   description="Rule confidence input (0.0-1.0)")
+    # Explicit absence semantics (F4): when True, a non-match of the control's
+    # explicit audit_regex is a verified FAIL condition defined by the control.
+    # Default False: regex miss means insufficient evidence (REVIEW).
+    absence_is_fail: bool = Field(default=False,
+                                  description="Non-match of audit_regex is a verified FAIL")
+
     vendor: str = Field(..., description="Target vendor, e.g. 'cisco'")
     platform: str = Field(..., description="Target platform, e.g. 'ios_xe'")
 
@@ -57,7 +73,7 @@ class BenchmarkControl(BaseModel):
 
     # Mapping to universal security model
     target_model_path: Optional[str] = Field(None, description="Universal Security Model path this control maps to")
-    operator: str = Field(default="equals", description="Evaluation operator: equals, not_equals, contains, regex_match, is_set, not_set, greater_than, less_than")
+    operator: str = Field(default="equals", description="Evaluation operator: equals, not_equals, greater_than, greater_than_or_equal, less_than, less_than_or_equal, contains, in, is_set, not_set, regex_match")
     expected_value: Any = Field(None, description="Expected value for compliance")
 
     # Evaluation rule details

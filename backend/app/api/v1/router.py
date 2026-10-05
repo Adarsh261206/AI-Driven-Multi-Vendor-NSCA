@@ -1,6 +1,6 @@
 from fastapi import APIRouter
 
-from app.api.v1 import auth, devices, configurations, audits, findings, compliance, training, reports, audit_execution
+from app.api.v1 import auth, devices, configurations, audits, findings, compliance, training, reports, audit_execution, audit_trail
 
 api_router = APIRouter()
 
@@ -14,3 +14,4 @@ api_router.include_router(findings.router, prefix="/findings", tags=["findings"]
 api_router.include_router(compliance.router, prefix="/compliance", tags=["compliance"])
 api_router.include_router(training.router, prefix="/training", tags=["training"])
 api_router.include_router(reports.router, prefix="/reports", tags=["reports"])
+api_router.include_router(audit_trail.router, prefix="/audit-trail", tags=["audit-trail"])

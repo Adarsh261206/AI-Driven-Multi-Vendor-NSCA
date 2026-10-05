@@ -2,14 +2,28 @@
 Vendor Detection Engine
 
 Identifies device vendor, platform, and firmware version from configuration content.
+
+Evidence-first contract (E03 F1-F17):
+  * the pattern scorer always decides the vendor, platform, firmware and evidence;
+  * a vendor claim requires >= 2 distinct matched patterns including >= 1
+    structural match (COMMAND_SYNTAX / CONFIG_STRUCTURE / KEYWORD) — banner
+    text alone never claims a vendor and never beats structural evidence;
+  * two vendors with strong structural evidence means the file mixes dialects
+    and the verdict is 'unknown' (F8);
+  * the ML model is accepted only when it agrees with the pattern verdict; its
+    confidence formula and platform claims never override the scorer (F1/F3);
+  * content that consists only of Cisco '!' comment lines yields 'unknown' (F7).
 """
 
 from __future__ import annotations
 
+import logging
 import re
 from dataclasses import dataclass, field
 from typing import Optional
 from enum import Enum
+
+logger = logging.getLogger(__name__)
 
 
 class DetectionMethod(str, Enum):
@@ -43,16 +57,44 @@ class VendorIdentification:
     hostname: Optional[str] = None
 
 
+# Vendors that have a compliance parser/controls behind them (Engines 04/07).
+# Anything else this engine can recognise — notably paloalto — is
+# detection-only: reported by name, never handed to a parser (E03 F2/F10).
+SUPPORTED_COMPLIANCE_VENDORS = frozenset({"cisco", "juniper", "fortinet"})
+
+# One canonical platform vocabulary: the ML model emits "ios_xe" while the
+# pattern table uses "ios". Everything downstream sees "ios" (E03 F3/F5).
+PLATFORM_ALIASES = {"ios_xe": "ios"}
+
+# A vendor claim needs at least this many distinct pieces of evidence —
+# a (pattern, line) pair counts once. Banner + one structural line qualifies;
+# a single match on a single line does not (a single pattern matching several
+# independent lines does, e.g. JUNOS hierarchical "system {"/"interfaces {").
+MIN_EVIDENCE_PATTERNS = 2
+
+# Two vendors with at least this much structural evidence each means the file
+# mixes dialects — report unknown instead of guessing (E03 F8). The runner-up
+# must also be comparable to the leader (>= 25% of its structural score):
+# two stray "##" comment lines must not veto a file whose real dialect has
+# dozens of structural matches.
+MIXED_VENDOR_STRUCTURAL_FLOOR = 2
+MIXED_VENDOR_STRUCTURAL_RATIO = 0.25
+
+# Legacy ML acceptance gate. Kept as-is; no confidence threshold was invented
+# for the compliance gate (E03 F16: confidence stays informational).
+ML_CONFIDENCE_GATE = 0.55
+
+
 class VendorDetector:
     """
     Vendor Detection Engine
-    
+
     Detects:
     - Vendor (Cisco, Fortinet, Juniper, etc.)
     - Platform (IOS, NX-OS, FortiOS, Junos, etc.)
     - Firmware version (when available)
     """
-    
+
     # Vendor detection patterns
     VENDOR_PATTERNS = {
         "cisco": {
@@ -78,16 +120,20 @@ class VendorDetector:
                 (r"(?:Router|Switch|Firewall)\s+Management", DetectionMethod.BANNER),
             ],
             "version_patterns": [
-                r"version\s+(\d+\.\d+(?:\.\d+)?(?:\.\d+)?)",
+                r"version\s+(\d+\.\d+(?:\.\d+)*(?:\(\w+\))?\w*)",
                 r"Cisco\s+(?:IOS|NX-OS)\s+Software.*?Version\s+(\S+)",
             ],
         },
         "fortinet": {
             "platforms": {
                 "fortios": [
-                    (r"^#\s*config\s+(?:system|firewall|router)", DetectionMethod.CONFIG_STRUCTURE),
+                    # bare "config system ..." (FortiOS `show` output) or the
+                    # "# config system ..." commented form — both are real
+                    # FortiOS block syntax (E02 validation accepts both).
+                    (r"^\s*#?\s*config\s+[a-z][\w-]*(?:\s+[\w-]+)*", DetectionMethod.CONFIG_STRUCTURE),
                     (r"(?:set\s+(?:status|mode|type))", DetectionMethod.COMMAND_SYNTAX),
                     (r"(?:end|next)\s*$", DetectionMethod.CONFIG_STRUCTURE),
+                    (r"^\s*execute\s+[a-z][\w-]*", DetectionMethod.COMMAND_SYNTAX),
                 ],
             },
             "banner_patterns": [
@@ -101,9 +147,22 @@ class VendorDetector:
         "juniper": {
             "platforms": {
                 "junos": [
-                    (r"^##", DetectionMethod.CONFIG_STRUCTURE),
-                    (r"(?:system\s+\{|interfaces\s+\{|protocols\s+\{)", DetectionMethod.CONFIG_STRUCTURE),
-                    (r"(?:set\s+(?:system|interfaces|protocols))", DetectionMethod.COMMAND_SYNTAX),
+                    # "##" comment marker — but NOT "###..." bars (FortiOS /
+                    # markdown comment rules are not JUNOS evidence).
+                    (r"^##(?!#)", DetectionMethod.CONFIG_STRUCTURE),
+                    # top-level hierarchical blocks (same set E02 validation
+                    # accepts as JUNOS content)
+                    (r"^\s*(?:system|protocols|routing-options|interfaces|snmp|"
+                      r"security|vlans|policy-options|forwarding-options|chassis|"
+                      r"applications|routing-instances|class-of-service|"
+                      r"configuration)\s*\{", DetectionMethod.CONFIG_STRUCTURE),
+                    # set-style JUNOS; "(?=\s)" keeps FortiOS keys like
+                    # "set security-status ..." from matching "set security".
+                    (r"(?:set\s+(?:system|protocols|routing-options|interfaces|"
+                      r"snmp|security|vlans|policy-options|forwarding-options|"
+                      r"chassis|applications|routing-instances|"
+                      r"class-of-service|firewall|groups)(?=\s))",
+                     DetectionMethod.COMMAND_SYNTAX),
                 ],
             },
             "banner_patterns": [
@@ -157,131 +216,85 @@ class VendorDetector:
             (r"set\s+rulebase\s+security", DetectionMethod.COMMAND_SYNTAX),
         ],
     }
-    
+
     def detect(self, content: str) -> VendorIdentification:
         """
-        Detect vendor from configuration content
-        
-        Uses ML model (TF-IDF + LogisticRegression) if available, fallback to regex.
-        
+        Detect vendor from configuration content.
+
+        The pattern scorer decides vendor/platform/firmware/evidence; the ML
+        model (TF-IDF + LogisticRegression) is accepted only when it agrees
+        with the pattern verdict, and its confidence is reported as
+        min(0.99, ml_conf * 1.05).
+
         Args:
             content: Configuration content string
-            
+
         Returns:
             VendorIdentification with detection results
+
+        Raises:
+            TypeError: if content is not a str (E03 F13)
         """
-        # === ML path (real model) ===
+        if not isinstance(content, str):
+            raise TypeError("content must be a string")
+
+        comment_only = self._is_cisco_comment_only(content)
+        scores: dict[str, dict] = {} if comment_only else self._score_vendors(content)
+        vendor, platform, confidence, ev_vendor, ev_platform = self._decide(scores)
+
+        device_type = self._detect_device_type(content)
+        platform = self._postprocess_platform(vendor, platform, content)
+        if platform == "asa":
+            device_type = "firewall"
+        hostname = self._extract_hostname(content)
+        firmware_version = self._extract_firmware(content, vendor)
+        evidence = self._collect_evidence(content, ev_vendor, ev_platform)
+        detection_method = evidence[0].method if evidence else DetectionMethod.KEYWORD
+
+        # === ML path (real model, corroborated) ===
         try:
             from app.ml.model import get_ml_detector
             ml = get_ml_detector()
             if ml.is_available:
                 ml_vendor, ml_platform, ml_device, ml_conf, ml_method = ml.predict(content)
-                if ml_conf >= 0.55 and ml_vendor != "unknown":
-                    # ML confident — use it, but also gather evidence via regex for explainability
-                    firmware_version = self._extract_firmware_version(
-                        content,
-                        self.VENDOR_PATTERNS.get(ml_vendor, {}).get("version_patterns", [])
-                    )
-                    hostname = self._extract_hostname(content)
-                    # Device type from ML if confident, else regex
-                    device_type = ml_device if ml_device != "unknown" else self._detect_device_type(content)
-                    # Next-level: Correct platform for Cisco ASA firewall (detected as ios_xe but should be asa)
-                    if ml_vendor == "cisco" and device_type == "firewall" and ml_platform == "ios_xe":
-                        if re.search(r"nameif|security-level\s+\d+", content, re.IGNORECASE):
-                            ml_platform = "asa"
-                    evidence = self._collect_evidence(content, ml_vendor, ml_platform)
-                    # Add ML evidence marker
-                    evidence.insert(0, DetectionEvidence(
+                if (
+                    ml_conf >= ML_CONFIDENCE_GATE
+                    and ml_vendor != "unknown"
+                    and vendor != "unknown"
+                    and ml_vendor == vendor
+                ):
+                    ml_evidence = self._collect_evidence(content, ev_vendor, ev_platform)
+                    ml_evidence.insert(0, DetectionEvidence(
                         method=DetectionMethod.PATTERN,
                         pattern="ML model: TF-IDF + LogisticRegression",
                         matched_text=f"ML predicted {ml_vendor}/{ml_platform} ({ml_device}) conf={ml_conf:.2f}",
                         line_number=None,
                     ))
+                    if platform == "asa":
+                        ml_device_type = "firewall"
+                    else:
+                        ml_device_type = (
+                            ml_device if ml_device != "unknown" else device_type
+                        )
                     return VendorIdentification(
                         vendor=ml_vendor,
-                        platform=ml_platform,
-                        confidence=min(0.99, ml_conf * 1.05),  # slight boost for ML
+                        platform=platform,
+                        confidence=min(0.99, ml_conf * 1.05),
                         firmware_version=firmware_version,
                         detection_method=DetectionMethod.PATTERN,
-                        detection_evidence=evidence,
-                        device_type=device_type,
+                        detection_evidence=ml_evidence[:10],
+                        device_type=ml_device_type,
                         hostname=hostname,
                     )
-        except Exception:
-            pass  # Fallback to regex
-
-        lines = content.splitlines()
-        
-        # Track scores for each vendor
-        vendor_scores: dict[str, dict[str, float]] = {}
-        
-        for vendor, patterns in self.VENDOR_PATTERNS.items():
-            vendor_scores[vendor] = {"total": 0.0, "platforms": {}}
-            
-            # Check banner patterns (high confidence)
-            for pattern, method in patterns.get("banner_patterns", []):
-                for i, line in enumerate(lines, 1):
-                    if re.search(pattern, line, re.IGNORECASE):
-                        vendor_scores[vendor]["total"] += 3.0
-            
-            # Check platform patterns
-            for platform, platform_patterns in patterns.get("platforms", {}).items():
-                platform_score = 0.0
-                for pattern, method in platform_patterns:
-                    for i, line in enumerate(lines, 1):
-                        if re.search(pattern, line, re.IGNORECASE):
-                            platform_score += 1.0
-                
-                vendor_scores[vendor]["platforms"][platform] = platform_score
-                vendor_scores[vendor]["total"] += platform_score
-        
-        # Find best match
-        best_vendor = None
-        best_platform = None
-        best_score = 0.0
-        
-        for vendor, scores in vendor_scores.items():
-            if scores["total"] > best_score:
-                best_score = scores["total"]
-                best_vendor = vendor
-                if scores["platforms"]:
-                    best_platform = max(scores["platforms"], key=scores["platforms"].get)
-        
-        # Calculate confidence (capped at 0.95)
-        if best_score >= 5.0:
-            confidence = min(0.95, 0.7 + (best_score * 0.02))
-        elif best_score >= 3.0:
-            confidence = min(0.90, 0.6 + (best_score * 0.02))
-        elif best_score >= 1.0:
-            confidence = min(0.70, 0.4 + (best_score * 0.02))
-        else:
-            confidence = 0.0
-        
-        # Extract firmware version if available
-        firmware_version = None
-        if best_vendor:
-            firmware_version = self._extract_firmware_version(
-                content,
-                self.VENDOR_PATTERNS[best_vendor].get("version_patterns", [])
+        except Exception as exc:
+            logger.warning(
+                "Vendor ML detection failed: %s; falling back to regex",
+                type(exc).__name__,
             )
-        
-        # Detect device type (switch/router/firewall)
-        device_type = self._detect_device_type(content)
-        
-        # Extract hostname
-        hostname = self._extract_hostname(content)
 
-        # Collect detection evidence
-        evidence = self._collect_evidence(content, best_vendor, best_platform)
-        
-        # Determine detection method
-        detection_method = DetectionMethod.KEYWORD
-        if evidence:
-            detection_method = evidence[0].method
-        
         return VendorIdentification(
-            vendor=best_vendor or "unknown",
-            platform=best_platform or "unknown",
+            vendor=vendor,
+            platform=platform,
             confidence=confidence,
             firmware_version=firmware_version,
             detection_method=detection_method,
@@ -289,7 +302,151 @@ class VendorDetector:
             device_type=device_type,
             hostname=hostname,
         )
-    
+
+    def _score_vendors(self, content: str) -> dict[str, dict]:
+        """Score every vendor: banner score, structural score, per-platform
+        score and the set of distinct (pattern, line) evidence pairs that
+        matched (E03 F1)."""
+        lines = content.splitlines()
+        scores: dict[str, dict] = {}
+
+        for vendor, spec in self.VENDOR_PATTERNS.items():
+            banner = 0.0
+            structural = 0.0
+            platforms: dict[str, float] = {}
+            distinct: set[tuple[str, int]] = set()
+
+            for pattern, _method in spec.get("banner_patterns", []):
+                for i, line in enumerate(lines):
+                    if re.search(pattern, line, re.IGNORECASE):
+                        banner += 3.0
+                        distinct.add((pattern, i))
+
+            for platform_name, platform_patterns in spec.get("platforms", {}).items():
+                platform_score = 0.0
+                for pattern, _method in platform_patterns:
+                    for i, line in enumerate(lines):
+                        if re.search(pattern, line, re.IGNORECASE):
+                            platform_score += 1.0
+                            distinct.add((pattern, i))
+                platforms[platform_name] = platform_score
+                structural += platform_score
+
+            scores[vendor] = {
+                "banner": banner,
+                "structural": structural,
+                "total": banner + structural,
+                "platforms": platforms,
+                "distinct": distinct,
+            }
+        return scores
+
+    def _decide(self, scores: dict) -> tuple[str, str, float, Optional[str], Optional[str]]:
+        """Apply the evidence hierarchy and eligibility gate to the score map.
+
+        Returns (vendor, platform, confidence, evidence_vendor, evidence_platform).
+        evidence_* names the best candidate even when it was too weak to claim
+        the file, so reviewers still see what matched.
+        """
+        top: Optional[str] = None
+        for vendor, s in scores.items():
+            if top is None or (s["structural"], s["total"]) > (
+                scores[top]["structural"], scores[top]["total"]
+            ):
+                top = vendor
+        if top is None:
+            return "unknown", "unknown", 0.0, None, None
+
+        ev_platform = self._best_platform(scores[top]["platforms"])
+
+        def eligible(vendor: str) -> bool:
+            s = scores[vendor]
+            return (
+                len(s["distinct"]) >= MIN_EVIDENCE_PATTERNS
+                and s["structural"] > 0.0
+            )
+
+        strong = [
+            v for v in scores
+            if eligible(v) and scores[v]["structural"] >= MIXED_VENDOR_STRUCTURAL_FLOOR
+        ]
+        if len(strong) >= 2:
+            ranked = sorted(
+                (scores[v]["structural"] for v in strong), reverse=True
+            )
+            if ranked[1] >= ranked[0] * MIXED_VENDOR_STRUCTURAL_RATIO:
+                return "unknown", "unknown", 0.0, top, ev_platform
+
+        if not eligible(top):
+            return "unknown", "unknown", 0.0, top, ev_platform
+
+        s = scores[top]
+        platform = ev_platform or "unknown"
+        return top, platform, self._regex_confidence(s["total"]), top, ev_platform
+
+    @staticmethod
+    def _best_platform(platforms: dict[str, float]) -> Optional[str]:
+        best_name: Optional[str] = None
+        best_score = 0.0
+        for name, score in platforms.items():
+            if score > best_score:
+                best_score = score
+                best_name = name
+        return best_name
+
+    @staticmethod
+    def _regex_confidence(total: float) -> float:
+        if total >= 5.0:
+            return min(0.95, 0.7 + (total * 0.02))
+        if total >= 3.0:
+            return min(0.90, 0.6 + (total * 0.02))
+        if total >= 1.0:
+            return min(0.70, 0.4 + (total * 0.02))
+        return 0.0
+
+    def _postprocess_platform(
+        self, vendor: str, platform: str, content: str
+    ) -> str:
+        """Shared ASA correction (both paths) then canonical normalization.
+
+        nameif / security-level are ASA-only syntax, so their presence is the
+        marker — no device-type heuristic required (E03 F3: one correction
+        order on both paths: raw platform -> ASA correction -> aliases).
+        """
+        if (
+            vendor == "cisco"
+            and platform in ("ios", "ios_xe")
+            and re.search(r"nameif|security-level\s+\d+", content, re.IGNORECASE)
+        ):
+            platform = "asa"
+        return PLATFORM_ALIASES.get(platform, platform)
+
+    @staticmethod
+    def _is_cisco_comment_only(content: str) -> bool:
+        """True when every non-blank line is a Cisco '!' comment.
+
+        Syntax-aware on purpose: FortiOS '#' and JUNOS '##' are live syntax
+        and are never treated as comments (E03 F7).
+        """
+        lines = [line for line in content.splitlines() if line.strip()]
+        if not lines:
+            return False
+        return all(line.lstrip().startswith("!") for line in lines)
+
+    def _extract_firmware(self, content: str, vendor: Optional[str]) -> Optional[str]:
+        if vendor and vendor in self.VENDOR_PATTERNS:
+            firmware = self._extract_firmware_version(
+                content, self.VENDOR_PATTERNS[vendor].get("version_patterns", [])
+            )
+            if firmware is not None:
+                return firmware
+        all_patterns = [
+            pattern
+            for spec in self.VENDOR_PATTERNS.values()
+            for pattern in spec.get("version_patterns", [])
+        ]
+        return self._extract_firmware_version(content, all_patterns)
+
     def _extract_firmware_version(
         self,
         content: str,
@@ -301,7 +458,7 @@ class VendorDetector:
             if match:
                 return match.group(1)
         return None
-    
+
     def _collect_evidence(
         self,
         content: str,
@@ -310,13 +467,13 @@ class VendorDetector:
     ) -> list[DetectionEvidence]:
         """Collect detection evidence"""
         evidence = []
-        
+
         if not vendor or vendor not in self.VENDOR_PATTERNS:
             return evidence
-        
+
         vendor_patterns = self.VENDOR_PATTERNS[vendor]
         lines = content.splitlines()
-        
+
         # Check banner patterns
         for pattern, method in vendor_patterns.get("banner_patterns", []):
             for i, line in enumerate(lines, 1):
@@ -327,7 +484,7 @@ class VendorDetector:
                         matched_text=line.strip()[:100],
                         line_number=i,
                     ))
-        
+
         # Check platform patterns
         if platform and platform in vendor_patterns.get("platforms", {}):
             for pattern, method in vendor_patterns["platforms"][platform]:
@@ -340,7 +497,7 @@ class VendorDetector:
                             line_number=i,
                         ))
                         break  # Only one evidence per pattern
-        
+
         return evidence[:10]  # Limit evidence to 10 items
 
     def _detect_device_type(self, content: str) -> str:

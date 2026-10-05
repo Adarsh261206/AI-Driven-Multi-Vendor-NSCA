@@ -7,8 +7,11 @@ from datetime import datetime
 
 from app.database import get_db
 from app.models import User, Audit, AuditConfiguration, Configuration
-from app.schemas import AuditCreate, AuditResponse, AuditStatusResponse, AuditListResponse, AuditStatus, PaginationMeta
+from app.models import AuditAction
+from app.repositories.audit_trail import AuditTrailRepository
+from app.schemas import AuditCreate, AuditResponse, AuditStatusResponse, AuditListResponse, AuditStatus, FindingListResponse, FindingStatus, PaginationMeta
 from app.security.auth import get_current_user
+from app.api.v1.findings import _to_finding_response
 
 router = APIRouter()
 
@@ -97,7 +100,20 @@ async def create_audit(
     
     await db.flush()
     await db.refresh(new_audit)
-    
+
+    # E12: audit creation opens the lifecycle history.
+    trail = AuditTrailRepository(db)
+    await trail.log_audit_event(
+        action=AuditAction.AUDIT_CREATED,
+        audit_id=str(new_audit.id),
+        user_id=str(current_user.id),
+        details={
+            "name": new_audit.name,
+            "configuration_count": len(audit.configuration_ids),
+        },
+    )
+    await db.flush()
+
     return AuditResponse.from_orm(new_audit)
 
 
@@ -169,6 +185,43 @@ async def get_audit_status(
     )
 
 
+@router.get("/{audit_id}/findings", response_model=FindingListResponse)
+async def list_audit_findings_canonical(
+    audit_id: UUID,
+    page: int = Query(1, gt=0),
+    per_page: int = Query(20, gt=0, le=100),
+    severity: Optional[str] = None,
+    status: Optional[FindingStatus] = None,
+    vendor: Optional[str] = None,
+    platform: Optional[str] = None,
+    control_id: Optional[str] = None,
+    db: AsyncSession = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+):
+    """List findings for an audit (spec 20.2 canonical endpoint).
+
+    Backed by the single FindingQueryService shared with every other
+    findings list endpoint (E08 F4).
+    """
+    from app.repositories.findings import FindingQueryService
+    from app.schemas import FindingListResponse as _FLR
+
+    items, total = await FindingQueryService(db).list_for_audit(
+        audit_id=audit_id, user_id=current_user.id, page=page,
+        per_page=per_page, severity=severity, status=status, vendor=vendor,
+        platform=platform, control_id=control_id,
+    )
+    return _FLR(
+        items=[_to_finding_response(f) for f in items],
+        meta=PaginationMeta(
+            page=page,
+            per_page=per_page,
+            total=total,
+            total_pages=(total + per_page - 1) // per_page,
+        ),
+    )
+
+
 @router.post("/{audit_id}/cancel", response_model=AuditResponse)
 async def cancel_audit(
     audit_id: UUID,
@@ -195,8 +248,17 @@ async def cancel_audit(
     
     audit.status = AuditStatus.CANCELLED.value
     audit.completed_at = datetime.utcnow()
-    
+
+    await db.flush()
+
+    # E12: cancellation closes the lifecycle history.
+    trail = AuditTrailRepository(db)
+    await trail.log_audit_event(
+        action=AuditAction.AUDIT_CANCELLED,
+        audit_id=str(audit.id),
+        user_id=str(current_user.id),
+    )
     await db.flush()
     await db.refresh(audit)
-    
+
     return AuditResponse.from_orm(audit)

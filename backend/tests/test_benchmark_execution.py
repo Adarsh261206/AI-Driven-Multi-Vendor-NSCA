@@ -74,7 +74,7 @@ class TestSampleConfigs:
 
     def test_insecure_config_loads(self):
         cfg = _load_sample("insecure.txt")
-        assert "hostname INSECURE-RTR-01" in cfgss
+        assert "hostname INSECURE-RTR-01" in cfg
 
     def test_mixed_config_loads(self):
         cfg = _load_sample("mixed.txt")
@@ -113,7 +113,7 @@ class TestAAA_1_1_1:
         result = engine.execute(secure_config)
         ev = _find_eval(result, "1.1.1")
         assert ev.result == "PASS"
-        assert ev.evidence.target_model_path == "aaa.authentication_enabled"
+        assert ev.evidence.universal_model_path == "aaa.authentication_enabled"
         assert ev.evidence.actual_value is True
         assert ev.evidence.raw_evidence_snippet != ""
 
@@ -140,7 +140,7 @@ class TestAccessRules_1_2_2:
         result = engine.execute(secure_config)
         ev = _find_eval(result, "1.2.2")
         assert ev.result == "PASS"
-        assert ev.evidence.target_model_path == "management.vty.transport"
+        assert ev.evidence.universal_model_path == "management.vty.transport"
         assert ev.evidence.actual_value == "ssh"
 
     def test_fail(self, engine, insecure_config):
@@ -197,7 +197,7 @@ class TestSNMP_1_5_3:
     def test_evidence_chain(self, engine, secure_config):
         result = engine.execute(secure_config)
         ev = _find_eval(result, "1.5.3")
-        assert ev.evidence.target_model_path == "services.snmp.version"
+        assert ev.evidence.universal_model_path == "services.snmp.version"
 
 
 class TestSSH_2_1_1:
@@ -240,7 +240,7 @@ class TestSSH_2_1_2:
     def test_evidence_chain(self, engine, secure_config):
         result = engine.execute(secure_config)
         ev = _find_eval(result, "2.1.2")
-        assert ev.evidence.target_model_path == "management.ssh.auth_retries"
+        assert ev.evidence.universal_model_path == "management.ssh.auth_retries"
 
 
 class TestServices_2_1_10:
@@ -266,7 +266,7 @@ class TestLogging_2_2_1:
         result = engine.execute(secure_config)
         ev = _find_eval(result, "2.2.1")
         assert ev.result == "PASS"
-        assert ev.evidence.target_model_path == "monitoring.syslog.severity_level"
+        assert ev.evidence.universal_model_path == "monitoring.syslog.severity_level"
 
     def test_fail(self, engine, insecure_config):
         result = engine.execute(insecure_config)
@@ -288,13 +288,14 @@ class TestNTP_2_3_1:
         result = engine.execute(secure_config)
         ev = _find_eval(result, "2.3.1")
         assert ev.result == "PASS"
-        assert ev.evidence.target_model_path == "ntp.configured"
+        assert ev.evidence.universal_model_path == "ntp.configured"
 
     def test_fail(self, engine, insecure_config):
         result = engine.execute(insecure_config)
         ev = _find_eval(result, "2.3.1")
-        # No ntp server configured → ntp.configured=False → FAIL
-        assert ev.result == "FAIL"
+        # E05 F1: no ntp server configured -> ntp.configured unobserved
+        # (not fabricated False) -> REVIEW, never a false FAIL.
+        assert ev.result == "REVIEW"
 
     def test_evidence_chain(self, engine, secure_config):
         result = engine.execute(secure_config)
@@ -346,7 +347,7 @@ class TestNegatedControls:
         ev = _find_eval(result, "1.2.3")
         # Regex checks for 'no exec' which IS present in secure config → PASS
         assert ev.result == "PASS"
-        assert ev.evidence.result_reasoning.strip() != ""
+        assert ev.evidence.reasoning.strip() != ""
 
     def test_2_1_7_negated_no_finger(self, engine, secure_config):
         result = engine.execute(secure_config)
@@ -366,23 +367,23 @@ class TestNegatedControls:
 class TestFullExecution:
     def test_secure_produces_results(self, engine, secure_config):
         result = engine.execute(secure_config)
-        assert result.total_controls == 53
-        assert result.evaluated == 53
+        assert result.total_controls == 179
+        assert result.evaluated == 179
         assert result.passed > 0
         assert result.score > 0
 
     def test_insecure_produces_results(self, engine, insecure_config):
         result = engine.execute(insecure_config)
-        assert result.evaluated == 53
+        assert result.evaluated == 179
 
     def test_mixed_produces_results(self, engine, mixed_config):
         result = engine.execute(mixed_config)
-        assert result.evaluated == 53
+        assert result.evaluated == 179
         assert result.passed > 0
 
     def test_minimal_produces_results(self, engine, minimal_config):
         result = engine.execute(minimal_config)
-        assert result.evaluated == 53
+        assert result.evaluated == 179
 
     def test_score_is_percentage(self, engine, secure_config):
         result = engine.execute(secure_config)
@@ -399,9 +400,13 @@ class TestFullExecution:
     def test_all_evaluations_have_metadata(self, engine, secure_config):
         result = engine.execute(secure_config)
         for ev in result.evaluations:
-            assert ev.evidence.benchmark_id == "CIS-CISCO-IOS-XE-17.x-v2.2.1"
-            assert ev.evidence.vendor == "cisco"
-            assert ev.evidence.platform == "ios_xe"
+            assert ev.evidence.benchmark_id != ""
+            assert ev.evidence.framework in ("CIS", "NIST")
+            if ev.evidence.framework == "CIS":
+                assert ev.evidence.vendor == "cisco"
+                assert ev.evidence.platform == "ios_xe"
+            else:
+                assert ev.evidence.vendor == "universal"
 
 
 # ---------------------------------------------------------------------------
@@ -427,7 +432,7 @@ class TestEvidenceChainIntegrity:
         assert e.severity == "HIGH"
         assert e.source_document != ""
         assert e.source_location != ""
-        assert e.result_reasoning.strip() != ""
+        assert e.reasoning.strip() != ""
         assert e.confidence > 0
         assert e.evaluated_at is not None
 
@@ -437,13 +442,13 @@ class TestEvidenceChainIntegrity:
         fails = [ev for ev in result.evaluations if ev.result == "FAIL"]
         if fails:
             e = fails[0].evidence
-            assert len(e.raw_config_lines) > 0
+            assert len(e.raw_config_line_numbers) > 0
 
     def test_review_evidence_has_reasoning(self, engine, secure_config):
         result = engine.execute(secure_config)
         reviews = [ev for ev in result.evaluations if ev.result == "REVIEW"]
         for ev in reviews:
-            assert ev.evidence.result_reasoning.strip() != ""
+            assert ev.evidence.reasoning.strip() != ""
 
 
 # ---------------------------------------------------------------------------

@@ -10,6 +10,26 @@ from app.benchmarks.models import (
     BenchmarkRegistry,
     ControlSeverity,
 )
+from app.benchmarks.selection import (
+    DuplicateControlError,
+    apply_operator,
+    normalize_platform,
+    normalize_vendor,
+    validate_control,
+)
+
+
+_MODEL_PATHS: Optional[set[str]] = None
+
+
+def _model_paths() -> set[str]:
+    """Cached Universal Security Model path set for load-time validation."""
+    global _MODEL_PATHS
+    if _MODEL_PATHS is None:
+        from app.engines.universal_model import UniversalSecurityModel
+
+        _MODEL_PATHS = set(UniversalSecurityModel().get_all_paths())
+    return _MODEL_PATHS
 
 
 class ControlRegistry:
@@ -35,22 +55,41 @@ class ControlRegistry:
             self.register_control(control)
 
     def register_control(self, control: BenchmarkControl) -> None:
-        """Register a single control."""
+        """Register a single control.
+
+        Fail fast (F9): the control definition is validated (operator,
+        regex, model path) and a conflicting duplicate id raises
+        DuplicateControlError instead of silently overwriting another
+        vendor's control. Re-registering an identical definition is an
+        idempotent no-op.
+        """
+        validate_control(control, _model_paths())
+        existing = self._controls.get(control.control_id)
+        if existing is not None:
+            if (existing.vendor == control.vendor
+                    and existing.platform == control.platform
+                    and existing.title == control.title
+                    and existing.target_model_path == control.target_model_path
+                    and existing.operator == control.operator
+                    and existing.expected_value == control.expected_value):
+                return
+            raise DuplicateControlError(
+                control.control_id,
+                f"already registered for "
+                f"{existing.vendor}/{existing.platform}; cannot overwrite "
+                f"with {control.vendor}/{control.platform}")
+
         self._controls[control.control_id] = control
 
-        vp_key = f"{control.vendor}:{control.platform}"
-        if vp_key not in self._by_vendor_platform:
-            self._by_vendor_platform[vp_key] = []
-        self._by_vendor_platform[vp_key].append(control)
+        vp_key = (f"{normalize_vendor(control.vendor)}:"
+                  f"{normalize_platform(control.vendor, control.platform)}")
+        self._by_vendor_platform.setdefault(vp_key, []).append(control)
 
-        if control.category not in self._by_category:
-            self._by_category[control.category] = []
-        self._by_category[control.category].append(control)
+        self._by_category.setdefault(control.category, []).append(control)
 
         if control.target_model_path:
-            if control.target_model_path not in self._by_model_path:
-                self._by_model_path[control.target_model_path] = []
-            self._by_model_path[control.target_model_path].append(control)
+            self._by_model_path.setdefault(
+                control.target_model_path, []).append(control)
 
     def get_control(self, control_id: str) -> Optional[BenchmarkControl]:
         """Get a control by its ID."""
@@ -59,8 +98,14 @@ class ControlRegistry:
     def get_controls_by_vendor_platform(
         self, vendor: str, platform: str
     ) -> list[BenchmarkControl]:
-        """Get all controls for a specific vendor and platform."""
-        return self._by_vendor_platform.get(f"{vendor}:{platform}", [])
+        """Get all controls for a specific vendor and platform.
+
+        Keys are canonical (lowercased, aliased) at both register and lookup
+        time, so caller casing cannot silently drop controls (F2).
+        """
+        return self._by_vendor_platform.get(
+            f"{normalize_vendor(vendor)}:"
+            f"{normalize_platform(vendor, platform)}", [])
 
     def get_controls_by_category(self, category: str) -> list[BenchmarkControl]:
         """Get all controls in a category."""
@@ -187,42 +232,8 @@ class ControlRegistry:
         operator: str,
         negated: bool = False,
     ) -> bool:
-        """Apply the comparison operator."""
-        if operator == "equals":
-            result = actual == expected
-        elif operator == "not_equals":
-            result = actual != expected
-        elif operator == "contains":
-            if isinstance(actual, str):
-                result = str(expected) in actual
-            elif isinstance(actual, list):
-                result = expected in actual
-            else:
-                result = False
-        elif operator == "is_set":
-            result = actual is not None
-        elif operator == "not_set":
-            result = actual is None
-        elif operator == "greater_than":
-            try:
-                result = float(actual) > float(expected)
-            except (TypeError, ValueError):
-                result = False
-        elif operator == "less_than":
-            try:
-                result = float(actual) < float(expected)
-            except (TypeError, ValueError):
-                result = False
-        elif operator == "regex_match":
-            import re
-            if isinstance(actual, str):
-                result = bool(re.search(str(expected), actual))
-            else:
-                result = False
-        else:
-            result = actual == expected
-
-        return not result if negated else result
+        """Apply the comparison operator (canonical implementation, F8)."""
+        return apply_operator(actual, expected, operator, negated)
 
     def _generate_reasoning(
         self, control: BenchmarkControl, actual_value: Any, result: bool
@@ -240,13 +251,25 @@ class ControlRegistry:
     def _filter_by_vendor_platform(
         self, vendor: Optional[str], platform: Optional[str]
     ) -> list[BenchmarkControl]:
-        """Filter controls by optional vendor and platform."""
-        if vendor and platform:
-            return self.get_controls_by_vendor_platform(vendor, platform)
-        elif vendor:
-            return [c for c in self._controls.values() if c.vendor == vendor]
-        else:
-            return list(self._controls.values())
+        """Filter controls by optional vendor and platform.
+
+        Every supplied filter applies (F2): vendor-only filters vendor,
+        platform-only filters platform, both apply conjunctively. Values
+        are canonicalized so casing cannot change the answer.
+        """
+        vendor_c = normalize_vendor(vendor) if vendor else None
+        platform_c = (normalize_platform(vendor_c or "", platform)
+                      if platform else None)
+        out = []
+        for control in self._controls.values():
+            if vendor_c is not None and normalize_vendor(
+                    control.vendor) != vendor_c:
+                continue
+            if platform_c is not None and normalize_platform(
+                    control.vendor, control.platform) != platform_c:
+                continue
+            out.append(control)
+        return out
 
     def get_stats(self) -> dict[str, Any]:
         """Get registry statistics."""

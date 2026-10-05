@@ -17,13 +17,28 @@ from app.engines.compliance.models import (
 )
 from app.engines.compliance.engine import ControlEvaluation, ComplianceEvaluation
 from app.engines.compliance.evidence import EvidenceChain
+from app.engines.compliance.risk import RiskEngine, SeverityCalculator
 
 
 @dataclass
 class Finding:
-    """A compliance finding"""
+    """A compliance finding — the canonical §12 Finding interface plus
+    documented operational fields.
+
+    Canonical (§12): id, compliance_result_id, control_id, title,
+    description, severity, confidence, evidence, affected_device,
+    affected_vendor, remediation, status.
+    Operational (engine-internal, documented): audit_id (which audit run
+    produced it), risk_score + priority (Engine 09 outputs, computed by the
+    canonical RiskEngine so findings carry them), risk_method +
+    risk_model_version (scoring lineage: which scorer and version produced
+    the attached score), result (the source verdict: FAIL/REVIEW —
+    PASS never becomes a finding), affected_platform (vendor context),
+    created_at/updated_at (record lifecycle).
+    """
     id: str
     audit_id: str
+    compliance_result_id: str
     control_id: str
     title: str
     description: str
@@ -38,13 +53,16 @@ class Finding:
     affected_platform: str = ""
     risk_score: float = 0.0
     priority: str = ""
+    risk_method: str = ""
+    risk_model_version: str = ""
     created_at: datetime = field(default_factory=datetime.utcnow)
     updated_at: datetime = field(default_factory=datetime.utcnow)
-    
+
     def to_dict(self) -> dict[str, Any]:
         return {
             "id": self.id,
             "audit_id": self.audit_id,
+            "compliance_result_id": self.compliance_result_id,
             "control_id": self.control_id,
             "title": self.title,
             "description": self.description,
@@ -59,105 +77,25 @@ class Finding:
             "affected_platform": self.affected_platform,
             "risk_score": self.risk_score,
             "priority": self.priority,
+            "risk_method": self.risk_method,
+            "risk_model_version": self.risk_model_version,
             "created_at": self.created_at.isoformat(),
             "updated_at": self.updated_at.isoformat(),
         }
 
 
-class SeverityCalculator:
-    """Calculate risk scores and priority levels"""
-    
-    # Severity base scores
-    SEVERITY_SCORES = {
-        Severity.CRITICAL: 10.0,
-        Severity.HIGH: 7.5,
-        Severity.MEDIUM: 5.0,
-        Severity.LOW: 2.5,
-    }
-    
-    # Impact multipliers
-    VENDOR_IMPACT = {
-        "cisco": 1.2,
-        "paloalto": 1.2,
-        "fortinet": 1.1,
-        "juniper": 1.1,
-    }
-    
-    CATEGORY_IMPACT = {
-        "authentication": 1.3,
-        "ssh": 1.2,
-        "management": 1.1,
-        "logging": 1.0,
-        "snmp": 1.0,
-        "access_control": 1.1,
-    }
-    
-    # Priority thresholds
-    PRIORITY_THRESHOLDS = [
-        (80, "P1"),
-        (60, "P2"),
-        (40, "P3"),
-        (0, "P4"),
-    ]
-    
-    def calculate_risk_score(
-        self,
-        severity: Severity,
-        vendor: str = "",
-        category: str = "",
-        confidence: float = 1.0,
-    ) -> float:
-        """
-        Calculate risk score for a finding
-        
-        ML-enhanced: Uses RandomForest model if available, fallback to deterministic formula.
-        Formula: severity_score * vendor_impact * category_impact * confidence_factor
-        Normalized to 0-100
-        """
-        # Try ML model first (real, not hardcoded)
-        try:
-            from app.ml.model import get_risk_predictor
-            model, available = get_risk_predictor()
-            if available:
-                sev_map = {"CRITICAL": 3, "HIGH": 2, "MEDIUM": 1, "LOW": 0}
-                sev_str = severity.value if hasattr(severity, 'value') else str(severity)
-                sev_num = sev_map.get(sev_str.upper(), 1)
-                v_mult = self.VENDOR_IMPACT.get(vendor.lower(), 1.0)
-                c_mult = self.CATEGORY_IMPACT.get(category, 1.0)
-                # ML predict — 4 features as trained
-                pred = model.predict([[sev_num, v_mult, c_mult, confidence]])[0]
-                return round(float(max(0, min(100, pred))), 1)
-        except Exception:
-            pass
-
-        base_score = self.SEVERITY_SCORES.get(severity, 5.0)
-        vendor_mult = self.VENDOR_IMPACT.get(vendor.lower(), 1.0)
-        category_mult = self.CATEGORY_IMPACT.get(category, 1.0)
-        confidence_factor = max(confidence, 0.5)
-        
-        raw_score = base_score * vendor_mult * category_mult * confidence_factor
-        
-        # Normalize to 0-100 (max possible ~10 * 1.2 * 1.3 * 1.0 = 15.6)
-        normalized = min(100.0, (raw_score / 15.6) * 100)
-        
-        return round(normalized, 1)
-    
-    def calculate_priority(self, risk_score: float) -> str:
-        """Calculate priority level from risk score"""
-        for threshold, priority in self.PRIORITY_THRESHOLDS:
-            if risk_score >= threshold:
-                return priority
-        return "P4"
-
-
 class FindingGenerator:
     """
     Finding Generator
-    
-    Generates findings from compliance evaluation results.
+
+    Generates findings from compliance evaluation results. Risk scoring
+    belongs to the canonical RiskEngine (spec §10.9): each finding is
+    assessed through RiskEngine.attach with finding-grade inputs, so
+    there is exactly one scoring implementation.
     """
-    
+
     def __init__(self):
+        self.risk_engine = RiskEngine()
         self.severity_calc = SeverityCalculator()
     
     def generate_findings(
@@ -168,22 +106,42 @@ class FindingGenerator:
     ) -> list[Finding]:
         """
         Generate findings from compliance evaluation
-        
+
+        One finding per FAIL/REVIEW evaluation; PASS never becomes a
+        finding. Unsafe evaluations never arrive here: the executor only
+        builds a ComplianceEvaluation for completed runs, and boundary
+        statuses (unsupported/mismatch/empty/failed) carry no evaluation.
+
         Args:
-            evaluation: Compliance evaluation results
+            evaluation: Compliance evaluation results (must be a
+                ComplianceEvaluation with an evaluations list)
             audit_id: ID of the audit
             device_name: Name of the device
-            
+
         Returns:
             List of findings
+
+        Raises:
+            TypeError: evaluation is not a ComplianceEvaluation.
+            ValueError: an evaluation row lacks a control id (typed,
+                deterministic — never an AttributeError downstream).
         """
+        if not isinstance(evaluation, ComplianceEvaluation):
+            raise TypeError(
+                "evaluation must be a ComplianceEvaluation, got "
+                f"{type(evaluation).__name__}")
         findings = []
-        
-        for ctrl_eval in evaluation.evaluations:
+
+        for ctrl_eval in evaluation.evaluations or []:
             # Only generate findings for FAIL and REVIEW
             if ctrl_eval.result == ComplianceResultType.PASS:
                 continue
-            
+            if not getattr(ctrl_eval, "control_id", None) or not isinstance(
+                    ctrl_eval.control_id, str):
+                raise ValueError(
+                    "cannot generate a finding for an evaluation without a "
+                    "control id")
+
             finding = self._create_finding(
                 ctrl_eval=ctrl_eval,
                 audit_id=audit_id,
@@ -192,7 +150,7 @@ class FindingGenerator:
                 platform=evaluation.platform,
             )
             findings.append(finding)
-        
+
         return findings
     
     def _create_finding(
@@ -203,33 +161,47 @@ class FindingGenerator:
         vendor: str,
         platform: str,
     ) -> Finding:
-        """Create a single finding from control evaluation"""
-        
-        # Calculate risk score
-        risk_score = self.severity_calc.calculate_risk_score(
+        """Create a single finding from control evaluation.
+
+        The finding identity is minted first; risk is then assessed by
+        the canonical RiskEngine from finding-grade inputs (the same
+        severity/vendor/confidence values stored on the finding, plus the
+        evaluation's category context) and attached — satisfying the 10.9
+        input contract (V09-73).
+        """
+        finding_id = str(uuid.uuid4())
+        assessment = self.risk_engine.assess(
+            finding_id=finding_id,
             severity=ctrl_eval.severity,
             vendor=vendor,
             category=ctrl_eval.category,
             confidence=ctrl_eval.confidence,
         )
-        
-        priority = self.severity_calc.calculate_priority(risk_score)
-        
+
         # Build description based on result
         if ctrl_eval.result == ComplianceResultType.FAIL:
             description = (
                 f"Control {ctrl_eval.control_id} failed evaluation. "
-                f"{ctrl_eval.evidence.result_reasoning}"
+                f"{ctrl_eval.evidence.reasoning}"
             )
         else:
             description = (
                 f"Control {ctrl_eval.control_id} requires manual review. "
-                f"{ctrl_eval.evidence.result_reasoning}"
+                f"{ctrl_eval.evidence.reasoning}"
             )
-        
+
+        # §12 remediation linkage (F3): the remediation content rides on the
+        # evaluation; finding_id/finding_title are stamped here where the
+        # finding identity exists.
+        remediation = dict(ctrl_eval.remediation or {})
+        remediation["finding_id"] = finding_id
+        remediation["finding_title"] = ctrl_eval.control_title
+
         return Finding(
-            id=str(uuid.uuid4()),
+            id=finding_id,
             audit_id=audit_id,
+            compliance_result_id=getattr(ctrl_eval, "compliance_result_id",
+                                         "") or "",
             control_id=ctrl_eval.control_id,
             title=ctrl_eval.control_title,
             description=description,
@@ -238,10 +210,12 @@ class FindingGenerator:
             result=ctrl_eval.result,
             status=FindingStatus.OPEN,
             evidence=ctrl_eval.evidence.to_dict(),
-            remediation=ctrl_eval.remediation,
+            remediation=remediation,
             affected_device=device_name,
             affected_vendor=vendor,
             affected_platform=platform,
-            risk_score=risk_score,
-            priority=priority,
+            risk_score=assessment.risk_score,
+            priority=assessment.priority,
+            risk_method=assessment.scoring_method,
+            risk_model_version=assessment.scoring_version,
         )

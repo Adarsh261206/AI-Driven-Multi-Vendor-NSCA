@@ -14,6 +14,22 @@ from app.engines.reporting import generate_audit_report
 router = APIRouter()
 
 
+def resolve_report_format(fmt: str) -> str:
+    """Validate the report download format (E11).
+
+    Only 'pdf' and 'json' exist; anything else is a typed 422 — the old
+    code fell through to PDF generation for any unrecognized value
+    (format=xml returned a PDF labeled as requested).
+    """
+    normalized = (fmt or "").strip().lower()
+    if normalized not in ("pdf", "json"):
+        raise HTTPException(
+            status_code=422,
+            detail=f"unsupported report format {fmt!r} (use 'pdf' or 'json')",
+        )
+    return normalized
+
+
 @router.get("/", response_model=ReportListResponse)
 async def list_reports(
     page: int = Query(1, gt=0),
@@ -23,6 +39,21 @@ async def list_reports(
     current_user: User = Depends(get_current_user),
 ):
     """List all completed audit reports"""
+    if framework:
+        # Canonical framework form (F1/F2); unknown frameworks are a typed
+        # error, never a silent unfiltered list.
+        from app.benchmarks.selection import (
+            ComplianceError, DUAL_BASELINE, normalize_framework)
+        try:
+            framework_filter = normalize_framework(framework)
+        except ComplianceError as exc:
+            raise HTTPException(status_code=422, detail=str(exc)) from exc
+        if framework_filter == DUAL_BASELINE:
+            raise HTTPException(
+                status_code=422,
+                detail="the dual baseline is an evaluation mode, not a "
+                       "report framework filter (use CIS or NIST)")
+        framework = framework_filter
     query = select(Audit).where(
         Audit.user_id == current_user.id,
         Audit.status == "completed",
@@ -47,11 +78,16 @@ async def list_reports(
 
     items = []
     for audit in audits:
+        audit_frameworks = await db.execute(
+            select(ComplianceResult.framework).where(
+                ComplianceResult.audit_id == audit.id).distinct()
+        )
+        frameworks = sorted({f for f in audit_frameworks.scalars().all() if f})
         items.append(ReportResponse(
             id=str(audit.id),
             audit_id=audit.id,
             audit_name=audit.name,
-            framework="CIS",
+            framework="+".join(frameworks) if frameworks else "CIS",
             overall_score=audit.overall_score or 0.0,
             generated_at=audit.completed_at or audit.updated_at,
             download_url=f"/api/v1/reports/{audit.id}/report",
@@ -76,6 +112,8 @@ async def get_audit_report(
     current_user: User = Depends(get_current_user),
 ):
     """Generate and return audit report as PDF"""
+    # E11: reject unknown formats before touching the database.
+    wanted = resolve_report_format(format)
     # Verify audit exists and user has access
     audit_result = await db.execute(
         select(Audit).where(
@@ -87,6 +125,24 @@ async def get_audit_report(
 
     if not audit:
         raise HTTPException(status_code=404, detail="Audit not found")
+
+    # Session observability (best-effort by design: a trail write must
+    # never break a report download the caller is authorized for).
+    try:
+        from app.models import AuditAction
+        from app.repositories.audit_trail import AuditTrailRepository
+
+        report_trail = AuditTrailRepository(db)
+        await report_trail.log(
+            action=AuditAction.REPORT_GENERATED,
+            entity_type="audit",
+            entity_id=str(audit.id),
+            user_id=str(current_user.id),
+            details={"audit_id": str(audit.id), "format": wanted},
+        )
+        await db.flush()
+    except Exception:
+        pass
 
     # Fetch findings
     findings_result = await db.execute(
@@ -105,6 +161,12 @@ async def get_audit_report(
             "status": f.status,
             "evidence": f.evidence or {},
             "remediation": f.remediation or {},
+            # E09 F1/F9: the persisted 10.9 output — same values storage
+            # holds, never recomputed for the report.
+            "risk_score": f.risk_score,
+            "priority": f.priority,
+            "risk_method": f.risk_method,
+            "risk_model_version": f.risk_model_version,
         })
 
     # Fetch compliance results
@@ -169,7 +231,7 @@ async def get_audit_report(
         "file_details": file_details,
     }
 
-    if format == "json":
+    if wanted == "json":
         return {
             "audit": audit_data,
             "findings": findings,

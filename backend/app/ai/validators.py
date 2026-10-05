@@ -205,24 +205,27 @@ class OutputValidator:
         return sections
     
     def _validate_model_path(self, path: str) -> bool:
-        """Validate universal model path format"""
+        """Validate universal model path against the model itself.
+
+        Delegates to the canonical kb_domain.is_valid_model_path (E06 §25):
+        a path is valid only if it names an actual UniversalSecurityModel
+        node. Token shape is still enforced.
+        """
         if not path:
             return False
-        
+
         parts = path.split(".")
         if not parts:
             return False
-        
-        # Check first part is valid prefix
-        if parts[0] not in self.VALID_PATH_PREFIXES:
-            return False
-        
+
         # Check all parts are alphanumeric/underscore
         for part in parts:
             if not re.match(r"^[a-zA-Z_][a-zA-Z0-9_]*$", part):
                 return False
-        
-        return True
+
+        # The model's own path set is the source of truth (no prefixes).
+        from app.ai import kb_domain as _kb_domain
+        return _kb_domain.is_valid_model_path(path)
     
     def check_hallucination(self, hypothesis: AIHypothesis) -> list[str]:
         """Check for hallucination indicators"""

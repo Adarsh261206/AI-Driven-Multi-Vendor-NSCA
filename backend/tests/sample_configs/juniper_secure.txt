@@ -2,59 +2,59 @@
 # SAMPLE: SECURE Juniper JUNOS Configuration
 # All CIS Juniper OS v2.1.0 automated controls should PASS on this config.
 # ============================================================================
-## system {
-##     host-name SECURE-JUNOS-01;
-##     time-zone UTC;
-##     services {
-##         ssh {
-##             protocol-version v2;
-##             root-login deny;
-##             connection-limit 10;
-##             rate-limit 10;
-##         }
-##     }
-##     login {
-##         retry-options {
-##             tries-before-disconnect 3;
-##             backoff-threshold 2;
-##             backoff-factor 5;
-##             lockout-period 30;
-##         }
-##         password {
-##             minimum-length 10;
-##             format sha512;
-##         }
-##     }
-##     accounting {
-##         events login;
-##     }
-##     syslog {
-##         host 10.0.0.10 {
-##             any info;
-##         }
-##     }
-##     ntp {
-##         server 10.0.0.20;
-##         server 10.0.0.21;
-##         version 4;
-##     }
-## }
-## interfaces {
-##     lo0 {
-##         unit 0 {
-##             family inet {
-##                 address 10.255.255.1/32;
-##             }
-##         }
-##     }
-## }
-## snmp {
-##     client-list SECURE-NMS {
-##         default restrict;
-##         10.0.1.0/24;
-##     }
-##     community secure-community {
-##         client-list-name SECURE-NMS;
-##         authorization read-only;
-##     }
-## }
+system {
+    host-name SECURE-JUNOS-01;
+    time-zone UTC;
+    services {
+        ssh {
+            protocol-version v2;
+            root-login deny;
+            connection-limit 10;
+            rate-limit 10;
+        }
+    }
+    login {
+        retry-options {
+            tries-before-disconnect 3;
+            backoff-threshold 2;
+            backoff-factor 5;
+            lockout-period 30;
+        }
+        password {
+            minimum-length 10;
+            format sha512;
+        }
+    }
+    accounting {
+        events login;
+    }
+    syslog {
+        host 10.0.0.10 {
+            any info;
+        }
+    }
+    ntp {
+        server 10.0.0.20;
+        server 10.0.0.21;
+        version 4;
+    }
+}
+interfaces {
+    lo0 {
+        unit 0 {
+            family inet {
+                address 10.255.255.1/32;
+            }
+        }
+    }
+}
+snmp {
+    client-list SECURE-NMS {
+        default restrict;
+        10.0.1.0/24;
+    }
+    community secure-community {
+        client-list-name SECURE-NMS;
+        authorization read-only;
+    }
+}

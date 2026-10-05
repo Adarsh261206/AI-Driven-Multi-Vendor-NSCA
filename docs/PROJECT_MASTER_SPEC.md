@@ -561,6 +561,67 @@ Each module has:
 **Input:** `Findings`
 **Output:** `RiskAssessment`
 
+#### 10.9.1 Risk Engine Contract Amendment (E09, 2026-09-28 — explicit amendment, not a silent redefinition)
+
+The original §10.9 named the formula, vocabulary and output without
+defining them. This amendment specifies them normatively; where it
+narrows an ambiguity it says so.
+
+**Normative risk formula** (deterministic production path, §4.2):
+
+    risk = base(severity) × vendor(vendor) × category(category)
+           × max(confidence, 0.5) / 15.6 × 100
+
+rounded to one decimal, clamped to [0, 100]. The 0.5 confidence floor is
+preserved explicitly (risk stops decreasing below confidence 0.5;
+monotonic non-decreasing in confidence). 15.6 is the maximum raw product
+(10.0 × 1.2 × 1.3 × 1.0).
+
+**Severity base:** CRITICAL 10.0, HIGH 7.5, MEDIUM 5.0, LOW 2.5
+(neutral inputs therefore score 64.1 / 48.1 / 32.1 / 16.0).
+
+**Vendor impact** (verified supported vendors carry a multiplier;
+everything else resolves to the documented neutral 1.0 — never a silent
+Cisco substitution, never an inflated multiplier):
+cisco 1.2, juniper 1.1, fortinet 1.1, paloalto 1.2, unknown 1.0.
+
+**Category impact** (one canonical map keyed by normalized category —
+strip, lowercase, underscores to spaces, collapsed whitespace; unknown
+categories resolve to the documented neutral 1.0):
+aaa 1.3, ssh 1.2, authentication 1.3, access control 1.2, snmp 1.1,
+logging 1.0, management 1.1, ntp 1.0, services 1.1, password rules 1.2,
+access rules 1.2, audit and accountability 1.2,
+configuration management 1.1, system and communications protection 1.2.
+
+**Priority vocabulary and bands** (preserved): P1 >= 80, P2 >= 60,
+P3 >= 40, P4 below 40; every score bands to exactly one of P1, P2, P3,
+P4 — never empty.
+
+**RiskAssessment interface:** finding_id, risk_score, priority, severity,
+confidence, vendor, category, scoring_method, scoring_version, plus
+optional advisory_score / advisory_model / advisory_model_version.
+
+**Deterministic-vs-ML decision:** the normative production scorer is the
+deterministic formula above. The RandomForest risk model is advisory
+only: it may supply an advisory_score with model metadata, and its
+published fit metric measures formula-emulation fidelity on synthetic
+labels — never real-world risk accuracy. It must never determine
+risk_score, priority, or any security decision.
+
+**Input contract:** the RiskEngine assesses finding-grade inputs
+(severity, vendor, category, confidence for one finding) into a
+RiskAssessment, which is attached to the finding before persistence.
+
+**Overall compliance score ownership:** the overall compliance score
+(passed/evaluated, single formula) stays owned by the compliance engine
+(E07); the Risk Engine owns risk assessment only and computes no second
+score.
+
+**Exposure:** risk_score, priority, risk_method and risk_model_version
+persist on the finding row and are served on the finding resource
+(GET finding); no separate risk endpoint exists — risk travels on the
+finding, and reports render the persisted values.
+
 ### 10.10 Remediation Engine
 
 **Purpose:** Generate actionable fix instructions

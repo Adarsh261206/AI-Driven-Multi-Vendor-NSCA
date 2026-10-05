@@ -37,8 +37,12 @@ class Settings(BaseSettings):
     RATE_LIMIT_BURST: int = 200
 
     # File Upload
+    # NOTE: .zip is deliberately absent — ZIP archives are not part of
+    # the ingestion contract (one Configuration row per uploaded text
+    # file; no safe bounded extraction path exists). See the
+    # IngestionEngine module docstring (E01 F5/N7 decision).
     MAX_UPLOAD_SIZE_MB: int = 10
-    ALLOWED_EXTENSIONS: List[str] = [".txt", ".cfg", ".conf", ".zip"]
+    ALLOWED_EXTENSIONS: List[str] = [".txt", ".cfg", ".conf"]
 
     # CORS
     CORS_ORIGINS: List[str] = ["http://localhost:3000"]

@@ -21,6 +21,7 @@ import { TechBadge, SeverityBadge, ResultBadge, FindingStatusBadge } from '@/com
 import { Select } from '@/components/ui/Field';
 import { PageLoader } from '@/components/ui/Progress';
 import { findingsAPI, getApiError, request } from '@/lib/api';
+import { PlanSection } from '@/components/remediation/PlanSection';
 import { formatDateTime, formatConfidence } from '@/lib/format';
 import { SEVERITY_META } from '@/lib/security';
 import type { Finding } from '@/types';
@@ -341,8 +342,10 @@ export default function FindingDetailPage() {
             </div>
           </div>
 
-          {rem && (rem.verification_steps?.length || rem.rollback_steps?.length) && (
-            <div className="card overflow-hidden">
+          {/* Structured remediation plan (dry-run; backend never executes) */}
+          {finding?.id && <PlanSection findingId={finding.id} />}
+
+          {rem && (rem.verification_steps?.length || rem.rollback_steps?.length) && (            <div className="card overflow-hidden">
               <div className="card-header">
                 <h2 className="section-title">Verification & Rollback</h2>
               </div>

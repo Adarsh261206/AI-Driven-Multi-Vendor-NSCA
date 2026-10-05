@@ -1,8 +1,12 @@
 """
 CIS Cisco IOS Controls
 
-Initial set of 10 high-quality CIS controls for Cisco IOS.
-Each control traces: RAW → PARSED → NORMALIZED → CONTROL → EXPECTED → ACTUAL → RESULT
+DEPRECATED — retired legacy inventory (F10). Initial set of 10 high-quality
+CIS controls for Cisco IOS. Each control traces:
+RAW → PARSED → NORMALIZED → CONTROL → EXPECTED → ACTUAL → RESULT
+
+Only consumed by the deprecated ControlLoader; the canonical path uses the
+196-control registry in app.benchmarks. Retained for backward compatibility.
 """
 
 from __future__ import annotations

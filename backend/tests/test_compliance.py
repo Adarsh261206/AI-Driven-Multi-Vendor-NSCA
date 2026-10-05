@@ -248,7 +248,7 @@ class TestEvidenceChain:
             platform="ios",
         )
         
-        assert chain.result == "pass"
+        assert chain.result == "PASS"
         assert chain.actual_value == False
         assert chain.expected_value == False
         assert chain.control_id == "CIS-Cisco-IOS-1.1"
@@ -266,7 +266,7 @@ class TestEvidenceChain:
             platform="ios",
         )
         
-        assert chain.result == "fail"
+        assert chain.result == "FAIL"
         assert chain.actual_value == True
     
     def test_build_review_chain(self):
@@ -281,7 +281,7 @@ class TestEvidenceChain:
             platform="ios",
         )
         
-        assert chain.result == "review"
+        assert chain.result == "REVIEW"
     
     def test_chain_to_dict(self):
         control = self.loader.get_control("CIS-Cisco-IOS-1.1")

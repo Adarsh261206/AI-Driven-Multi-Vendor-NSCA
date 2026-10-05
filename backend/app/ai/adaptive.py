@@ -21,8 +21,11 @@ from datetime import datetime
 
 from app.ai.semantic import SemanticAnalyzer, UnknownSection, SemanticAnalysis
 from app.ai.knowledge_base import KnowledgeBase, TrainingMapping
+from app.ai import kb_domain as dom
 from app.ai.client import AIClient
-from app.ai.validators import AIHypothesis, SecurityRelevance
+from app.ai.validators import (
+    AIHypothesis, SecurityRelevance, AlternativeInterpretation,
+)
 
 
 @dataclass
@@ -99,22 +102,25 @@ class AdaptiveLearningEngine:
         3. If not found, query AI
         4. Return hypothesis
         """
-        # Step 1: Check Knowledge Base
+        # Step 1: Check Knowledge Base (exact, confirmed; suggestions attach
+        # as non-authoritative alternatives below)
         kb_mapping = self.kb.lookup(
             vendor=request.vendor,
             platform=request.platform,
             raw_syntax=request.raw_syntax,
             require_confirmed=True,
         )
-        
+
         if kb_mapping:
-            # Found in KB - convert to hypothesis
+            # Found in KB - convert to hypothesis; relevance comes from the
+            # mapping's own model path (F15), never a constant.
             hypothesis = AIHypothesis(
                 raw_syntax=kb_mapping.raw_syntax,
                 meaning=kb_mapping.semantic_meaning,
                 confidence=kb_mapping.confidence,
                 reasoning="From confirmed knowledge base mapping",
-                security_relevance=SecurityRelevance.MEDIUM,
+                security_relevance=SecurityRelevance(
+                    dom.relevance_for_path(kb_mapping.universal_model_path)),
                 universal_model_path=kb_mapping.universal_model_path,
             )
             
@@ -139,7 +145,24 @@ class AdaptiveLearningEngine:
             platform=request.platform,
             section_path=request.section_path,
         )
-        
+
+        if hypothesis is not None:
+            # Attach KB suggestions as non-authoritative alternatives
+            # (suggestion-only: review required before use).
+            try:
+                suggestions = self.kb.lookup_suggestions(
+                    request.vendor, request.platform, request.raw_syntax)
+            except (TypeError, dom.KBValidationError):
+                suggestions = []
+            for candidate, similarity in suggestions[:3]:
+                hypothesis.alternatives.append(AlternativeInterpretation(
+                    meaning=candidate.semantic_meaning,
+                    confidence=round(similarity, 4),
+                    reasoning="Knowledge-base suggestion "
+                              f"(similarity {similarity:.2f}); requires "
+                              "administrator review before use",
+                ))
+
         return HypothesisResponse(
             raw_syntax=request.raw_syntax,
             hypothesis=hypothesis,
@@ -155,11 +178,14 @@ class AdaptiveLearningEngine:
         universal_model_path: Optional[str] = None,
         admin_notes: Optional[str] = None,
         user_id: Optional[str] = None,
+        confidence: Optional[float] = None,
     ) -> TrainingMapping:
         """
         Admin confirms a mapping
-        
-        Creates or updates the knowledge base entry.
+
+        Creates or updates the knowledge base entry. An explicit estimated
+        confidence is preserved verbatim; otherwise the confirmed default
+        applies. The actor is required (typed error, never silent).
         """
         return self.kb.create(
             vendor=vendor,
@@ -167,11 +193,12 @@ class AdaptiveLearningEngine:
             raw_syntax=raw_syntax,
             semantic_meaning=semantic_meaning,
             universal_model_path=universal_model_path,
+            confidence=confidence,
             admin_confirmed=True,
             admin_notes=admin_notes,
-            created_by_id=user_id,
+            actor=user_id,
         )
-    
+
     def edit_mapping(
         self,
         mapping_id: str,
@@ -183,8 +210,9 @@ class AdaptiveLearningEngine:
     ) -> TrainingMapping:
         """
         Admin edits an existing mapping
-        
-        Creates a new version of the mapping.
+
+        Creates a new version. EDIT never confirms and never fabricates
+        confidence.
         """
         return self.kb.update(
             mapping_id=mapping_id,
@@ -192,34 +220,38 @@ class AdaptiveLearningEngine:
             universal_model_path=universal_model_path,
             admin_notes=admin_notes,
             change_reason=change_reason,
-            changed_by_id=user_id,
+            actor=user_id,
         )
-    
+
     def reject_mapping(
         self,
         raw_syntax: str,
         vendor: str,
         platform: str,
         user_id: Optional[str] = None,
+        reason: Optional[str] = None,
     ) -> bool:
         """
         Admin rejects a mapping
-        
-        Removes any unconfirmed mappings for this syntax.
+
+        Marks the exact row unconfirmed with a REJECTED note, bumps the
+        version and records history. Never deletes. Returns False when no
+        row matches.
         """
+        actor = dom.validate_actor(user_id)
         mappings = self.kb.list_mappings(
             vendor=vendor,
             platform=platform,
             confirmed_only=False,
         )
-        
+
         rejected = False
         for mapping in mappings:
-            if mapping.raw_syntax.strip() == raw_syntax.strip():
-                if not mapping.admin_confirmed:
-                    del self.kb._mappings[mapping.id]
-                    rejected = True
-        
+            if dom.canonical_syntax(mapping.raw_syntax) == dom.canonical_syntax(
+                    raw_syntax):
+                self.kb.reject(mapping.id, actor=actor, reason=reason)
+                rejected = True
+
         return rejected
     
     async def reanalyze_with_mapping(
@@ -237,18 +269,28 @@ class AdaptiveLearningEngine:
         # The re-analysis uses the updated knowledge base
         # When the semantic analyzer encounters the same unknown syntax,
         # it will now find the confirmed mapping in the KB
-        from app.engines.parsing.cisco import CiscoIOSParser
-        
-        parser = CiscoIOSParser()
-        parse_result = parser.parse(config_content)
-        
+        # E04 F3/F10: parse with the supplied vendor's own parser via the
+        # central selection contract, never a hard-coded vendor parser.
+        # E06 F1: the knowledge base rides along so confirmed mappings
+        # resolve unknowns without AI.
+        from app.engines.parsing import get_parser
+
+        parser = get_parser(vendor, platform)
+        if parser is None:
+            # Unsupported vendor: safe empty result, no foreign parsing.
+            return SemanticAnalysis(
+                known_sections=[], unknown_sections=[], interpretations=[])
+        parse_result = parser.parse(
+            config_content, vendor=vendor, platform=platform)
+
         analysis = await self.semantic_analyzer.analyze(
             parse_result=parse_result,
             vendor=vendor,
             platform=platform,
             query_ai=False,  # Don't query AI again, use KB
+            knowledge_base=self.kb,
         )
-        
+
         return analysis
     
     def get_training_mappings(

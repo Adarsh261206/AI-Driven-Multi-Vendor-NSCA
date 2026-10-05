@@ -367,7 +367,7 @@ class TestRegexControls:
         result = engine.execute(cfg)
         regex_controls = [
             e for e in result.evaluations
-            if e.evidence.target_model_path == "" and e.is_automated
+            if e.evidence.universal_model_path == "" and e.is_automated
         ]
         for ev in regex_controls:
             assert ev.result in ("PASS", "FAIL"), (
@@ -466,7 +466,7 @@ class TestFullTestMatrix:
         for name in self.ALL_CONFIGS:
             cfg = _load(name)
             result = engine.execute(cfg)
-            assert result.evaluated == 53, f"{name}: wrong count"
+            assert result.evaluated == 179, f"{name}: wrong count"
             assert 0 <= result.score <= 100, f"{name}: bad score"
 
     def test_secure_highest_score(self, engine):
@@ -494,17 +494,17 @@ class TestFullTestMatrix:
         """Malformed config should not crash the engine"""
         cfg = _load("malformed.txt")
         result = engine.execute(cfg)
-        assert result.evaluated == 53
+        assert result.evaluated == 179
 
     def test_unknown_commands_no_crash(self, engine):
         cfg = _load("unknown_commands.txt")
         result = engine.execute(cfg)
-        assert result.evaluated == 53
+        assert result.evaluated == 179
 
     def test_conflicting_settings_no_crash(self, engine):
         cfg = _load("conflicting.txt")
         result = engine.execute(cfg)
-        assert result.evaluated == 53
+        assert result.evaluated == 179
 
     def test_multiple_vty_ssh(self, engine):
         """Multiple VTY blocks both with ssh → PASS for 1.2.2"""
@@ -516,7 +516,7 @@ class TestFullTestMatrix:
     def test_nested_interfaces(self, engine):
         cfg = _load("nested_interfaces.txt")
         result = engine.execute(cfg)
-        assert result.evaluated == 53
+        assert result.evaluated == 179
 
 
 # =========================================================================
@@ -531,12 +531,12 @@ class TestEvidenceQuality:
         cfg = _load("secure.txt")
         result = engine.execute(cfg)
         for ev in result.evaluations:
-            if ev.evidence.target_model_path:
+            if ev.evidence.universal_model_path:
                 e = ev.evidence
                 assert e.control_id != ""
                 assert e.result in ("PASS", "FAIL", "REVIEW")
                 assert e.operator != "" or e.result == "REVIEW"
-                assert e.result_reasoning.strip() != ""
+                assert e.reasoning.strip() != ""
                 assert 0 < e.confidence <= 1
 
     def test_regex_controls_have_raw_evidence(self, engine):
@@ -544,7 +544,7 @@ class TestEvidenceQuality:
         cfg = _load("secure.txt")
         result = engine.execute(cfg)
         for ev in result.evaluations:
-            if not ev.evidence.target_model_path and ev.is_automated:
+            if not ev.evidence.universal_model_path and ev.is_automated:
                 assert ev.evidence.audit_regex_matched is not None
 
     def test_manual_controls_have_reasoning(self, engine):
@@ -554,7 +554,7 @@ class TestEvidenceQuality:
         for ev in result.evaluations:
             if ev.evidence.assessment_status == "Manual":
                 assert ev.result == "REVIEW"
-                assert "Manual control" in ev.evidence.result_reasoning
+                assert "Manual control" in ev.evidence.reasoning
 
     def test_evidence_chain_1_1_1(self, engine):
         """Full evidence chain for AAA control"""
@@ -562,7 +562,7 @@ class TestEvidenceQuality:
         result = engine.execute(cfg)
         ev = next(e for e in result.evaluations if e.control_id == "1.1.1")
         e = ev.evidence
-        assert e.target_model_path == "aaa.authentication_enabled"
+        assert e.universal_model_path == "aaa.authentication_enabled"
         assert e.actual_value is True
         assert e.expected_value is True
         assert e.operator == "equals"
@@ -575,7 +575,7 @@ class TestEvidenceQuality:
         result = engine.execute(cfg)
         ev = next(e for e in result.evaluations if e.control_id == "2.1.1")
         e = ev.evidence
-        assert e.target_model_path == "management.ssh.version"
+        assert e.universal_model_path == "management.ssh.version"
         assert e.actual_value == 2
         assert e.expected_value == 2
         assert e.result == "PASS"
@@ -646,7 +646,7 @@ class TestConflictDetection:
         # 1.2.2 (transport) is conflict-affected and not multi-block → REVIEW
         ev = next(e for e in result.evaluations if e.control_id == "1.2.2")
         assert ev.result == "REVIEW"
-        assert "Conflicting" in ev.evidence.result_reasoning
+        assert "Conflicting" in ev.evidence.reasoning
 
     def test_conflict_detected_in_normalizer(self, normalizer):
         """Normalizer detects conflicting duplicates"""
@@ -836,7 +836,7 @@ class TestEdgeCases:
         result = engine.execute(cfg)
         ev = next(e for e in result.evaluations if e.control_id == "1.2.2")
         assert ev.result == "REVIEW"
-        assert "Conflicting" in ev.evidence.result_reasoning
+        assert "Conflicting" in ev.evidence.reasoning
 
     def test_exec_timeout_malformed(self, engine):
         """exec-timeout with non-numeric values → REVIEW"""

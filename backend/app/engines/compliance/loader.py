@@ -1,6 +1,11 @@
 """
 Control Definition Loader
 
+DEPRECATED — retired legacy loader (F10). Loads the 10-control legacy
+inventory; the canonical path loads the 196-control registry from
+app.benchmarks instead. Retained only so existing unit tests keep
+importing; no production code in the audit path uses it.
+
 Loads compliance controls from Python definitions.
 Supports filtering by framework, vendor, platform, category, and severity.
 """

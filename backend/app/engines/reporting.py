@@ -5,6 +5,7 @@ import os
 from datetime import datetime
 from typing import Any, Dict, List, Optional
 from uuid import UUID
+from xml.sax.saxutils import escape as _xml_escape
 
 from reportlab.lib import colors
 from reportlab.lib.enums import TA_CENTER, TA_LEFT, TA_RIGHT
@@ -37,6 +38,129 @@ RESULT_COLORS = {
     "FAIL": colors.HexColor("#DC2626"),
     "REVIEW": colors.HexColor("#CA8A04"),
 }
+
+
+class ReportEngineError(Exception):
+    """Typed error for Reporting Engine (E11) contract violations.
+
+    Raised for structural input violations (wrong container types,
+    non-mapping entries) — never for missing optional display values,
+    which render as explicit defaults ("N/A", "0", ...). Callers can
+    rely on: no AttributeError/TypeError/ValueError from untrusted or
+    partial audit data; either valid PDF bytes or ReportEngineError.
+    """
+
+
+def _str(value: Any, default: str = "N/A") -> str:
+    """Display coercion: None means missing (yields the default).
+
+    Strings pass through; other scalars are str()-ified so stored data
+    (ints, floats) renders instead of crashing Paragraph.
+    """
+    if value is None:
+        return default
+    if isinstance(value, str):
+        return value
+    return str(value)
+
+
+def _esc(value: Any) -> str:
+    """Escape untrusted data interpolated into Paragraph markup.
+
+    ReportLab Paragraph parses a markup subset: a stray '<' from config
+    content (evidence, titles, commands) can abort the whole document
+    with ValueError, and well-formed tags would render as formatting
+    instead of literal text. Escaping keeps data literal (V03-44).
+    """
+    return _xml_escape(_str(value, ""))
+
+
+def _score(value: Any) -> str:
+    """Overall-score display: '80.0%'; missing -> '0.0%'; garbage -> 'N/A'."""
+    if value is None:
+        return "0.0%"
+    try:
+        return f"{float(value):.1f}%"
+    except (TypeError, ValueError):
+        return "N/A"
+
+
+def _confidence(value: Any) -> str:
+    """Finding-confidence display: '90%'; missing -> '0%'; garbage -> 'N/A'."""
+    if value is None:
+        return "0%"
+    try:
+        return f"{float(value) * 100:.0f}%"
+    except (TypeError, ValueError):
+        return "N/A"
+
+
+def _file_confidence(value: Any) -> str:
+    """Device-identification confidence: '90%'; missing -> 'N/A'."""
+    if value is None:
+        return "N/A"
+    try:
+        return f"{float(value) * 100:.0f}%"
+    except (TypeError, ValueError):
+        return "N/A"
+
+
+def _str_list(value: Any) -> List[str]:
+    """Remediation step lists: lists/tuples of coerced strings, else []."""
+    if isinstance(value, (list, tuple)):
+        return [_str(v, "") for v in value]
+    return []
+
+
+def _as_list(value: Any, name: str) -> List[Any]:
+    """Structural gate: report collections must be lists (None = empty)."""
+    if value is None:
+        return []
+    if not isinstance(value, (list, tuple)):
+        raise ReportEngineError(
+            f"{name} must be a list of mappings, got {type(value).__name__}")
+    return list(value)
+
+
+def validate_report_inputs(
+    audit_data: Any,
+    findings: Any,
+    compliance_results: Any,
+) -> Dict[str, List[Any]]:
+    """Validate the §10.11 input contract; return normalized collections.
+
+    Raises ReportEngineError on structural violations (wrong container
+    types, non-mapping entries). Scalar display values are NOT rejected
+    here — they are coerced at render time so partial stored data still
+    yields a report instead of a 500.
+    """
+    if not isinstance(audit_data, dict):
+        raise ReportEngineError(
+            "audit_data must be a mapping, got "
+            f"{type(audit_data).__name__}")
+    findings = _as_list(findings, "findings")
+    compliance_results = _as_list(compliance_results, "compliance_results")
+    file_details = _as_list(audit_data.get("file_details"), "file_details")
+    for entry in findings:
+        if not isinstance(entry, dict):
+            raise ReportEngineError(
+                "every finding must be a mapping, got "
+                f"{type(entry).__name__}")
+    for entry in compliance_results:
+        if not isinstance(entry, dict):
+            raise ReportEngineError(
+                "every compliance result must be a mapping, got "
+                f"{type(entry).__name__}")
+    for entry in file_details:
+        if not isinstance(entry, dict):
+            raise ReportEngineError(
+                "every file detail must be a mapping, got "
+                f"{type(entry).__name__}")
+    return {
+        "findings": findings,
+        "compliance_results": compliance_results,
+        "file_details": file_details,
+    }
 
 
 def _get_styles() -> Dict[str, ParagraphStyle]:
@@ -125,7 +249,7 @@ def _header_footer(canvas, doc, audit_data: Dict[str, Any]):
     canvas.setFillColor(colors.HexColor("#9CA3AF"))
     canvas.drawString(2 * cm, A4[1] - 1.2 * cm, "ConfigShield — Network Security Compliance Auditor — Confidential")
     canvas.drawRightString(A4[0] - 2 * cm, 1.2 * cm, f"Page {doc.page}")
-    canvas.drawCentredString(A4[0] / 2, 1.2 * cm, audit_data.get("audit_name", "Audit Report"))
+    canvas.drawCentredString(A4[0] / 2, 1.2 * cm, _str(audit_data.get("audit_name"), "Audit Report"))
     canvas.restoreState()
 
 
@@ -135,6 +259,14 @@ def generate_audit_report(
     compliance_results: List[Dict[str, Any]],
     output_path: Optional[str] = None,
 ) -> bytes:
+    # E11: fail fast with a typed error on structural violations; scalar
+    # display values are coerced at render time (never a crash).
+    normalized = validate_report_inputs(audit_data, findings,
+                                        compliance_results)
+    findings = normalized["findings"]
+    compliance_results = normalized["compliance_results"]
+    file_details = normalized["file_details"]
+
     buffer = io.BytesIO()
     styles = _get_styles()
 
@@ -153,21 +285,25 @@ def generate_audit_report(
     elements.append(Spacer(1, 2 * cm))
     elements.append(Paragraph("ConfigShield — Compliance Audit Report", styles["title"]))
     elements.append(Paragraph(
-        f"<b>{audit_data.get('audit_name', 'N/A')}</b>",
+        f"<b>{_esc(audit_data.get('audit_name') or 'N/A')}</b>",
         styles["subtitle"],
     ))
+    # E11 F8: the cover carries no unconditional ML claim. Per-engine
+    # model availability is disclosed in the footer only when the models
+    # actually run (V09-69); the cover line is model-agnostic.
     elements.append(Paragraph(
-        f"<font size='8' color='#6B7280'>Powered by ML — Vendor/Device Type Classification + Risk Scoring</font>",
+        "<font size='8' color='#6B7280'>Automated analysis of device "
+        "configurations against the specified compliance framework</font>",
         styles["small"],
     ))
 
     meta_data = [
-        ["Audit ID", str(audit_data.get("audit_id", "N/A"))],
-        ["Framework", audit_data.get("framework", "CIS")],
-        ["Status", audit_data.get("status", "N/A")],
-        ["Overall Score", f"{audit_data.get('overall_score', 0):.1f}%"],
+        ["Audit ID", _esc(audit_data.get("audit_id") or "N/A")],
+        ["Framework", _esc(audit_data.get("framework") or "CIS")],
+        ["Status", _esc(audit_data.get("status") or "N/A")],
+        ["Overall Score", _score(audit_data.get("overall_score", 0))],
         ["Generated", datetime.utcnow().strftime("%Y-%m-%d %H:%M UTC")],
-        ["Configurations Audited", str(audit_data.get("configuration_count", 0))],
+        ["Configurations Audited", _str(audit_data.get("configuration_count", 0), "0")],
     ]
     meta_table = Table(meta_data, colWidths=[5 * cm, 10 * cm])
     meta_table.setStyle(TableStyle([
@@ -183,7 +319,7 @@ def generate_audit_report(
     elements.append(Spacer(1, 0.6 * cm))
 
     # === Per-File Device Details (Real Analysis) ===
-    file_details = audit_data.get("file_details", [])
+    # E11: file_details was normalized by validate_report_inputs.
     if file_details:
         elements.append(Paragraph("Analyzed Files — Device Identification", styles["heading1"]))
         fd_header = [
@@ -195,22 +331,22 @@ def generate_audit_report(
         ]
         fd_data = [fd_header]
         for fd in file_details:
-            vendor = fd.get("vendor", "unknown")
-            dtype = fd.get("device_type", "unknown")
+            vendor = _str(fd.get("vendor", "unknown"), "unknown")
+            dtype = _str(fd.get("device_type", "unknown"), "unknown")
             # Color device type
-            dtype_display = f'<font color="#1F2937">{dtype.title()}</font>'
-            if dtype == "switch":
-                dtype_display = f'<font color="#2563EB">{dtype.title()}</font>'
-            elif dtype == "router":
-                dtype_display = f'<font color="#EA580C">{dtype.title()}</font>'
-            elif dtype == "firewall":
-                dtype_display = f'<font color="#DC2626">{dtype.title()}</font>'
+            dtype_display = f'<font color="#1F2937">{_esc(dtype.title())}</font>'
+            if dtype.lower() == "switch":
+                dtype_display = f'<font color="#2563EB">{_esc(dtype.title())}</font>'
+            elif dtype.lower() == "router":
+                dtype_display = f'<font color="#EA580C">{_esc(dtype.title())}</font>'
+            elif dtype.lower() == "firewall":
+                dtype_display = f'<font color="#DC2626">{_esc(dtype.title())}</font>'
             fd_data.append([
-                Paragraph(fd.get("filename", "N/A")[:30], styles["cell"]),
-                Paragraph(vendor.title() if vendor != "unknown" else "Unknown", styles["cell"]),
+                Paragraph(_esc(_str(fd.get("filename"), "N/A")[:30]), styles["cell"]),
+                Paragraph(_esc(vendor.title()) if vendor.lower() != "unknown" else "Unknown", styles["cell"]),
                 Paragraph(dtype_display, styles["cell"]),
-                Paragraph(fd.get("platform", "unknown"), styles["cell"]),
-                Paragraph(fd.get("hostname") or "—", styles["cell"]),
+                Paragraph(_esc(fd.get("platform", "unknown")), styles["cell"]),
+                Paragraph(_esc(fd.get("hostname") or "—"), styles["cell"]),
             ])
         fd_table = Table(fd_data, colWidths=[5 * cm, 3 * cm, 3 * cm, 3 * cm, 3 * cm])
         fd_table.setStyle(TableStyle([
@@ -231,10 +367,11 @@ def generate_audit_report(
         # Firmware + confidence row if available
         for fd in file_details:
             if fd.get("firmware_version") or fd.get("confidence") is not None:
-                conf = fd.get("confidence")
-                conf_str = f"{conf*100:.0f}%" if conf is not None else "N/A"
                 elements.append(Paragraph(
-                    f"<font size='7' color='#6B7280'><b>{fd.get('filename','')}:</b> Firmware {fd.get('firmware_version') or 'N/A'} · Confidence {conf_str} · {fd.get('detection_method','')}</font>",
+                    f"<font size='7' color='#6B7280'><b>{_esc(fd.get('filename') or '')}:</b> "
+                    f"Firmware {_esc(fd.get('firmware_version') or 'N/A')} · "
+                    f"Confidence {_file_confidence(fd.get('confidence'))} · "
+                    f"{_esc(fd.get('detection_method') or '')}</font>",
                     styles["small"]
                 ))
         elements.append(Spacer(1, 0.4 * cm))
@@ -243,10 +380,21 @@ def generate_audit_report(
     if file_details and findings:
         elements.append(Paragraph("Per-Device Compliance Breakdown", styles["heading1"]))
         from collections import defaultdict
-        findings_by_device: dict[str, list] = defaultdict(list)
+        # E11 F7: attribution is matched-only. A finding belongs to a
+        # device when its affected_device (or evidence hostname) names
+        # that device's filename or hostname. Findings that match
+        # neither are listed under an explicit "Unattributed" row — the
+        # old proportional fallback (slicing the global finding list per
+        # device) invented per-device counts and is deleted.
+        findings_by_file: dict[str, list] = defaultdict(list)
+        findings_by_host: dict[str, list] = defaultdict(list)
         for f in findings:
-            dev = f.get("affected_device", "unknown") or f.get("evidence", {}).get("hostname", "unknown")
-            findings_by_device[dev].append(f)
+            ev = f.get("evidence")
+            ev = ev if isinstance(ev, dict) else {}
+            dev = f.get("affected_device") or ev.get("hostname") or "unknown"
+            findings_by_file[_str(dev, "unknown")].append(f)
+            if ev.get("hostname"):
+                findings_by_host[_str(ev.get("hostname"), "unknown")].append(f)
         per_file_header = [
             Paragraph("<b>Device</b>", styles["cell_header"]),
             Paragraph("<b>Type</b>", styles["cell_header"]),
@@ -255,21 +403,33 @@ def generate_audit_report(
             Paragraph("<b>High</b>", styles["cell_header"]),
         ]
         per_file_data = [per_file_header]
+        matched_ids: set[int] = set()
         for fd in file_details:
-            fname = fd.get("filename", "unknown")
-            dtype = fd.get("device_type", "unknown")
-            f_list = findings_by_device.get(fname, []) or findings_by_device.get(fd.get("hostname", ""), [])
-            # Fallback: if no exact match, use all findings proportionally
-            if not f_list and findings:
-                # Distribute findings evenly if grouping not matched
-                f_list = findings[: len(findings)//len(file_details) + 1]
+            fname = _str(fd.get("filename", "unknown"), "unknown")
+            dtype = _str(fd.get("device_type", "unknown"), "unknown")
+            hostname = _str(fd.get("hostname") or "", "")
+            f_list = list(findings_by_file.get(fname, []))
+            if not f_list and hostname:
+                f_list = list(findings_by_host.get(hostname, []))
+            matched_ids.update(id(fl) for fl in f_list)
             crit = sum(1 for fl in f_list if fl.get("severity") == "CRITICAL")
             high = sum(1 for fl in f_list if fl.get("severity") == "HIGH")
-            dtype_col = f'<font color="#2563EB">{dtype.title()}</font>' if dtype == "switch" else f'<font color="#DC2626">{dtype.title()}</font>' if dtype == "firewall" else f'<font color="#EA580C">{dtype.title()}</font>' if dtype == "router" else dtype.title()
+            dtype_col = f'<font color="#2563EB">{_esc(dtype.title())}</font>' if dtype.lower() == "switch" else f'<font color="#DC2626">{_esc(dtype.title())}</font>' if dtype.lower() == "firewall" else f'<font color="#EA580C">{_esc(dtype.title())}</font>' if dtype.lower() == "router" else _esc(dtype.title())
             per_file_data.append([
-                Paragraph(fname[:20], styles["cell"]),
+                Paragraph(_esc(fname[:20]), styles["cell"]),
                 Paragraph(dtype_col, styles["cell"]),
                 Paragraph(str(len(f_list)), styles["cell"]),
+                Paragraph(str(crit), styles["cell"]),
+                Paragraph(str(high), styles["cell"]),
+            ])
+        unattributed = [fl for fl in findings if id(fl) not in matched_ids]
+        if unattributed:
+            crit = sum(1 for fl in unattributed if fl.get("severity") == "CRITICAL")
+            high = sum(1 for fl in unattributed if fl.get("severity") == "HIGH")
+            per_file_data.append([
+                Paragraph("Unattributed", styles["cell"]),
+                Paragraph("—", styles["cell"]),
+                Paragraph(str(len(unattributed)), styles["cell"]),
                 Paragraph(str(crit), styles["cell"]),
                 Paragraph(str(high), styles["cell"]),
             ])
@@ -305,7 +465,7 @@ def generate_audit_report(
             Paragraph("<b>Metric</b>", styles["cell_header"]),
             Paragraph("<b>Value</b>", styles["cell_header"]),
         ],
-        ["Overall Score", f"{audit_data.get('overall_score', 0):.1f}%"],
+        ["Overall Score", _score(audit_data.get("overall_score", 0))],
         ["Total Findings", str(total_findings)],
         ["Critical", str(critical_count)],
         ["High", str(high_count)],
@@ -330,7 +490,10 @@ def generate_audit_report(
         ("GRID", (0, 0), (-1, 0), 0.5, colors.HexColor("#D1D5DB")),
     ]))
     elements.append(summary_table)
-    elements.append(PageBreak())
+    # E11 F9: break only when more content follows — an unconditional
+    # break here left a trailing blank page on finding-less reports.
+    if findings or compliance_results:
+        elements.append(PageBreak())
 
     # === Findings Detail ===
     if findings:
@@ -340,18 +503,24 @@ def generate_audit_report(
         sorted_findings = sorted(findings, key=lambda f: severity_order.get(f.get("severity", "LOW"), 4))
 
         for i, finding in enumerate(sorted_findings, 1):
-            sev = finding.get("severity", "LOW")
+            sev = _str(finding.get("severity", "LOW"), "LOW")
             sev_color = SEVERITY_COLORS.get(sev, colors.gray)
 
             elements.append(Paragraph(
-                f"<b>{i}. {finding.get('title', 'Untitled Finding')}</b>",
+                f"<b>{i}. {_esc(finding.get('title', 'Untitled Finding'))}</b>",
                 styles["heading2"],
             ))
 
             info_data = [
                 ["Severity", sev],
-                ["Status", finding.get("status", "open")],
-                ["Confidence", f"{finding.get('confidence', 0)*100:.0f}%"],
+                ["Status", _str(finding.get("status", "open"), "open")],
+                ["Confidence", _confidence(finding.get("confidence", 0))],
+                # E09 F1/F9: persisted 10.9 output rendered from the same
+                # values storage holds (never recomputed for the report).
+                ["Risk", (f"{finding.get('risk_score')} "
+                          f"({_str(finding.get('priority'), 'N/A')})"
+                          if finding.get("risk_score") is not None
+                          else "not assessed")],
             ]
             info_table = Table(info_data, colWidths=[4 * cm, 11 * cm])
             info_table.setStyle(TableStyle([
@@ -365,47 +534,59 @@ def generate_audit_report(
 
             if finding.get("description"):
                 elements.append(Spacer(1, 3 * mm))
-                elements.append(Paragraph(f"<b>Description:</b> {finding['description']}", styles["body"]))
+                elements.append(Paragraph(f"<b>Description:</b> {_esc(finding['description'])}", styles["body"]))
 
-            evidence = finding.get("evidence", {})
+            evidence = finding.get("evidence")
+            evidence = evidence if isinstance(evidence, dict) else {}
             if isinstance(evidence, dict):
                 evidence_parts = []
                 if evidence.get("vendor"):
-                    evidence_parts.append(f"Vendor: {evidence['vendor']}")
+                    evidence_parts.append(f"Vendor: {_esc(evidence['vendor'])}")
                     dtype = evidence.get("device_type") or finding.get("device_type") or audit_data.get("device_type")
-                    if dtype and dtype != "unknown":
-                        evidence_parts[-1] += f" ({dtype})"
+                    if dtype and _str(dtype, "unknown") != "unknown":
+                        evidence_parts[-1] += f" ({_esc(dtype)})"
                 if evidence.get("platform"):
-                    evidence_parts.append(f"Platform: {evidence['platform']}")
+                    evidence_parts.append(f"Platform: {_esc(evidence['platform'])}")
                 if evidence.get("hostname"):
-                    evidence_parts.append(f"Hostname: {evidence['hostname']}")
+                    evidence_parts.append(f"Hostname: {_esc(evidence['hostname'])}")
                 if evidence.get("device_type") and not evidence.get("vendor"):
-                    evidence_parts.append(f"Device Type: {evidence['device_type']}")
+                    evidence_parts.append(f"Device Type: {_esc(evidence['device_type'])}")
                 if evidence.get("control_id"):
-                    evidence_parts.append(f"Control: {evidence['control_id']}")
+                    evidence_parts.append(f"Control: {_esc(evidence['control_id'])}")
                 if evidence.get("actual_value"):
-                    evidence_parts.append(f"Actual: {evidence['actual_value']}")
+                    evidence_parts.append(f"Actual: {_esc(evidence['actual_value'])}")
                 if evidence.get("expected_value"):
-                    evidence_parts.append(f"Expected: {evidence['expected_value']}")
+                    evidence_parts.append(f"Expected: {_esc(evidence['expected_value'])}")
                 if evidence_parts:
                     elements.append(Spacer(1, 3 * mm))
                     elements.append(Paragraph("<b>Evidence:</b>", styles["body"]))
                     for part in evidence_parts:
                         elements.append(Paragraph(f"  {part}", styles["small"]))
 
-            remediation = finding.get("remediation", {})
-            if isinstance(remediation, dict) and remediation.get("description"):
+            remediation = finding.get("remediation")
+            remediation = remediation if isinstance(remediation, dict) else {}
+            # E10: §12 remediation keys (risk_description, recommended_config,
+            # verification/rollback steps); legacy description/command keys
+            # are honored when present for backward compatibility.
+            if isinstance(remediation, dict) and (remediation.get("risk_description") or remediation.get("description")):
                 elements.append(Spacer(1, 3 * mm))
-                elements.append(Paragraph(f"<b>Remediation:</b> {remediation['description']}", styles["body"]))
-                if remediation.get("command"):
+                elements.append(Paragraph(f"<b>Remediation:</b> {_esc(remediation.get('risk_description') or remediation.get('description'))}", styles["body"]))
+                command = remediation.get("recommended_config") or remediation.get("command") or ""
+                if command:
                     elements.append(Paragraph(
-                        f"<font face='Courier' size='8'>  {remediation['command']}</font>",
+                        f"<font face='Courier' size='8'>  {_esc(command)}</font>",
                         styles["small"],
                     ))
+                for step in _str_list(remediation.get("verification_steps"))[:5]:
+                    elements.append(Paragraph(f"  Verify: {_esc(step)}", styles["small"]))
+                for step in _str_list(remediation.get("rollback_steps"))[:5]:
+                    elements.append(Paragraph(f"  Rollback: {_esc(step)}", styles["small"]))
 
             elements.append(Spacer(1, 6 * mm))
 
-        elements.append(PageBreak())
+        # E11 F9: trailing break only when the compliance section follows.
+        if compliance_results:
+            elements.append(PageBreak())
 
     # === Compliance Results ===
     if compliance_results:
@@ -420,13 +601,13 @@ def generate_audit_report(
         table_data = [header_row]
 
         for cr in compliance_results:
-            result_val = cr.get("result", "")
+            result_val = _str(cr.get("result", ""), "")
             result_color = RESULT_COLORS.get(result_val, colors.gray)
             table_data.append([
-                Paragraph(cr.get("control_id", ""), styles["cell"]),
-                Paragraph(cr.get("control_name", ""), styles["cell"]),
-                Paragraph(f'<font color="{result_color.hexval()}">{result_val}</font>', styles["cell"]),
-                Paragraph(cr.get("severity", ""), styles["cell"]),
+                Paragraph(_esc(cr.get("control_id", "")), styles["cell"]),
+                Paragraph(_esc(cr.get("control_name", "")), styles["cell"]),
+                Paragraph(f'<font color="{result_color.hexval()}">{_esc(result_val)}</font>', styles["cell"]),
+                Paragraph(_esc(cr.get("severity", "")), styles["cell"]),
             ])
 
         cr_table = Table(table_data, colWidths=[3 * cm, 5.5 * cm, 3 * cm, 3.5 * cm])
@@ -453,15 +634,30 @@ def generate_audit_report(
             # Vendor + Risk + Semantic + Normalisation
             vendor_acc = ml_info.get("vendor_accuracy", 0) * 100
             device_acc = ml_info.get("device_type_accuracy", 0) * 100
-            risk_r2 = ml_info.get("risk_meta", {}).get("r2", 0)
             sem_acc = ml_info.get("semantic_meta", {}).get("accuracy", 0) * 100
             norm_acc = ml_info.get("normalisation_meta", {}).get("accuracy", 0) * 100
+            # E09 §15: the risk-model claim is gated on RISK model
+            # availability (separate metadata), never the vendor flag —
+            # and the fit metric is labeled for what it measures
+            # (formula-emulation fit on synthetic labels).
+            from app.engines.compliance.risk import advisory_model_info
+            risk_info = advisory_model_info()
+            if risk_info.get("available"):
+                risk_line = (
+                    f"• Risk Scoring (advisory): RandomForest "
+                    f"(formula-emulation R² "
+                    f"{risk_info.get('r2_formula_emulation', 0):.3f}) → "
+                    f"severity×vendor×category×confidence → risk 0-100<br/>"
+                )
+            else:
+                risk_line = ("• Risk Scoring: deterministic formula "
+                             "(advisory model unavailable)<br/>")
             elements.append(Paragraph(
                 f"<font size='7' color='#059669'><b>ML Analysis — All Engines Trained:</b><br/>"
                 f"• Vendor Detection: TF-IDF+LR (Acc {vendor_acc:.0f}%, {ml_info.get('train_size',0)} samples) → Switch/Router/Firewall<br/>"
                 f"• Normalisation: TF-IDF+LR (Acc {norm_acc:.0f}%, 28 universal paths) → raw line → universal model<br/>"
                 f"• Semantic: TF-IDF+LR (Acc {sem_acc:.0f}%, HIGH/MEDIUM/LOW) → unknown syntax security relevance<br/>"
-                f"• Risk Scoring: RandomForest (R² {risk_r2:.3f}, MSE {ml_info.get('risk_meta',{}).get('mse',0):.1f}) → severity×vendor×category×confidence → risk 0-100<br/>"
+                f"{risk_line}"
                 f"Device type and hostname extracted per file via ML + pattern evidence.</font>",
                 styles["small"],
             ))

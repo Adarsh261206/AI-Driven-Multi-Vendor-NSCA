@@ -198,7 +198,11 @@ class TestOutputValidator:
 
 
 class TestKnowledgeBase:
-    """Tests for Knowledge Base"""
+    """Tests for Knowledge Base.
+
+    E06: a universal model path and an actor are part of the create/update
+    contract, and REJECT retains the row instead of deleting it.
+    """
     
     def setup_method(self):
         self.kb = KnowledgeBase()
@@ -209,12 +213,28 @@ class TestKnowledgeBase:
             platform="ios",
             raw_syntax="ip ssh version 2",
             semantic_meaning="Enables SSH version 2",
+            universal_model_path="management.ssh",
             admin_confirmed=True,
+            actor="admin-1",
         )
         
         assert mapping.id is not None
         assert mapping.version == 1
         assert mapping.admin_confirmed is True
+    
+    def test_create_requires_path_and_actor(self):
+        from app.ai.kb_domain import KBValidationError
+        
+        with pytest.raises(KBValidationError):
+            self.kb.create(
+                vendor="cisco", platform="ios", raw_syntax="x",
+                semantic_meaning="y", actor="admin-1",
+            )
+        with pytest.raises(KBValidationError):
+            self.kb.create(
+                vendor="cisco", platform="ios", raw_syntax="x",
+                semantic_meaning="y", universal_model_path="management.ssh",
+            )
     
     def test_lookup_exact(self):
         self.kb.create(
@@ -222,7 +242,9 @@ class TestKnowledgeBase:
             platform="ios",
             raw_syntax="ip ssh version 2",
             semantic_meaning="Enables SSH version 2",
+            universal_model_path="management.ssh",
             admin_confirmed=True,
+            actor="admin-1",
         )
         
         result = self.kb.lookup("cisco", "ios", "ip ssh version 2")
@@ -233,13 +255,19 @@ class TestKnowledgeBase:
         result = self.kb.lookup("cisco", "ios", "unknown command")
         assert result is None
     
+    def test_lookup_is_total(self):
+        for hostile in (None, 123, ["cisco"], {"vendor": "cisco"}, object()):
+            assert self.kb.lookup(hostile, "ios", "x") is None
+    
     def test_lookup_unconfirmed(self):
         self.kb.create(
             vendor="cisco",
             platform="ios",
             raw_syntax="test",
             semantic_meaning="test",
+            universal_model_path="management.ssh",
             admin_confirmed=False,
+            actor="admin-1",
         )
         
         # Should not return unconfirmed by default
@@ -256,25 +284,61 @@ class TestKnowledgeBase:
             platform="ios",
             raw_syntax="test",
             semantic_meaning="original",
+            universal_model_path="management.ssh",
+            actor="admin-1",
         )
         
         updated = self.kb.update(
             mapping_id=mapping.id,
             semantic_meaning="updated",
             change_reason="Fixed meaning",
+            actor="admin-1",
         )
         
         assert updated.version == 2
         assert updated.semantic_meaning == "updated"
         
         versions = self.kb.get_versions(mapping.id)
-        assert len(versions) == 1
+        # One post-change record per real mutation: create (v1) and edit (v2).
+        assert len(versions) == 2
         assert versions[0].semantic_meaning == "original"
+        assert versions[1].semantic_meaning == "updated"
+    
+    def test_edit_never_confirms(self):
+        mapping = self.kb.create(
+            vendor="cisco", platform="ios", raw_syntax="neutral",
+            semantic_meaning="original", universal_model_path="management.ssh",
+            confidence=0.5, admin_confirmed=False, actor="hypothesis-1",
+        )
+        edited = self.kb.update(
+            mapping_id=mapping.id, semantic_meaning="edited",
+            change_reason="clarified", actor="admin-1",
+        )
+        assert edited.admin_confirmed is False
+        assert edited.confidence == 0.5
+    
+    def test_reject_retains_row(self):
+        mapping = self.kb.create(
+            vendor="cisco", platform="ios", raw_syntax="bad",
+            semantic_meaning="wrong", universal_model_path="management.ssh",
+            admin_confirmed=True, actor="admin-1",
+        )
+        rejected = self.kb.reject(mapping.id, actor="admin-1", reason="wrong")
+        assert rejected is not None
+        assert rejected.admin_confirmed is False
+        assert (rejected.admin_notes or "").startswith("REJECTED:")
+        assert rejected.version == 2
+        assert self.kb.lookup("cisco", "ios", "bad") is None
+        assert self.kb.lookup("cisco", "ios", "bad", require_confirmed=False) is not None
     
     def test_list_mappings(self):
-        self.kb.create("cisco", "ios", "a", "meaning a", admin_confirmed=True)
-        self.kb.create("cisco", "ios", "b", "meaning b", admin_confirmed=False)
-        self.kb.create("fortinet", "fortios", "c", "meaning c", admin_confirmed=True)
+        self.kb.create("cisco", "ios", "a", "meaning a", universal_model_path="management.ssh",
+                       admin_confirmed=True, actor="admin-1")
+        self.kb.create("cisco", "ios", "b", "meaning b", universal_model_path="management.ssh",
+                       admin_confirmed=False, actor="admin-1")
+        self.kb.create("fortinet", "fortios", "c", "meaning c",
+                       universal_model_path="management.ssh", admin_confirmed=True,
+                       actor="admin-1")
         
         all_mappings = self.kb.list_mappings()
         assert len(all_mappings) == 3
@@ -286,8 +350,10 @@ class TestKnowledgeBase:
         assert len(cisco) == 2
     
     def test_stats(self):
-        self.kb.create("cisco", "ios", "a", "a", admin_confirmed=True)
-        self.kb.create("cisco", "ios", "b", "b", admin_confirmed=False)
+        self.kb.create("cisco", "ios", "a", "a", universal_model_path="management.ssh",
+                       admin_confirmed=True, actor="admin-1")
+        self.kb.create("cisco", "ios", "b", "b", universal_model_path="management.ssh",
+                       admin_confirmed=False, actor="admin-1")
         
         stats = self.kb.get_stats()
         assert stats["total_mappings"] == 2
@@ -313,7 +379,8 @@ class TestAdaptiveLearning:
             vendor="cisco",
             platform="ios",
             semantic_meaning="This is a test command",
-            universal_model_path="management.test",
+            universal_model_path="management.ssh",
+            user_id="admin-1",
         )
         
         assert mapping.admin_confirmed is True
@@ -329,16 +396,20 @@ class TestAdaptiveLearning:
             vendor="cisco",
             platform="ios",
             semantic_meaning="original",
+            universal_model_path="management.ssh",
+            user_id="admin-1",
         )
         
         updated = self.engine.edit_mapping(
             mapping_id=mapping.id,
             semantic_meaning="updated",
             change_reason="Fixed",
+            user_id="admin-1",
         )
         
         assert updated.version == 2
         assert updated.semantic_meaning == "updated"
+        assert updated.admin_confirmed is True
     
     def test_reject_unconfirmed_mapping(self):
         # Create an unconfirmed mapping first
@@ -347,7 +418,9 @@ class TestAdaptiveLearning:
             platform="ios",
             raw_syntax="unconfirmed-cmd",
             semantic_meaning="unconfirmed",
+            universal_model_path="management.ssh",
             admin_confirmed=False,
+            actor="hypothesis-1",
         )
         
         # Reject should work for unconfirmed
@@ -355,29 +428,49 @@ class TestAdaptiveLearning:
             raw_syntax="unconfirmed-cmd",
             vendor="cisco",
             platform="ios",
+            user_id="admin-1",
+            reason="wrong",
         )
         
         assert rejected is True
-        assert self.kb.lookup("cisco", "ios", "unconfirmed-cmd", require_confirmed=False) is None
+        # E06: the row is retained, unconfirmed, with a REJECTED note.
+        row = self.kb.lookup("cisco", "ios", "unconfirmed-cmd", require_confirmed=False)
+        assert row is not None
+        assert row.admin_confirmed is False
+        assert (row.admin_notes or "").startswith("REJECTED:")
+        # Rejected knowledge is never auto-reused.
+        assert self.kb.lookup("cisco", "ios", "unconfirmed-cmd") is None
     
-    def test_cannot_reject_confirmed_mapping(self):
-        # Create a confirmed mapping
-        mapping = self.engine.confirm_mapping(
+    def test_reject_confirmed_mapping_unconfirms_it(self):
+        # An explicit REJECT is always allowed - including for a previously
+        # confirmed row - and downgrades it to unconfirmed.
+        self.engine.confirm_mapping(
             raw_syntax="confirmed-cmd",
             vendor="cisco",
             platform="ios",
             semantic_meaning="confirmed",
+            universal_model_path="management.ssh",
+            user_id="admin-1",
         )
         
-        # Reject should not work for confirmed
         rejected = self.engine.reject_mapping(
             raw_syntax="confirmed-cmd",
             vendor="cisco",
             platform="ios",
+            user_id="admin-2",
+            reason="misleading",
         )
         
-        assert rejected is False
-        assert self.kb.lookup("cisco", "ios", "confirmed-cmd") is not None
+        assert rejected is True
+        assert self.kb.lookup("cisco", "ios", "confirmed-cmd") is None
+        row = self.kb.lookup("cisco", "ios", "confirmed-cmd", require_confirmed=False)
+        assert row is not None and row.admin_confirmed is False
+    
+    def test_reject_unknown_syntax_is_false(self):
+        assert self.engine.reject_mapping(
+            raw_syntax="never-seen", vendor="cisco", platform="ios",
+            user_id="admin-1",
+        ) is False
     
     def test_get_hypothesis_from_kb(self):
         # Add to KB first
@@ -386,6 +479,8 @@ class TestAdaptiveLearning:
             vendor="cisco",
             platform="ios",
             semantic_meaning="Enables HTTP server",
+            universal_model_path="management.http",
+            user_id="admin-1",
         )
         
         async def run():
@@ -417,8 +512,10 @@ class TestAdaptiveLearning:
         asyncio.run(run())
     
     def test_stats(self):
-        self.engine.confirm_mapping("a", "cisco", "ios", "a")
-        self.engine.confirm_mapping("b", "cisco", "ios", "b")
+        self.engine.confirm_mapping("a", "cisco", "ios", "a",
+                                    universal_model_path="management.ssh", user_id="admin-1")
+        self.engine.confirm_mapping("b", "cisco", "ios", "b",
+                                    universal_model_path="management.ssh", user_id="admin-1")
         
         stats = self.engine.get_stats()
         assert stats["knowledge_base"]["total_mappings"] == 2
@@ -465,8 +562,9 @@ class TestEndToEndAdaptiveWorkflow:
             vendor="cisco",
             platform="ios",
             semantic_meaning="This command configures a test feature",
-            universal_model_path="management.test_feature",
+            universal_model_path="management.vty",
             admin_notes="Confirmed by admin after review",
+            user_id="admin-1",
         )
         
         assert mapping.admin_confirmed is True
