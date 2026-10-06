@@ -486,6 +486,40 @@ class FindingListResponse(BaseModel):
     meta: PaginationMeta
 
 
+# ============ Remediation Plan Schemas (plan-first workflow) ============
+
+class RemediationApproveRequest(BaseModel):
+    """Approve (confirm=true) or reject a plan awaiting approval.
+
+    params carries operator-supplied placeholder values. Secret values
+    are accepted transiently, validated, then discarded — they never
+    persist. No status field exists anywhere by design.
+    """
+    confirm: bool
+    params: Dict[str, Any] = {}
+    notes: str = ""
+
+
+class RemediationPlanResponse(BaseModel):
+    """Schema for remediation plan response (status is server-derived)."""
+    model_config = ConfigDict(from_attributes=True)
+
+    id: UUID
+    plan_id: str
+    finding_id: UUID
+    control_id: Optional[str] = None
+    status: str
+    plan: Dict[str, Any] = {}
+    configuration_id: Optional[UUID] = None
+    configuration_hash_before: Optional[str] = None
+    approved_by: Optional[UUID] = None
+    approved_at: Optional[datetime] = None
+    rejection_reason: Optional[str] = None
+    failure_info: Optional[Dict[str, Any]] = None
+    created_at: datetime
+    updated_at: datetime
+
+
 # ============ Training Schemas ============
 
 class TrainingMappingCreate(BaseModel):
@@ -629,6 +663,13 @@ class AuditTrailResponse(BaseModel):
     ip_address: Optional[str] = None
     user_agent: Optional[str] = None
     created_at: datetime
+    # Hash-chained ledger era (migration 009). OUTPUT-ONLY: no input
+    # schema carries these fields and no write route accepts them, so
+    # hashes are server-generated and read-only by construction.
+    # NULL explicitly means "pre-chain audit era".
+    seq: Optional[int] = None
+    previous_hash: Optional[str] = None
+    event_hash: Optional[str] = None
 
 
 class AuditTrailListResponse(BaseModel):
@@ -698,3 +739,12 @@ class BaselineNotConfiguredResponse(BaseModel):
     baseline_status: str = "NOT_CONFIGURED"
     company_baseline_available: bool = False
     evaluation_unavailable: bool = True
+
+
+# ============ Health Schemas ============
+
+class HealthResponse(BaseModel):
+    """Schema for health check response"""
+    status: str
+    version: str
+    service: str

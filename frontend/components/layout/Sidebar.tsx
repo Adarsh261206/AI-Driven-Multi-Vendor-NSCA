@@ -10,6 +10,7 @@ import {
   ListChecks,
   Network,
   PlayCircle,
+  ScrollText,
   Settings,
   ShieldCheck,
   LogOut,
@@ -33,6 +34,7 @@ const NAV_SECTIONS: { label: string; items: { href: string; label: string; icon:
     items: [
       { href: '/frameworks', label: 'Frameworks', icon: <BookOpenCheck className="h-4 w-4" strokeWidth={1.75} /> },
       { href: '/reports', label: 'Reports', icon: <FileText className="h-4 w-4" strokeWidth={1.75} /> },
+      { href: '/audit-log', label: 'Audit Ledger', icon: <ScrollText className="h-4 w-4" strokeWidth={1.75} /> },
       { href: '/training', label: 'AI Training', icon: <BrainCircuit className="h-4 w-4" strokeWidth={1.75} /> },
     ],
   },

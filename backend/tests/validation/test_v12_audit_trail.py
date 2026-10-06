@@ -1422,3 +1422,98 @@ async def test_v12_40_finding_linkage_round_trip(recorder, trail_db):
          "E12: the entry reconstructs who did what to which finding",
          "")
     assert ok
+
+
+async def test_v12_41_date_range_filters(recorder, trail_db):
+    import datetime as _dt
+
+    session, admin, _, tracked = trail_db
+    from app.models import AuditAction
+    from app.repositories.audit_trail import AuditTrailRepository
+
+    repo = AuditTrailRepository(session)
+    marker = f"e12-{uuid.uuid4().hex[:8]}"
+    for i in range(3):
+        e = await repo.log(action=AuditAction.AUDIT_STARTED,
+                           entity_type="audit", user_id=str(admin.id),
+                           details={"e12": marker, "i": i})
+        tracked.append(e.id)
+    await session.flush()
+    now = _dt.datetime.utcnow()
+    wide_from = (now - _dt.timedelta(hours=1)).isoformat()
+    wide_to = (now + _dt.timedelta(hours=1)).isoformat()
+    in_range = await repo.get_entries(user_id=str(admin.id),
+                                      from_date=wide_from, to_date=wide_to)
+    ours_in = [r for r in in_range
+               if (r.details or {}).get("e12") == marker]
+    future = await repo.get_entries(
+        user_id=str(admin.id),
+        from_date=(now + _dt.timedelta(hours=1)).isoformat(),
+        to_date=(now + _dt.timedelta(hours=2)).isoformat())
+    ours_future = [r for r in future
+                   if (r.details or {}).get("e12") == marker]
+    ancient = await repo.get_entries(
+        user_id=str(admin.id),
+        from_date="2020-01-01T00:00:00", to_date="2020-01-02T00:00:00")
+    ours_ancient = [r for r in ancient
+                    if (r.details or {}).get("e12") == marker]
+    n_list = len(await repo.get_entries(
+        user_id=str(admin.id), from_date=wide_from, to_date=wide_to))
+    n_count = await repo.count_entries(
+        user_id=str(admin.id), from_date=wide_from, to_date=wide_to)
+    ok = (len(ours_in) == 3 and not ours_future and not ours_ancient
+          and n_list == n_count and n_list >= 3)
+    _row(recorder, "V12-41", "D",
+         "half-open UTC date bounds return exact sets and count agrees "
+         "with list (wide window hits, future/ancient windows miss)",
+         "3 fresh rows; ±1h window vs future vs 2020 windows",
+         "3 hits, 0 + 0 misses, count == len",
+         f"in={len(ours_in)} future={len(ours_future)} "
+         f"ancient={len(ours_ancient)} count={n_count}",
+         ok, "CONFIRMED BEHAVIOR",
+         "ledger date-range filters ([from, to) UTC)",
+         "")
+    assert ok
+
+
+async def test_v12_42_malformed_dates_are_typed(recorder, trail_db):
+    session, admin, _, _ = trail_db
+    from types import SimpleNamespace
+
+    from fastapi import HTTPException
+
+    from app.api.v1.audit_trail import list_trail_entries
+    from app.repositories.audit_trail import (
+        AuditTrailError, AuditTrailRepository)
+
+    repo = AuditTrailRepository(None)  # validation precedes session use
+    typed = 0
+    for fn in (lambda: repo.get_entries(from_date="not-a-date"),
+               lambda: repo.get_entries(to_date="2026-13-99"),
+               lambda: repo.get_entries(from_date=12345)):
+        try:
+            await fn()
+        except AuditTrailError:
+            typed += 1
+    me = SimpleNamespace(id=admin.id, role="admin")
+    http_422 = 0
+    for kw in ({"from_date": "yesterday"}, {"to_date": "zzz"}):
+        try:
+            await list_trail_entries(
+                page=1, per_page=20, entity_type=None, entity_id=None,
+                action=None, from_date=kw.get("from_date"),
+                to_date=kw.get("to_date"), db=session, current_user=me)
+        except HTTPException as e:
+            if e.status_code == 422:
+                http_422 += 1
+    ok = typed == 3 and http_422 == 2
+    _row(recorder, "V12-42", "D",
+         "malformed date filters raise AuditTrailError at the repo and "
+         "surface as HTTP 422 at the endpoint (never 500)",
+         "3 bad repo filters + 2 bad endpoint filters",
+         "3/3 typed, 2/2 are 422",
+         f"typed={typed}/3 http422={http_422}/2",
+         ok, "CONFIRMED BEHAVIOR",
+         "ledger date validation (same typed-error convention as UUIDs)",
+         "")
+    assert ok

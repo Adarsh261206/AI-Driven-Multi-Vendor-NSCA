@@ -1,0 +1,15 @@
+__pycache__/
+*.py[cod]
+venv/
+env/
+.env
+.pytest_cache/
+.coverage
+htmlcov/
+tests/
+artifacts/
+scripts/engine_validation/
+.git
+.gitignore
+*.md
+.DS_Store

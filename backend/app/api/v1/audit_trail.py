@@ -8,6 +8,7 @@ errors), never 500.
 """
 
 from fastapi import APIRouter, HTTPException, Depends, Query
+from fastapi.params import Query as _QueryDefault
 from sqlalchemy.ext.asyncio import AsyncSession
 from typing import Optional
 
@@ -41,15 +42,30 @@ async def list_trail_entries(
     entity_type: Optional[str] = Query(None),
     entity_id: Optional[str] = Query(None),
     action: Optional[str] = Query(None),
+    from_date: Optional[str] = Query(
+        None, description="ISO-8601 inclusive lower bound (UTC)"),
+    to_date: Optional[str] = Query(
+        None, description="ISO-8601 exclusive upper bound (UTC)"),
     db: AsyncSession = Depends(get_db),
     current_user: User = Depends(get_current_user),
 ):
     """Query audit-trail records (newest first).
 
-    Filters: entity_type, entity_id (UUID), action (AuditAction value).
+    Filters: entity_type, entity_id (UUID), action (AuditAction value),
+    from_date / to_date (ISO-8601, half-open UTC interval). Malformed
+    values are 422, never 500.
     Scoping: non-admin callers are restricted to their own user_id;
     admins see every entry.
     """
+    # Direct (non-HTTP) callers that omit an optional filter receive the
+    # raw Query(...) default object instead of None (FastAPI only
+    # resolves defaults over HTTP). Normalize those to None so programmatic
+    # calls behave like "filter absent". Real values pass through to the
+    # repository validators untouched.
+    if isinstance(from_date, _QueryDefault):
+        from_date = None
+    if isinstance(to_date, _QueryDefault):
+        to_date = None
     scoped_user: Optional[str] = None
     if current_user.role != UserRole.ADMIN.value:
         scoped_user = str(current_user.id)
@@ -61,12 +77,16 @@ async def list_trail_entries(
             entity_id=entity_id,
             user_id=scoped_user,
             action=action,
+            from_date=from_date,
+            to_date=to_date,
         )
         entries = await repo.get_entries(
             entity_type=entity_type,
             entity_id=entity_id,
             user_id=scoped_user,
             action=action,
+            from_date=from_date,
+            to_date=to_date,
             limit=per_page,
             offset=(page - 1) * per_page,
         )

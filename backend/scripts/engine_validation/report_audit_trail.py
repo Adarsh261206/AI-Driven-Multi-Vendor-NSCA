@@ -40,7 +40,7 @@ HYPOTHESES = [
      ["V12-11", "V12-12", "V12-13", "V12-14"]),
     ("H12-04", "trail queries are inexact, unordered, unclamped, or "
                "crash on malformed filters",
-     ["V12-15", "V12-16", "V12-17", "V12-18"]),
+     ["V12-15", "V12-16", "V12-17", "V12-18", "V12-41", "V12-42"]),
     ("H12-05", "lifecycle transitions, configuration changes and KB "
                "version events leave no trail",
      ["V12-19", "V12-20", "V12-21", "V12-22"]),

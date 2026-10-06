@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from sqlalchemy import Column, String, Boolean, DateTime, ForeignKey, Text, Integer, Float, Index, Numeric, UniqueConstraint, text
+from sqlalchemy import Column, String, Boolean, DateTime, ForeignKey, Text, Integer, Float, Index, Numeric, UniqueConstraint, BigInteger, text
 from sqlalchemy.dialects.postgresql import UUID, JSONB
 from sqlalchemy.orm import relationship, validates
 from datetime import datetime
@@ -45,6 +45,14 @@ class FindingStatus(str, enum.Enum):
 
 
 class AuditAction(str, enum.Enum):
+    # User sessions (observability events; best-effort at the call sites
+    # so a trail hiccup can never lock users out)
+    USER_LOGIN = "user_login"
+    USER_LOGOUT = "user_logout"
+
+    # Reports
+    REPORT_GENERATED = "report_generated"
+
     # Audit lifecycle
     AUDIT_CREATED = "audit_created"
     AUDIT_STARTED = "audit_started"
@@ -77,6 +85,20 @@ class AuditAction(str, enum.Enum):
     
     # Training
     TRAINING_COMPLETED = "training_completed"
+
+    # Remediation plans (plan-first workflow; backend execution disabled)
+    REMEDIATION_PLAN_CREATED = "remediation_plan_created"
+    REMEDIATION_PLAN_VALIDATED = "remediation_plan_validated"
+    REMEDIATION_APPROVAL_REQUESTED = "remediation_approval_requested"
+    REMEDIATION_APPROVED = "remediation_approved"
+    REMEDIATION_REJECTED = "remediation_rejected"
+    REMEDIATION_APPLIED = "remediation_applied"
+    REMEDIATION_FAILED = "remediation_failed"
+    REMEDIATION_VERIFIED = "remediation_verified"
+    REMEDIATION_ROLLED_BACK = "remediation_rolled_back"
+    REMEDIATION_SCRIPT_GENERATED = "remediation_script_generated"
+    REMEDIATION_ROLLBACK_SCRIPT_GENERATED = (
+        "remediation_rollback_script_generated")
 
 
 class User(Base):
@@ -366,6 +388,7 @@ class Finding(Base):
     # Relationships
     audit = relationship("Audit", back_populates="findings")
     compliance_result = relationship("ComplianceResult", back_populates="findings")
+    remediation_plans = relationship("RemediationPlanRow", back_populates="finding", cascade="all, delete-orphan")
 
     # E08 F9: length + NUL validation before any DB write, so oversized or
     # hostile strings raise a typed ValueError instead of a raw asyncpg
@@ -450,6 +473,13 @@ class AuditTrail(Base):
     __tablename__ = "audit_trail"
 
     id = Column(UUID(as_uuid=True), primary_key=True, default=uuid4)
+    # Hash-chained ledger era (migration 009): stable ordering + chain
+    # links. NULL hashes explicitly mean "pre-chain audit era" and are
+    # never backfilled.
+    seq = Column(BigInteger, nullable=False,
+                 server_default=text("nextval('audit_trail_seq_seq')"))
+    previous_hash = Column(String(64), nullable=True)
+    event_hash = Column(String(64), nullable=True)
     entity_type = Column(String(50), nullable=False)
     entity_id = Column(UUID(as_uuid=True), nullable=True)
     action = Column(String(50), nullable=False)
@@ -458,6 +488,10 @@ class AuditTrail(Base):
     ip_address = Column(String(45), nullable=True)
     user_agent = Column(String(500), nullable=True)
     created_at = Column(DateTime, nullable=False, default=datetime.utcnow)
+
+    __table_args__ = (
+        UniqueConstraint("seq", name="uq_audit_trail_seq"),
+    )
 
 
 class AuditExecution(Base):
@@ -542,3 +576,36 @@ class AuditBatch(Base):
 
     # Relationships
     user = relationship("User", back_populates="audit_batches")
+
+
+class RemediationPlanRow(Base):
+    """Persisted remediation-plan lifecycle (plan-first workflow).
+
+    The executable lifecycle lives here — never inside
+    Finding.remediation (advisory contract, untouched) and never
+    derived per request. Secrets are never stored on this row: only
+    parameter descriptors (name/type/supplied) and resolved PLAIN
+    values inside plan_json.commands.
+    """
+
+    __tablename__ = "remediation_plans"
+
+    id = Column(UUID(as_uuid=True), primary_key=True, default=uuid4)
+    plan_id = Column(String(32), nullable=False, unique=True, index=True)
+    finding_id = Column(UUID(as_uuid=True), ForeignKey("findings.id", ondelete="CASCADE"), nullable=False, index=True)
+    control_id = Column(String(100), nullable=True)
+    # Strict machine state; transitions enforced in service layer, never
+    # accepted from API request bodies.
+    status = Column(String(32), nullable=False, default="draft", index=True)
+    plan_json = Column(JSONB, nullable=False)
+    configuration_id = Column(UUID(as_uuid=True), nullable=True)
+    configuration_hash_before = Column(String(64), nullable=True)
+    approved_by = Column(UUID(as_uuid=True), nullable=True)
+    approved_at = Column(DateTime, nullable=True)
+    rejection_reason = Column(Text, nullable=True)
+    failure_info = Column(JSONB, nullable=True)
+    created_at = Column(DateTime, nullable=False, default=datetime.utcnow)
+    updated_at = Column(DateTime, nullable=False, default=datetime.utcnow, onupdate=datetime.utcnow)
+
+    # Relationships
+    finding = relationship("Finding", back_populates="remediation_plans")

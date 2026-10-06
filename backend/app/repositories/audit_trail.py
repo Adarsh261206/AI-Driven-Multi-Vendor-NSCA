@@ -23,12 +23,14 @@ from __future__ import annotations
 
 import datetime as _dt
 import enum
+import hashlib
+import json
 import math
 import uuid
 from decimal import Decimal
 from typing import Optional, Any
 
-from sqlalchemy import select
+from sqlalchemy import select, text
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.models import AuditTrail, AuditAction
@@ -68,6 +70,40 @@ MAPPING_ACTIONS = frozenset({
 })
 
 _SANITIZE_MAX_DEPTH = 10
+
+#: Transaction-scoped advisory-lock key serializing chain-head reads
+#: (fixed arbitrary 63-bit constant; one key guards the whole ledger).
+_CHAIN_ADVISORY_KEY = 0x0A1D17
+
+
+def canonical_event(action: AuditAction, entity_type: str,
+                    entity_id: Optional[uuid.UUID],
+                    user_id: Optional[uuid.UUID], details: dict,
+                    created_at: _dt.datetime) -> str:
+    """Deterministic serialization of a trail event for hashing.
+
+    Fixed top-level key order (action, entity_type, entity_id, user_id,
+    details, created_at), sanitized details, stored timestamp, compact
+    separators, sorted keys throughout — the same event always yields
+    the same bytes. Hashing lives here, on the backend only.
+    """
+    action = normalize_action(action)
+    payload = {
+        "action": action.value,
+        "entity_type": entity_type,
+        "entity_id": str(entity_id) if entity_id is not None else "",
+        "user_id": str(user_id) if user_id is not None else "",
+        "details": details,
+        "created_at": created_at.isoformat(),
+    }
+    return json.dumps(payload, sort_keys=True, separators=(",", ":"),
+                      ensure_ascii=False)
+
+
+def chain_hash(canonical: str, previous_hash: str) -> str:
+    """SHA-256 over canonical event bytes + previous head hash."""
+    return hashlib.sha256(
+        (canonical + previous_hash).encode("utf-8")).hexdigest()
 
 
 def normalize_action(action: Any) -> AuditAction:
@@ -154,13 +190,48 @@ def _check_text(name: str, value: Any, *, allow_none: bool,
     return value
 
 
+def _parse_date_bound(value: Any, name: str) -> Optional[_dt.datetime]:
+    """Coerce a date filter to a naive UTC datetime (typed on misuse).
+
+    Accepts datetime objects or ISO-8601 strings ("2026-10-04",
+    "2026-10-04T15:30:00"). "" / None means unbounded. Aware inputs
+    are converted to UTC-naive to match the stored naive timestamps.
+    """
+    if value is None:
+        return None
+    if isinstance(value, str):
+        if not value.strip():
+            return None
+        try:
+            parsed = _dt.datetime.fromisoformat(value.strip())
+        except ValueError:
+            raise AuditTrailError(
+                f"{name} must be an ISO-8601 datetime, got {value!r}")
+        value = parsed
+    if isinstance(value, _dt.date) and not isinstance(
+            value, _dt.datetime):
+        value = _dt.datetime(value.year, value.month, value.day)
+    if not isinstance(value, _dt.datetime):
+        raise AuditTrailError(
+            f"{name} must be an ISO-8601 datetime, got {value!r}")
+    if value.tzinfo is not None:
+        value = value.astimezone(_dt.timezone.utc).replace(tzinfo=None)
+    return value
+
+
 def _filter_conditions(
     entity_type: Optional[str],
     entity_id: Any,
     user_id: Any,
     action: Any,
+    from_date: Any = None,
+    to_date: Any = None,
 ) -> list:
-    """Single source of truth for trail filter semantics (list + count)."""
+    """Single source of truth for trail filter semantics (list + count).
+
+    Date bounds are half-open ([from_date, to_date)) over created_at in
+    UTC — a full calendar day is [day 00:00, next day 00:00).
+    """
     conditions = []
     if entity_type:
         conditions.append(AuditTrail.entity_type == entity_type)
@@ -173,6 +244,12 @@ def _filter_conditions(
     if action is not None:
         conditions.append(
             AuditTrail.action == normalize_action(action).value)
+    start = _parse_date_bound(from_date, "from_date")
+    if start is not None:
+        conditions.append(AuditTrail.created_at >= start)
+    end = _parse_date_bound(to_date, "to_date")
+    if end is not None:
+        conditions.append(AuditTrail.created_at < end)
     return conditions
 
 
@@ -209,22 +286,54 @@ class AuditTrailRepository:
             user_agent: Client user agent (truncated to 500 chars)
 
         Returns:
-            Created AuditTrail entry
+            Created AuditTrail entry (hash-chained: previous_hash links
+            the ledger head, event_hash commits to the canonical event;
+            the first chained event is genesis with previous_hash == "").
 
         Raises:
             AuditTrailError: on any contract violation (never a bare
                 uuid/DB error).
         """
+        action_v = normalize_action(action)
+        entity_type_v = self._checked_entity_type(entity_type)
+        entity_id_v = normalize_uuid(entity_id, "entity_id")
+        user_id_v = normalize_uuid(user_id, "user_id")
+        details_v = sanitize_details(details)
+        created_at_v = _dt.datetime.utcnow()
+
+        # Hash-chained ledger era (migration 009): serialize chain-head
+        # reads with a transaction-scoped advisory lock so two concurrent
+        # log() calls can never read the same head and fork the chain.
+        # The lock releases automatically on commit/rollback — a crashed
+        # worker can never wedge the ledger. No application sleep/retry.
+        await self.db.execute(
+            text("SELECT pg_advisory_xact_lock(:key)"),
+            {"key": _CHAIN_ADVISORY_KEY})
+        head = (await self.db.execute(
+            select(AuditTrail.event_hash)
+            .order_by(AuditTrail.seq.desc())
+            .limit(1))).scalar_one_or_none()
+        # Legacy pre-chain rows carry NULL hashes and are skipped by the
+        # head read only when no chained row exists yet: the first row
+        # written after migration 009 is genesis (""). History is never
+        # rewritten to look chained.
+        previous_hash = head if head else ""
+        canonical = canonical_event(action_v, entity_type_v, entity_id_v,
+                                    user_id_v, details_v, created_at_v)
+        event_hash = chain_hash(canonical, previous_hash)
+
         entry = AuditTrail(
             id=uuid.uuid4(),
-            action=normalize_action(action),
-            entity_type=self._checked_entity_type(entity_type),
-            entity_id=normalize_uuid(entity_id, "entity_id"),
-            user_id=normalize_uuid(user_id, "user_id"),
-            details=sanitize_details(details),
+            action=action_v,
+            entity_type=entity_type_v,
+            entity_id=entity_id_v,
+            user_id=user_id_v,
+            details=details_v,
             ip_address=self._truncated_ip(ip_address),
             user_agent=self._truncated_ua(user_agent),
-            created_at=_dt.datetime.utcnow(),
+            created_at=created_at_v,
+            previous_hash=previous_hash,
+            event_hash=event_hash,
         )
 
         self.db.add(entry)
@@ -452,17 +561,20 @@ class AuditTrailRepository:
         entity_id: Optional[str] = None,
         user_id: Optional[str] = None,
         action: Optional[Any] = None,
+        from_date: Optional[Any] = None,
+        to_date: Optional[Any] = None,
         limit: int = 100,
         offset: int = 0,
     ) -> list[AuditTrail]:
         """Get audit trail entries (newest first).
 
-        Malformed UUID filters raise AuditTrailError (never ValueError);
-        limit is clamped to [0, MAX_TRAIL_PAGE] and offset to >= 0 so
-        hostile pagination cannot 500 or full-scan unbounded.
+        Malformed UUID/date filters raise AuditTrailError (never
+        ValueError); limit is clamped to [0, MAX_TRAIL_PAGE] and offset
+        to >= 0 so hostile pagination cannot 500 or full-scan unbounded.
+        Date bounds are half-open UTC ([from_date, to_date)).
         """
         conditions = _filter_conditions(entity_type, entity_id, user_id,
-                                        action)
+                                        action, from_date, to_date)
 
         try:
             limit = int(limit)
@@ -494,12 +606,14 @@ class AuditTrailRepository:
         entity_id: Optional[str] = None,
         user_id: Optional[str] = None,
         action: Optional[Any] = None,
+        from_date: Optional[Any] = None,
+        to_date: Optional[Any] = None,
     ) -> int:
         """Count entries for the same filter set get_entries serves."""
         from sqlalchemy import and_, func
 
         conditions = _filter_conditions(entity_type, entity_id, user_id,
-                                        action)
+                                        action, from_date, to_date)
         stmt = select(func.count(AuditTrail.id))
         if conditions:
             stmt = stmt.where(and_(*conditions))

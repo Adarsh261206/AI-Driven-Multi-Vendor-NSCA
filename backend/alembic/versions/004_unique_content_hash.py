@@ -11,6 +11,7 @@ Revises: 003
 Create Date: 2026-09-26
 """
 from alembic import op
+import sqlalchemy as sa
 
 revision = '004'
 down_revision = '003'

@@ -1,0 +1,24 @@
+# Normalize line endings to LF on commit (stops CRLF/LF phantom diffs
+# between Windows and Linux checkouts). Binaries stay untouched.
+* text=auto eol=lf
+*.py text eol=lf
+*.js text eol=lf
+*.jsx text eol=lf
+*.ts text eol=lf
+*.tsx text eol=lf
+*.json text eol=lf
+*.md text eol=lf
+*.txt text eol=lf
+*.cfg text eol=lf
+*.conf text eol=lf
+*.yml text eol=lf
+*.yaml text eol=lf
+*.css text eol=lf
+*.html text eol=lf
+*.example text eol=lf
+*.joblib binary
+*.pkl binary
+*.bin binary
+*.pdf binary
+*.png binary
+*.jpg binary

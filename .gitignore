@@ -10,8 +10,8 @@ dist/
 downloads/
 eggs/
 .eggs/
-lib/
-lib64/
+/lib/
+/lib64/
 parts/
 sdist/
 var/
@@ -36,6 +36,13 @@ ENV/
 .env
 .env.local
 .env.production
+
+# Secrets / Keys (network device creds — never commit)
+*.pem
+*.key
+*.p12
+*.pfx
+id_rsa*
 
 # Database
 *.db
@@ -72,11 +79,9 @@ frontend/.env.production.local
 # Backend
 backend/.env
 backend/venv/
-backend/*.pyc
+backend/artifacts/
 
 # Build
-dist/
-build/
 *.tar.gz
 *.zip
 
@@ -84,6 +89,6 @@ build/
 reports/*.pdf
 
 # CIS Benchmark PDFs (copyrighted - keep private)
-docsss/
+docs/*.pdf
 private_resources/
 .opencode/

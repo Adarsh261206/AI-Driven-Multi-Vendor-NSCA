@@ -57,6 +57,8 @@ export const useAuthStore = create<AuthState>((set) => ({
   },
 
   logout: () => {
+    // Fire-and-forget USER_LOGOUT record; sign-out proceeds regardless.
+    void authAPI.logout().catch(() => undefined);
     localStorage.removeItem('access_token');
     localStorage.removeItem('refresh_token');
     set({ user: null, error: null });

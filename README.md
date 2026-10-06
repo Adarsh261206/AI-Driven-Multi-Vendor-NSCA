@@ -69,7 +69,7 @@ A full Architecture Document with verified diagrams is at **[docs/ARCHITECTURE.m
 │   │   ├── models/          # SQLAlchemy models
 │   │   ├── tasks.py         # Celery worker entry
 │   │   └── celery_app.py
-│   ├── alembic/versions/    # migrations 001–014
+│   ├── alembic/versions/    # migrations 001–016 (single head)
 │   ├── tests/               # 1847+ tests
 │   └── requirements.txt
 ├── frontend/
@@ -146,8 +146,13 @@ cp .env.example .env
 #    - REDIS_URL=redis://localhost:6379
 #    - (optional) OPENAI_API_KEY=sk-...   # without it, a built-in provider is used
 
-# 4. Run database migrations
+# 4. Run database migrations (single head: 016)
 alembic upgrade head
+
+# 5. (Optional, recommended for judges) Seed a demo admin in one command
+python scripts/seed_demo.py
+#    Signs in at http://localhost:3000 with:
+#    admin@configshield.local / Admin12345
 ```
 
 ### Step 4 — Start the Celery Worker
@@ -204,6 +209,7 @@ Open **http://localhost:3000** and create your account:
   ```
 - First run: the **Company Baseline onboarding** wizard appears — configure your org-level controls (or skip).
 - Create a device → upload its configuration (bound to the device) → click **Run Audit** → watch the live pipeline → open the report.
+- Fastest demo: upload `demo-configs/cisco-good.cfg` (or `juniper-good.conf`) and run an audit — findings, remediation plans, and the hash-chained audit ledger (`/audit-log`) populate automatically.
 
 ### What's running where (summary)
 

@@ -1,13 +1,14 @@
-from fastapi import APIRouter, HTTPException, Query, Depends
+from fastapi import APIRouter, HTTPException, Query, status, Depends
 from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy import select
-from typing import Optional
+from sqlalchemy import select, func
+from typing import List, Optional
 from uuid import UUID
 
 from app.database import get_db
 from app.models import User, Finding, Audit
-from app.schemas import FindingResponse, FindingStatusUpdate, FindingListResponse, FindingStatus, PaginationMeta
-from app.security.auth import get_current_user
+from app.schemas import FindingResponse, FindingStatusUpdate, FindingListResponse, FindingStatus, PaginationMeta, RemediationApproveRequest, RemediationPlanResponse
+from app.security.auth import get_current_user, require_auditor
+from app.engines.remediation.models import RemediationPlanError
 
 router = APIRouter()
 
@@ -147,3 +148,202 @@ async def update_finding_status(
     await db.refresh(finding)
 
     return _to_finding_response(finding)
+
+
+# ---------------------------------------------------------------------------
+# Remediation plans (plan-first workflow; backend execution disabled)
+# ---------------------------------------------------------------------------
+
+
+def _plan_error(exc: RemediationPlanError) -> HTTPException:
+    message = str(exc)
+    if message.startswith("unknown plan") or message.startswith(
+            "unknown finding"):
+        return HTTPException(status_code=404, detail=message)
+    return HTTPException(status_code=422, detail=message)
+
+
+def _to_plan_response(row) -> RemediationPlanResponse:
+    return RemediationPlanResponse(
+        id=row.id,
+        plan_id=row.plan_id,
+        finding_id=row.finding_id,
+        control_id=row.control_id,
+        status=row.status,
+        plan=row.plan_json or {},
+        configuration_id=row.configuration_id,
+        configuration_hash_before=row.configuration_hash_before,
+        approved_by=row.approved_by,
+        approved_at=row.approved_at,
+        rejection_reason=row.rejection_reason,
+        failure_info=row.failure_info,
+        created_at=row.created_at,
+        updated_at=row.updated_at,
+    )
+
+
+async def _owned_finding(finding_id: UUID, db: AsyncSession,
+                         current_user: User):
+    """Fetch the finding, scoped to the caller's audits (404 otherwise)."""
+    result = await db.execute(
+        select(Finding).where(Finding.id == finding_id)
+    )
+    finding = result.scalar_one_or_none()
+    if not finding:
+        raise HTTPException(status_code=404, detail="Finding not found")
+    audit_result = await db.execute(
+        select(Audit).where(
+            Audit.id == finding.audit_id,
+            Audit.user_id == current_user.id,
+        )
+    )
+    if audit_result.scalar_one_or_none() is None:
+        raise HTTPException(status_code=404, detail="Finding not found")
+    return finding
+
+
+@router.post("/{finding_id}/remediation/plan",
+             response_model=RemediationPlanResponse)
+async def create_remediation_plan(
+    finding_id: UUID,
+    db: AsyncSession = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+):
+    """Generate a dry-run remediation plan (never touches a device)."""
+    from app.engines.remediation import service as plan_service
+
+    finding = await _owned_finding(finding_id, db, current_user)
+    try:
+        row, _ = await plan_service.create_plan(
+            db, finding, str(current_user.id))
+        await db.commit()
+        await db.refresh(row)
+    except RemediationPlanError as exc:
+        await db.rollback()
+        raise _plan_error(exc) from exc
+    return _to_plan_response(row)
+
+
+@router.post("/{finding_id}/remediation/parameters",
+             response_model=RemediationPlanResponse)
+async def resolve_remediation_parameters(
+    finding_id: UUID,
+    body: RemediationApproveRequest,
+    db: AsyncSession = Depends(get_db),
+    current_user: User = Depends(require_auditor),
+):
+    """Parameter Resolution stage: supply placeholders, re-evaluate.
+
+    Secrets are validated then discarded (descriptor flips to
+    supplied/redacted); plain values substitute into stored commands.
+    A plan that becomes safe advances to awaiting approval. Partial
+    supply is allowed.
+    """
+    from app.engines.remediation import service as plan_service
+
+    finding = await _owned_finding(finding_id, db, current_user)
+    try:
+        latest = await plan_service.latest_plan_for_finding(
+            db, str(finding.id))
+        if latest is None:
+            raise RemediationPlanError("unknown plan for this finding")
+        row, _ = await plan_service.resolve_plan_params(
+            db, latest.plan_id, str(current_user.id),
+            params=body.params or {})
+        await db.commit()
+        await db.refresh(row)
+    except RemediationPlanError as exc:
+        await db.rollback()
+        raise _plan_error(exc) from exc
+    return _to_plan_response(row)
+
+
+@router.post("/{finding_id}/remediation/approve",
+             response_model=RemediationPlanResponse)
+async def approve_remediation_plan(
+    finding_id: UUID,
+    body: RemediationApproveRequest,
+    db: AsyncSession = Depends(get_db),
+    current_user: User = Depends(require_auditor),
+):
+    """Approve (confirm=true) or reject a plan awaiting approval."""
+    from app.engines.remediation import service as plan_service
+
+    finding = await _owned_finding(finding_id, db, current_user)
+    try:
+        latest = await plan_service.latest_plan_for_finding(
+            db, str(finding.id))
+        if latest is None:
+            raise RemediationPlanError("unknown plan for this finding")
+        row, _ = await plan_service.approve_plan(
+            db, latest.plan_id, str(current_user.id),
+            confirm=bool(body.confirm), params=body.params or {},
+            notes=body.notes or "")
+        await db.commit()
+        await db.refresh(row)
+    except RemediationPlanError as exc:
+        await db.rollback()
+        raise _plan_error(exc) from exc
+    return _to_plan_response(row)
+
+
+@router.post("/{finding_id}/remediation/script")
+async def download_remediation_script(
+    finding_id: UUID,
+    db: AsyncSession = Depends(get_db),
+    current_user: User = Depends(require_auditor),
+):
+    """Download the generated Python script for an approved plan."""
+    from fastapi.responses import Response
+
+    from app.engines.remediation import service as plan_service
+
+    finding = await _owned_finding(finding_id, db, current_user)
+    try:
+        latest = await plan_service.latest_plan_for_finding(
+            db, str(finding.id))
+        if latest is None:
+            raise RemediationPlanError("unknown plan for this finding")
+        filename, source, _ = await plan_service.generate_script_artifact(
+            db, latest.plan_id, str(current_user.id))
+        await db.commit()
+    except RemediationPlanError as exc:
+        await db.rollback()
+        raise _plan_error(exc) from exc
+    return Response(
+        content=source,
+        media_type="text/x-python",
+        headers={"Content-Disposition":
+                 f'attachment; filename="{filename}"'},
+    )
+
+
+@router.post("/{finding_id}/remediation/rollback")
+async def download_rollback_script(
+    finding_id: UUID,
+    db: AsyncSession = Depends(get_db),
+    current_user: User = Depends(require_auditor),
+):
+    """Download the rollback script (only when a safe rollback exists)."""
+    from fastapi.responses import Response
+
+    from app.engines.remediation import service as plan_service
+
+    finding = await _owned_finding(finding_id, db, current_user)
+    try:
+        latest = await plan_service.latest_plan_for_finding(
+            db, str(finding.id))
+        if latest is None:
+            raise RemediationPlanError("unknown plan for this finding")
+        filename, source, _ = await plan_service.generate_rollback_artifact(
+            db, latest.plan_id, str(current_user.id))
+        await db.commit()
+    except RemediationPlanError as exc:
+        await db.rollback()
+        raise _plan_error(exc) from exc
+    return Response(
+        content=source,
+        media_type="text/x-python",
+        headers={"Content-Disposition":
+                 f'attachment; filename="{filename}"'},
+    )

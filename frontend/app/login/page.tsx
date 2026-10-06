@@ -10,7 +10,7 @@ import { Field, Input } from '@/components/ui/Field';
 
 export default function LoginPage() {
   return (
-    <Suspense fallback={<div className="flex min-h-screen items-center justify-center text-sm text-ink-500">Loading…</div>}>
+    <Suspense fallback={<div className="flex min-h-screen items-center justify-center text-sm text-black">Loading…</div>}>
       <LoginForm />
     </Suspense>
   );
@@ -52,18 +52,18 @@ function LoginForm() {
             <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-brand-600 text-white shadow-odoo">
               <ShieldCheck className="h-5 w-5" strokeWidth={2} />
             </div>
-            <p className="text-lg font-bold tracking-tight text-ink-100">ConfigShield</p>
+            <p className="text-lg font-bold tracking-tight text-black">ConfigShield</p>
           </div>
         </div>
 
         <div className="space-y-12">
           <div>
-            <h1 className="text-4xl font-extrabold leading-tight tracking-tight text-ink-100">
+            <h1 className="text-4xl font-extrabold leading-tight tracking-tight text-black">
               AI-driven security compliance
               <br />
               for multi-vendor networks.
             </h1>
-            <p className="mt-4 max-w-md text-sm leading-relaxed text-ink-300">
+            <p className="mt-4 max-w-md text-sm leading-relaxed text-black">
               Deterministic benchmarks, normalized security model and Human-in-the-Loop learning — built for enterprise governance.
             </p>
           </div>
@@ -91,15 +91,15 @@ function LoginForm() {
                   {f.icon}
                 </div>
                 <div>
-                  <p className="text-sm font-semibold text-ink-100">{f.title}</p>
-                  <p className="mt-1.5 text-sm leading-relaxed text-ink-300">{f.body}</p>
+                  <p className="text-sm font-semibold text-black">{f.title}</p>
+                  <p className="mt-1.5 text-sm leading-relaxed text-black">{f.body}</p>
                 </div>
               </div>
             ))}
           </div>
         </div>
 
-        <p className="text-xs text-ink-400">
+        <p className="text-xs text-black">
           SIH 2026 · Problem 26155 · NTRO — Blockchain &amp; Cybersecurity
         </p>
       </div>
@@ -112,16 +112,16 @@ function LoginForm() {
             <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-brand-600 text-white shadow-odoo">
               <ShieldCheck className="h-4 w-4" strokeWidth={2} />
             </div>
-            <p className="text-sm font-bold tracking-tight text-ink-100">ConfigShield</p>
+            <p className="text-sm font-bold tracking-tight text-black">ConfigShield</p>
           </div>
 
           <div className="card overflow-hidden">
             <div className="px-8 py-8">
               <div>
-                <h2 className="text-2xl font-extrabold tracking-tight text-ink-100">
+                <h2 className="text-2xl font-extrabold tracking-tight text-black">
                   {mode === 'login' ? 'Sign in' : 'Create account'}
                 </h2>
-                <p className="mt-2 text-sm leading-relaxed text-ink-300">
+                <p className="mt-2 text-sm leading-relaxed text-black">
                   {mode === 'login'
                     ? 'Welcome back — access the compliance console.'
                     : 'Register to start auditing network configurations.'}
@@ -147,9 +147,9 @@ function LoginForm() {
               <form onSubmit={submit} className="mt-8 space-y-5">
                 {mode === 'register' && (
                   <div>
-                    <label className="label">Full name</label>
+                    <label className="label !text-black">Full name</label>
                     <input
-                      className="input"
+                      className="input !text-black placeholder:!text-black"
                       value={fullName}
                       onChange={(e) => setFullName(e.target.value)}
                       placeholder="Alex Rivera"
@@ -158,9 +158,9 @@ function LoginForm() {
                   </div>
                 )}
                 <div>
-                  <label className="label">Email address</label>
+                  <label className="label !text-black">Email address</label>
                   <input
-                    className="input"
+                    className="input !text-black placeholder:!text-black"
                     type="email"
                     required
                     value={email}
@@ -170,9 +170,9 @@ function LoginForm() {
                   />
                 </div>
                 <div>
-                  <label className="label">Password</label>
+                  <label className="label !text-black">Password</label>
                   <input
-                    className="input"
+                    className="input !text-black placeholder:!text-black"
                     type="password"
                     required
                     value={password}
@@ -181,7 +181,7 @@ function LoginForm() {
                     autoComplete={mode === 'login' ? 'current-password' : 'new-password'}
                   />
                   {mode === 'register' && (
-                    <p className="mt-2 text-xs text-ink-400">Minimum 8 characters</p>
+                    <p className="mt-2 text-xs text-black">Minimum 8 characters</p>
                   )}
                 </div>
                 <button type="submit" className="btn-primary w-full py-3" disabled={isLoading}>
@@ -199,12 +199,12 @@ function LoginForm() {
                 </button>
               </form>
 
-              <p className="mt-6 text-center text-sm text-ink-400">
+              <p className="mt-6 text-center text-sm text-black">
                 {mode === 'login' ? (
                   <>
                     No account?{' '}
                     <button
-                      className="font-semibold text-brand-600 transition-colors hover:text-brand-700"
+                      className="font-semibold text-black transition-colors hover:text-black hover:underline"
                       onClick={() => { clearError(); setMode('register'); }}
                     >
                       Register
@@ -214,7 +214,7 @@ function LoginForm() {
                   <>
                     Already registered?{' '}
                     <button
-                      className="font-semibold text-brand-600 transition-colors hover:text-brand-700"
+                      className="font-semibold text-black transition-colors hover:text-black hover:underline"
                       onClick={() => { clearError(); setMode('login'); }}
                     >
                       Sign in
@@ -224,7 +224,7 @@ function LoginForm() {
               </p>
             </div>
             <div className="border-t border-surface-100 bg-surface-50 px-8 py-4 text-center">
-              <p className="text-xs leading-relaxed text-ink-400">Secure by design · Encrypted at rest · Audit-trailed</p>
+              <p className="text-xs leading-relaxed text-black">Secure by design · Encrypted at rest · Audit-trailed</p>
             </div>
           </div>
         </div>

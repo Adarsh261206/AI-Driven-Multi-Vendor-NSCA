@@ -33,6 +33,8 @@ module.exports = {
           600: '#8a8a8a',
         },
         // Ink — Refined text hierarchy, Odoo-like
+        // NOTE: 600+ are dark aliases (600=#2e2e2e, 700=#1a1a1a, 800/900=#000)
+        // so legacy text-ink-700/800 headings render dark, not washed-out.
         ink: {
           0: '#ffffff',
           50: '#fafafb',
@@ -41,9 +43,10 @@ module.exports = {
           300: '#4a4a4a',
           400: '#6b6b6b',
           500: '#8a8a8a',
-          600: '#a8a8a8',
-          700: '#c7c7c7',
-          800: '#e0e0e0',
+          600: '#2e2e2e',
+          700: '#1a1a1a',
+          800: '#000000',
+          900: '#000000',
         },
         // Odoo-like semantic — muted, professional
         odoo: {

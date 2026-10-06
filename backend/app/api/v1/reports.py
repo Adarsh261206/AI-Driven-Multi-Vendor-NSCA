@@ -126,6 +126,24 @@ async def get_audit_report(
     if not audit:
         raise HTTPException(status_code=404, detail="Audit not found")
 
+    # Session observability (best-effort by design: a trail write must
+    # never break a report download the caller is authorized for).
+    try:
+        from app.models import AuditAction
+        from app.repositories.audit_trail import AuditTrailRepository
+
+        report_trail = AuditTrailRepository(db)
+        await report_trail.log(
+            action=AuditAction.REPORT_GENERATED,
+            entity_type="audit",
+            entity_id=str(audit.id),
+            user_id=str(current_user.id),
+            details={"audit_id": str(audit.id), "format": wanted},
+        )
+        await db.flush()
+    except Exception:
+        pass
+
     # Fetch findings
     findings_result = await db.execute(
         select(Finding).where(Finding.audit_id == audit_id)
