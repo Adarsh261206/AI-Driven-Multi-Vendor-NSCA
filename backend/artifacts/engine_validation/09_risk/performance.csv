@@ -1,5 +1,0 @@
-source,label,p50_ms,p95_ms,max_ms,note
-sweep,480 dataset files through the full executor (validation -> detection -> parsing -> normalization -> evaluation -> finding generation with normative risk scoring),16.2,221.6,1531.6,total 123.0s; normative scoring is pure arithmetic inside generation (no per-finding model calls)
-V09-77,200 sequential predict calls (model warm),,,,"p50=0.00ms, p95=0.00ms, max=0.01ms"
-V09-78,"1000 sequential formula calls, ML off",,,,p50=0.0025ms
-V09-79,generate_findings on 100 FAIL evaluations (ML path),,,,"elapsed=2ms, findings=100"

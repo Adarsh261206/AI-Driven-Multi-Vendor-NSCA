@@ -34,15 +34,7 @@ ConfigShield is able to reduce the amount of money and man-hours that BFSI, gove
 
 ## Architecture
 
-A full Architecture Document with verified diagrams is at **[docs/ARCHITECTURE.md](docs/ARCHITECTURE.md)** — it includes system architecture, audit pipeline workflow, run-audit sequence, data flow, and execution lifecycle (each diagram passed automated validation + browser checks):
-
-| Diagram | Static | Interactive (motion · themes · export) |
-|---|---|---|
-| System Architecture | [SVG](docs/diagrams/configshield-architecture.svg) | [HTML](.archify/architecture-configshield-20260930-162929/configshield-architecture.html) |
-| Audit Pipeline Workflow | [SVG](docs/diagrams/configshield-workflow.svg) | [HTML](.archify/workflow-audit-pipeline-20260930-162929/configshield-audit-workflow.html) |
-| Run Audit — Sequence | [SVG](docs/diagrams/configshield-sequence.svg) | [HTML](.archify/sequence-execute-audit-20260930-162929/configshield-execute-sequence.html) |
-| Data Flow | [SVG](docs/diagrams/configshield-dataflow.svg) | [HTML](.archify/dataflow-config-to-report-20260930-162929/configshield-dataflow.html) |
-| Execution Lifecycle | [SVG](docs/diagrams/configshield-execution-lifecycle.svg) | [HTML](.archify/lifecycle-audit-execution-20260930-162929/configshield-execution-lifecycle.html) |
+Full architecture documentation (system architecture, audit pipeline workflow, run-audit sequence, data flow, execution lifecycle — each diagram passed automated validation + browser checks) is maintained alongside the project.
 
 ### Tech Stack
 
@@ -76,9 +68,6 @@ A full Architecture Document with verified diagrams is at **[docs/ARCHITECTURE.m
 │   ├── app/                 # Next.js App Router pages (devices, audit, reports, settings…)
 │   ├── lib/                 # API client, types, formatting
 │   └── hooks/               # auth, dashboard data
-├── docs/
-│   ├── ARCHITECTURE.md      # Architecture Document with diagrams
-│   └── diagrams/            # SVG diagram exports
 └── .archify/                # interactive diagram sources
 ```
 
@@ -251,13 +240,7 @@ npm run build
 
 ## Documentation
 
-- [Architecture Document](docs/ARCHITECTURE.md) — system architecture, workflows, sequence, data flow, lifecycle (with verified diagrams)
-- [Project Master Spec](docs/PROJECT_MASTER_SPEC.md)
-- [Data Model](docs/DATA_MODEL.md)
-- [API Contracts](docs/API_CONTRACTS.md)
-- [Compliance Model](docs/COMPLIANCE_MODEL.md)
-- [AI Architecture](docs/AI_ARCHITECTURE.md)
-- [Development Roadmap](docs/DEVELOPMENT_ROADMAP.md)
+Detailed design docs (architecture, master spec, data model, API contracts, compliance model, AI architecture, roadmap) are maintained alongside the project and shared on request — the repository ships only runnable code.
 
 ---
 

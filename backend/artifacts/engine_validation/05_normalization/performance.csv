@@ -1,5 +1,0 @@
-source,label,p50_ms,p95_ms,max_ms,note
-corpus,480 dataset files normalized once each,0.772,14.653,176.003,sum=2685.0ms; supported labels only (323 files) dominate the tail
-V05-91,480 dataset files,,,,p50=0.772ms p95=14.653ms max=176.003ms
-V05-92,20000 interface lines,,,,ms=410.1 result_type=success mappings=6
-V05-93,20 runs over raw_lines=[],,,,mean_ms=0.097

@@ -1,8 +1,0 @@
-source,label,p50_ms,p95_ms,max_ms,note
-corpus,cisco parser over 252 label-matched dataset files,1.113,2.699,17.434,label-matched files (all sizes)
-corpus,fortinet parser over 30 label-matched dataset files,0.447,3.229,26.217,label-matched files (all sizes)
-corpus,juniper parser over 41 label-matched dataset files,3.888,87.812,120.605,label-matched files (all sizes)
-V04-80,"1067207 bytes, 40000 lines",,,,"470.7 ms, 40000 nodes"
-V04-81,959999 bytes,,,,"580.5 ms, 80000 nodes"
-V04-82,704573 bytes,,,,"70.8 ms, 30000 nodes"
-V04-73,synthetic ~1-2 MB per parser,,,,"timings(ms, bytes, nodes)={'cisco': (1128.2, 2022661, 90000), 'juniper': (224.2, 1992661, 30241), 'fortinet': (58.6, 354129, 15000)}"

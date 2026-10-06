@@ -79,7 +79,6 @@ frontend/.env.production.local
 # Backend
 backend/.env
 backend/venv/
-backend/artifacts/
 
 # Build
 *.tar.gz
@@ -88,7 +87,8 @@ backend/artifacts/
 # Reports (generated)
 reports/*.pdf
 
-# CIS Benchmark PDFs (copyrighted - keep private)
-docs/*.pdf
+# Docs + generated validation artifacts (kept local, never committed)
+docs/
 private_resources/
+backend/artifacts/
 .opencode/

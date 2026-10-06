@@ -1,5 +1,0 @@
-test_id,category,requirement,input,expected,actual,status,classification,evidence,recommendation,pytest_test
-V09-74,J,repeated ML risk scoring of identical inputs returns identical values,96-combo grid x3,three identical runs,run1==run2==run3: True,PASS,CONFIRMED BEHAVIOR,RandomForestRegressor.predict is deterministic; no randomness in the serving path,,tests/validation/test_v09_risk.py::test_v09_74_ml_grid_deterministic
-V09-75,J,generating findings twice from the same evaluation yields identical risk/priority sequences,20 FAIL evaluations x2,identical sequences,"identical=True, n=20",PASS,CONFIRMED BEHAVIOR,only finding ids/timestamps differ; risk_score and priority repeat exactly,,tests/validation/test_v09_risk.py::test_v09_75_generated_findings_deterministic
-V09-76,J,the deterministic formula path is repeatable,"96-combo grid x2, ML off",identical runs,identical=True,PASS,CONFIRMED BEHAVIOR,pure arithmetic with fixed tables,,tests/validation/test_v09_risk.py::test_v09_76_formula_deterministic
-SWEEP-C7,J,re-running corpus files reproduces identical risk scores and priorities,30,identical outcomes,violations=0,PASS,CONFIRMED BEHAVIOR,sweep_risk.py check C7,,

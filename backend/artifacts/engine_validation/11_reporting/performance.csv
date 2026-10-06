@@ -1,4 +1,0 @@
-source,label,p50_ms,p95_ms,max_ms,note
-sweep,480 dataset files x 2 report variants (matched + unmatched attribution),142.7,160.1,350.8,roadmap budget 30000ms per report; 26493510 bytes total
-V11-36,100 findings + 50 results,,,,elapsed_s=0.15 bytes=43671
-V11-37,500 findings,,,,elapsed_s=0.53 bytes=178216

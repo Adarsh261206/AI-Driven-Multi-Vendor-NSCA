@@ -1,5 +1,0 @@
-test_id,category,requirement,input,expected,actual,status,classification,evidence,recommendation,pytest_test
-V10-22,F,identical inputs yield identical remediations,same build twice,equal dicts,equal=True,PASS,CONFIRMED BEHAVIOR,"E10: pure functions, no randomness/time/env",,tests/validation/test_v10_remediation.py::test_v10_22_repeat_builds_identical
-V10-23,F,fresh engine instances agree exactly,two RemediationEngine() builds,equal dicts,equal=True,PASS,CONFIRMED BEHAVIOR,E10: stateless engine,,tests/validation/test_v10_remediation.py::test_v10_23_fresh_instances_identical
-V10-24,F,two full audits produce identical per-finding remediations (finding ids excluded — UUIDs),executor run twice on secure.txt,"identical (control_id, remediation) multisets",equal=True n=14,PASS,CONFIRMED BEHAVIOR,E10: deterministic pipeline end to end,,tests/validation/test_v10_remediation.py::test_v10_24_pipeline_repeat_identical
-SWEEP-C7,F,re-running corpus files reproduces identical remediations,30,identical outcomes,violations=0,PASS,CONFIRMED BEHAVIOR,sweep_remediation.py check C7,,

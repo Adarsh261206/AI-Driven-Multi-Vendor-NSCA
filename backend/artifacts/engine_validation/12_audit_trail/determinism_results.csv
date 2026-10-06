@@ -1,4 +1,0 @@
-test_id,category,requirement,input,expected,actual,status,classification,evidence,recommendation,pytest_test
-V12-23,F,sanitization is deterministic (sets sort; repeated calls agree),same payload sanitized 3x,"identical outputs, sets sorted",stable=True,PASS,CONFIRMED BEHAVIOR,"E12: pure function, no clock/randomness; set order normalized",,tests/validation/test_v12_audit_trail.py::test_v12_23_sanitize_is_deterministic
-V12-24,F,entry ids are unique per call and repeated queries return the same set (order-by ties compared as sets),"3 rows, queried twice","3 unique ids, stable sets",unique=True stable=True,PASS,CONFIRMED BEHAVIOR,E12: uuid4 ids; set-based determinism assertion,,tests/validation/test_v12_audit_trail.py::test_v12_24_ids_unique_query_sets_stable
-SWEEP-C6,F,re-queries return identical sets across the corpus,30,identical id sets,violations=0,PASS,CONFIRMED BEHAVIOR,sweep_audit_trail.py check C6,,

@@ -1,5 +1,0 @@
-test_id,category,requirement,input,expected,actual,status,classification,evidence,recommendation,pytest_test
-V08-78,J,"the same evaluation produces the same findings on repeat runs (content, severity, risk, priority - ids/timestamps excluded)",mixed evaluation generated twice,identical content multisets,identical=True,PASS,CONFIRMED BEHAVIOR,findings.py:163-196,,tests/validation/test_v08_findings.py::test_v08_78_repeat_generation
-V08-79,J,a fresh FindingGenerator instance behaves identically (no hidden instance state),"two instances, same input",identical,identical=True,PASS,CONFIRMED BEHAVIOR,findings.py:160-161,,tests/validation/test_v08_findings.py::test_v08_79_fresh_generator_instance
-V08-80,J,two full executor runs on the same input yield identical findings,secure.txt twice,identical control/severity/title/result multisets,identical=True (n=14),PASS,CONFIRMED BEHAVIOR,executor.py:253-262,,tests/validation/test_v08_findings.py::test_v08_80_executor_rerun_findings
-SWEEP-C7,J,re-running corpus files reproduces identical finding counts and executor statuses,30,identical outcomes,violations=0,PASS,CONFIRMED BEHAVIOR,sweep_findings.py check C7,,
